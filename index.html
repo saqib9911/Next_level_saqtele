@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#050510">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Saqskyscoop Pro – Industrial 4K Telescope</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-purple: #8a2be2;
+            --neon-gold: #ffb700;
+            --neon-green: #00ff88;
+            --glass-bg: rgba(10, 20, 40, 0.55);
+            --glass-border: rgba(0, 240, 255, 0.25);
+            --text-main: #ffffff;
+            --text-dim: #88aaff;
+            --ui-opacity: 1;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+        
+        body {
+            background: #000; color: var(--text-main);
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            overflow: hidden; height: 100vh; width: 100vw;
+            position: fixed; touch-action: none;
+        }
+
+        #particleCanvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none; opacity: 0.6;
+        }
+
+        .camera-view {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; overflow: hidden; background: #000; touch-action: none;
+        }
+        #video { display: none; }
+        #canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        body.night-mode #canvas {
+            filter: sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.7) contrast(1.2);
+        }
+
+        /* ====================== FINDER SCOPE ====================== */
+        .finder-scope {
+            position: absolute; top: 20px; right: 20px;
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 20px var(--neon-cyan), inset 0 0 20px rgba(0,240,255,0.4);
+            overflow: hidden; z-index: 10; display: none; background: #000;
+        }
+        .finder-scope video { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+        .finder-scope::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 12px; height: 12px; border: 1.5px solid var(--neon-pink);
+            transform: translate(-50%, -50%); border-radius: 50%;
+            box-shadow: 0 0 8px var(--neon-pink);
+        }
+
+        /* ====================== UI OVERLAY ====================== */
+        .ui-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+            opacity: var(--ui-opacity); transition: opacity 0.3s;
+        }
+
+        .top-hud {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 15px 20px; pointer-events: auto; gap: 10px;
+        }
+        .hud-badge {
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border); border-radius: 12px;
+            padding: 8px 15px; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+            color: var(--neon-cyan); display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+        .hud-badge i { color: var(--neon-pink); animation: pulse-glow 2s infinite; }
+        @keyframes pulse-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .top-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .icon-btn {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border); color: var(--text-main);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1rem; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+        .icon-btn:active { transform: scale(0.9); }
+        .icon-btn.active { 
+            background: rgba(0, 240, 255, 0.3); border-color: var(--neon-cyan); 
+            color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0,240,255,0.5); 
+        }
+
+        /* ====================== AUTO OBJECT BADGE ====================== */
+        .object-badge {
+            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 240, 255, 0.15); backdrop-filter: blur(15px);
+            border: 1px solid var(--neon-cyan); border-radius: 20px;
+            padding: 6px 16px; font-size: 0.7rem; font-weight: 700;
+            color: var(--neon-cyan); display: none; align-items: center; gap: 8px;
+            z-index: 50; animation: pulse-badge 1.5s infinite;
+            text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0,240,255,0.4);
+        }
+        .object-badge.show { display: flex; }
+        @keyframes pulse-badge { 
+            0%, 100% { box-shadow: 0 0 20px rgba(0,240,255,0.4); } 
+            50% { box-shadow: 0 0 30px rgba(0,240,255,0.7); } 
+        }
+
+        /* ====================== CONTROL PANEL ====================== */
+        .control-panel {
+            background: linear-gradient(0deg, rgba(5,5,16,0.98) 0%, rgba(5,5,16,0.75) 70%, transparent 100%);
+            padding: 12px 12px 22px; pointer-events: auto;
+            border-top: 1px solid rgba(0,240,255,0.15);
+            backdrop-filter: blur(12px);
+            max-height: 62vh; overflow-y: auto;
+        }
+        .control-panel::-webkit-scrollbar { width: 3px; }
+        .control-panel::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 2px; }
+
+        /* ZOOM BAR */
+        .zoom-container {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(0, 10, 30, 0.8); border-radius: 30px;
+            padding: 5px 8px; margin-bottom: 10px;
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+        }
+        .zoom-btn {
+            width: 40px; height: 40px; border-radius: 50%; border: none;
+            background: rgba(0, 240, 255, 0.12); color: var(--neon-cyan);
+            font-size: 1.3rem; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: 0.15s; font-weight: bold;
+            touch-action: none; flex-shrink: 0;
+        }
+        .zoom-btn:active, .zoom-btn.pressing { 
+            background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px var(--neon-cyan); 
+        }
+        .zoom-slider-wrap { flex: 1; margin: 0 10px; }
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+            border-radius: 2px; outline: none; touch-action: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 22px; height: 22px;
+            background: #fff; border: 2px solid var(--neon-cyan); border-radius: 50%;
+            box-shadow: 0 0 15px var(--neon-cyan); cursor: pointer;
+        }
+        .zoom-value {
+            font-family: 'Courier New', monospace; font-size: 0.95rem; font-weight: 900;
+            color: var(--neon-cyan); min-width: 65px; text-align: right;
+            text-shadow: 0 0 10px rgba(0,240,255,0.6); letter-spacing: -0.5px;
+        }
+        .zoom-value .zoom-unit { font-size: 0.65rem; opacity: 0.8; }
+
+        /* PRESET ROW */
+        .preset-row {
+            display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto;
+            scrollbar-width: none; padding-bottom: 2px;
+        }
+        .preset-row::-webkit-scrollbar { display: none; }
+        .preset-chip {
+            flex: 0 0 auto; min-width: 60px; padding: 8px 6px;
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); border-radius: 12px;
+            color: var(--text-dim); font-size: 0.52rem; font-weight: 700;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            cursor: pointer; transition: all 0.3s; text-transform: uppercase;
+            letter-spacing: 0.5px; position: relative; overflow: hidden;
+        }
+        .preset-chip i { font-size: 1.05rem; color: var(--text-main); transition: 0.3s; }
+        .preset-chip.active {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(138, 43, 226, 0.25));
+            border-color: var(--neon-cyan); color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0,240,255,0.3);
+        }
+        .preset-chip.active i { 
+            color: var(--neon-cyan); text-shadow: 0 0 12px var(--neon-cyan); transform: scale(1.15);
+        }
+
+        /* QUICK SLIDERS */
+        .sliders-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;
+        }
+        .slider-item {
+            background: rgba(0, 10, 30, 0.4); border-radius: 10px; padding: 6px 8px;
+            border: 1px solid rgba(0, 240, 255, 0.1);
+        }
+        .slider-label {
+            display: flex; justify-content: space-between;
+            font-size: 0.48rem; color: var(--text-dim); margin-bottom: 4px;
+            text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .slider-label span:last-child { color: var(--neon-cyan); font-weight: bold; }
+
+        /* ACTION GRID */
+        .action-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+        }
+        .action-btn {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); border-radius: 12px;
+            padding: 8px 3px; display: flex; flex-direction: column;
+            align-items: center; gap: 3px; cursor: pointer;
+            color: var(--text-dim); font-size: 0.45rem; font-weight: 700;
+            transition: all 0.3s; position: relative; overflow: hidden;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .action-btn i { font-size: 1.15rem; color: var(--text-main); transition: 0.3s; }
+        .action-btn.active-btn {
+            background: rgba(0, 240, 255, 0.18); border-color: var(--neon-cyan);
+            color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0,240,255,0.35);
+        }
+        .action-btn.active-btn i { color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); }
+        .action-btn:active { transform: scale(0.94); }
+
+        .action-btn.fx-btn i { color: var(--neon-pink); }
+        .action-btn.pro-btn i { color: var(--neon-gold); }
+
+        /* RIPPLE */
+        .ripple {
+            position: absolute; border-radius: 50%;
+            background: rgba(0, 240, 255, 0.5);
+            transform: scale(0); animation: ripple-anim 0.7s ease-out;
+            pointer-events: none;
+        }
+        @keyframes ripple-anim { to { transform: scale(5); opacity: 0; } }
+
+        /* ====================== BOTTOM SHEETS ====================== */
+        .sheet {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(180deg, rgba(10, 20, 40, 0.98), rgba(5, 5, 16, 0.99));
+            border-top: 2px solid var(--neon-cyan);
+            border-radius: 24px 24px 0 0;
+            padding: 18px 18px 30px; z-index: 500;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0, 240, 255, 0.2);
+        }
+        .sheet.open { transform: translateY(0); }
+        .sheet::-webkit-scrollbar { width: 3px; }
+        .sheet::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 2px; }
+        
+        .sheet-handle {
+            width: 50px; height: 4px; background: var(--neon-cyan);
+            border-radius: 2px; margin: 0 auto 12px; opacity: 0.5;
+        }
+        .sheet-title {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .sheet-title h2 { 
+            font-size: 0.95rem; color: var(--neon-cyan); letter-spacing: 1.5px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sheet-title button {
+            background: none; border: none; color: var(--text-main);
+            font-size: 1.4rem; cursor: pointer; padding: 5px 10px;
+        }
+
+        /* FX GRID */
+        .fx-section-title {
+            font-size: 0.6rem; color: var(--neon-pink); text-transform: uppercase;
+            letter-spacing: 1.5px; margin-bottom: 10px; margin-top: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .fx-section-title:first-of-type { margin-top: 0; }
+        
+        .fx-grid {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .color-dot {
+            aspect-ratio: 1; border-radius: 50%;
+            border: 2px solid transparent; cursor: pointer;
+            transition: 0.2s; position: relative;
+            box-shadow: 0 0 8px rgba(0,0,0,0.5);
+        }
+        .color-dot.active { 
+            border-color: #fff; transform: scale(1.15); 
+            box-shadow: 0 0 15px currentColor;
+        }
+        .color-dot.none-dot {
+            background: transparent; border: 2px dashed #666;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; color: #666;
+        }
+        
+        .effect-chip {
+            padding: 8px 6px; background: var(--glass-bg);
+            border: 1px solid var(--glass-border); border-radius: 10px;
+            color: var(--text-dim); font-size: 0.55rem; font-weight: 700;
+            cursor: pointer; transition: 0.3s; text-align: center;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .effect-chip.active {
+            background: rgba(0, 240, 255, 0.2); border-color: var(--neon-cyan);
+            color: var(--neon-cyan); box-shadow: 0 0 12px rgba(0,240,255,0.3);
+        }
+
+        .fx-slider-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+            background: rgba(0, 10, 30, 0.4); padding: 10px 12px; border-radius: 12px;
+            border: 1px solid rgba(0, 240, 255, 0.1);
+        }
+        .fx-slider-row label {
+            font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase;
+            letter-spacing: 0.5px; min-width: 70px;
+        }
+        .fx-slider-row input[type="range"] { flex: 1; }
+        .fx-slider-row .val {
+            font-size: 0.65rem; color: var(--neon-cyan); font-weight: bold;
+            min-width: 45px; text-align: right; font-family: monospace;
+        }
+
+        /* PRO CONTROLS GRID */
+        .pro-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .pro-item {
+            background: rgba(0, 10, 30, 0.5); border-radius: 12px; padding: 10px;
+            border: 1px solid rgba(0, 240, 255, 0.15);
+        }
+        .pro-label {
+            display: flex; justify-content: space-between;
+            font-size: 0.55rem; color: var(--text-dim); margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .pro-label span:last-child { color: var(--neon-cyan); font-weight: bold; font-family: monospace; }
+
+        /* SKY DATA */
+        .data-section {
+            margin-bottom: 12px;
+            background: rgba(0, 10, 30, 0.5);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            border-radius: 14px; padding: 12px 15px;
+        }
+        .data-section h3 {
+            font-size: 0.65rem; color: var(--neon-pink); text-transform: uppercase;
+            letter-spacing: 1.5px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .data-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0; font-size: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-row span:first-child { color: var(--text-dim); }
+        .data-row span:last-child { color: var(--neon-cyan); font-weight: 700; font-family: monospace; }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(5,5,16,0.95);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; backdrop-filter: blur(15px); padding: 20px;
+        }
+        .modal-card {
+            background: rgba(10, 20, 40, 0.85); border: 1px solid var(--neon-cyan);
+            border-radius: 24px; padding: 35px 25px; text-align: center;
+            max-width: 380px; width: 100%; box-shadow: 0 0 50px rgba(0,240,255,0.15);
+        }
+        .modal-card h2 { color: var(--neon-cyan); margin-bottom: 15px; font-size: 1.5rem; }
+        .modal-card p { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 25px; line-height: 1.6; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            border: none; color: #fff; padding: 14px 35px; border-radius: 30px;
+            font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 0 25px rgba(0,240,255,0.4); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-primary:active { transform: scale(0.95); }
+
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 240, 255, 0.95); color: #000;
+            padding: 10px 22px; border-radius: 30px; font-weight: 800;
+            font-size: 0.72rem; z-index: 2000;
+            box-shadow: 0 0 20px rgba(0,240,255,0.5);
+            text-align: center; max-width: 90vw;
+            animation: toast-in 0.3s ease;
+        }
+        @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 20px); } }
+
+        .pinch-hint {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 240, 255, 0.2);
+            border: 2px solid var(--neon-cyan); border-radius: 20px;
+            padding: 12px 24px; font-size: 0.8rem; color: var(--neon-cyan);
+            font-weight: 800; z-index: 200; pointer-events: none;
+            opacity: 0; transition: opacity 0.3s; backdrop-filter: blur(10px);
+        }
+        .pinch-hint.show { opacity: 1; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="camera-view" id="cameraView">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+        
+        <div class="finder-scope" id="finderScope">
+            <video id="finderVideo" autoplay playsinline muted></video>
+        </div>
+        
+        <div class="object-badge" id="objectBadge">
+            <i class="fas fa-crosshairs"></i>
+            <span id="objectName">Scanning...</span>
+        </div>
+        
+        <div class="pinch-hint" id="pinchHint">
+            <i class="fas fa-hand-pointer"></i> Pinch to Zoom
+        </div>
+    </div>
+
+    <div class="ui-overlay" id="uiOverlay">
+        <div>
+            <div class="top-hud">
+                <div class="hud-badge">
+                    <i class="fas fa-satellite"></i>
+                    <span id="statusText">4K READY</span>
+                </div>
+                <div class="top-buttons">
+                    <button class="icon-btn" id="skyDataBtn" title="Sky Data"><i class="fas fa-globe"></i></button>
+                    <button class="icon-btn" id="finderBtn" title="Finder"><i class="fas fa-search-plus"></i></button>
+                    <button class="icon-btn" id="transparentBtn" title="Ghost"><i class="fas fa-ghost"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            
+            <!-- ZOOM -->
+            <div class="zoom-container">
+                <button class="zoom-btn" id="zoomOutBtn">−</button>
+                <div class="zoom-slider-wrap">
+                    <input type="range" id="zoomSlider" min="0.5" max="50000" value="1" step="0.01">
+                </div>
+                <button class="zoom-btn" id="zoomInBtn">+</button>
+                <div class="zoom-value" id="zoomValue">1.00<span class="zoom-unit">x</span></div>
+            </div>
+
+            <!-- PRESETS -->
+            <div class="preset-row">
+                <button class="preset-chip active" data-preset="normal"><i class="fas fa-eye"></i><span>Normal</span></button>
+                <button class="preset-chip" data-preset="moon"><i class="fas fa-moon"></i><span>Moon</span></button>
+                <button class="preset-chip" data-preset="jupiter"><i class="fas fa-circle"></i><span>Jupiter</span></button>
+                <button class="preset-chip" data-preset="saturn"><i class="fas fa-ring"></i><span>Saturn</span></button>
+                <button class="preset-chip" data-preset="mars"><i class="fas fa-globe"></i><span>Mars</span></button>
+                <button class="preset-chip" data-preset="venus"><i class="fas fa-star"></i><span>Venus</span></button>
+                <button class="preset-chip" data-preset="nebula"><i class="fas fa-cloud"></i><span>Nebula</span></button>
+                <button class="preset-chip" data-preset="deepsky"><i class="fas fa-galaxy"></i><span>Deep</span></button>
+            </div>
+
+            <!-- QUICK SLIDERS -->
+            <div class="sliders-grid">
+                <div class="slider-item">
+                    <div class="slider-label"><span>Bright</span><span id="brightVal">100%</span></div>
+                    <input type="range" id="brightSlider" min="0" max="250" value="100">
+                </div>
+                <div class="slider-item">
+                    <div class="slider-label"><span>Contrast</span><span id="contVal">100%</span></div>
+                    <input type="range" id="contSlider" min="0" max="300" value="100">
+                </div>
+                <div class="slider-item">
+                    <div class="slider-label"><span>Focus</span><span id="focusVal">50%</span></div>
+                    <input type="range" id="focusSlider" min="0" max="100" value="50">
+                </div>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="action-grid">
+                <button class="action-btn" id="telescopeBtn"><i class="fas fa-eye"></i><span>Dark</span></button>
+                <button class="action-btn" id="stackBtn"><i class="fas fa-layer-group"></i><span>Stack</span></button>
+                <button class="action-btn" id="hdrBtn"><i class="fas fa-magic"></i><span>HDR</span></button>
+                <button class="action-btn" id="gridBtn"><i class="fas fa-th"></i><span>Grid</span></button>
+                <button class="action-btn fx-btn" id="fxBtn"><i class="fas fa-palette"></i><span>FX</span></button>
+                <button class="action-btn pro-btn" id="proBtn"><i class="fas fa-sliders-h"></i><span>Pro</span></button>
+                <button class="action-btn" id="nightBtn"><i class="fas fa-moon"></i><span>Night</span></button>
+                <button class="action-btn" id="captureBtn"><i class="fas fa-camera"></i><span>Shot</span></button>
+                <button class="action-btn" id="recordBtn"><i class="fas fa-video"></i><span>Rec</span></button>
+                <button class="action-btn" id="surfaceBtn"><i class="fas fa-mountain"></i><span>Surface</span></button>
+                <button class="action-btn" id="falseColorBtn"><i class="fas fa-rainbow"></i><span>False</span></button>
+                <button class="action-btn" id="resetBtn"><i class="fas fa-undo"></i><span>Reset</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== FX SHEET (Transparent Colors Menu) ====================== -->
+    <div class="sheet" id="fxSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+            <h2><i class="fas fa-palette"></i> COLORS & FILTERS</h2>
+            <button id="closeFxSheet">✕</button>
+        </div>
+
+        <div class="fx-section-title"><i class="fas fa-fill-drip"></i> Transparent Color Overlay</div>
+        <div class="fx-grid">
+            <div class="color-dot none-dot active" data-color="none">✕</div>
+            <div class="color-dot" data-color="rgba(255,0,0,1)" style="background:#ff0000;color:#ff0000"></div>
+            <div class="color-dot" data-color="rgba(0,255,0,1)" style="background:#00ff00;color:#00ff00"></div>
+            <div class="color-dot" data-color="rgba(0,100,255,1)" style="background:#0064ff;color:#0064ff"></div>
+            <div class="color-dot" data-color="rgba(255,215,0,1)" style="background:#ffd700;color:#ffd700"></div>
+            <div class="color-dot" data-color="rgba(255,0,200,1)" style="background:#ff00c8;color:#ff00c8"></div>
+            <div class="color-dot" data-color="rgba(0,255,255,1)" style="background:#00ffff;color:#00ffff"></div>
+            <div class="color-dot" data-color="rgba(255,140,0,1)" style="background:#ff8c00;color:#ff8c00"></div>
+            <div class="color-dot" data-color="rgba(138,43,226,1)" style="background:#8a2be2;color:#8a2be2"></div>
+            <div class="color-dot" data-color="rgba(255,255,255,1)" style="background:#ffffff;color:#ffffff"></div>
+            <div class="color-dot" data-color="rgba(50,205,50,1)" style="background:#32cd32;color:#32cd32"></div>
+            <div class="color-dot" data-color="rgba(0,0,0,1)" style="background:#000;color:#000;border:1px solid #444"></div>
+        </div>
+        <div class="fx-slider-row">
+            <label>Opacity</label>
+            <input type="range" id="opacitySlider" min="0" max="100" value="25">
+            <span class="val" id="opacityVal">25%</span>
+        </div>
+
+        <div class="fx-section-title"><i class="fas fa-magic"></i> Color Grading</div>
+        <div class="fx-grid" style="grid-template-columns:repeat(4,1fr)">
+            <div class="effect-chip active" data-grade="none">None</div>
+            <div class="effect-chip" data-grade="warm">Warm</div>
+            <div class="effect-chip" data-grade="cool">Cool</div>
+            <div class="effect-chip" data-grade="sunset">Sunset</div>
+            <div class="effect-chip" data-grade="ocean">Ocean</div>
+            <div class="effect-chip" data-grade="forest">Forest</div>
+            <div class="effect-chip" data-grade="noir">Noir</div>
+            <div class="effect-chip" data-grade="vintage">Vintage</div>
+        </div>
+
+        <div class="fx-section-title"><i class="fas fa-film"></i> Cinematic Effects</div>
+        <div class="fx-grid" style="grid-template-columns:repeat(4,1fr)">
+            <div class="effect-chip active" data-effect="none">None</div>
+            <div class="effect-chip" data-effect="invert">Invert</div>
+            <div class="effect-chip" data-effect="grayscale">B&W</div>
+            <div class="effect-chip" data-effect="sepia">Sepia</div>
+            <div class="effect-chip" data-effect="blur">Dreamy</div>
+            <div class="effect-chip" data-effect="sharpen">Sharpen</div>
+            <div class="effect-chip" data-effect="contrast">Punch</div>
+            <div class="effect-chip" data-effect="vivid">Vivid</div>
+        </div>
+
+        <div class="fx-slider-row">
+            <label>Vignette</label>
+            <input type="range" id="vignetteSlider" min="0" max="100" value="0">
+            <span class="val" id="vignetteVal">0%</span>
+        </div>
+        <div class="fx-slider-row">
+            <label>Light Leak</label>
+            <input type="range" id="leakSlider" min="0" max="100" value="0">
+            <span class="val" id="leakVal">0%</span>
+        </div>
+    </div>
+
+    <!-- ====================== PRO SHEET ====================== -->
+    <div class="sheet" id="proSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+            <h2><i class="fas fa-sliders-h"></i> PRO CONTROLS</h2>
+            <button id="closeProSheet">✕</button>
+        </div>
+
+        <div class="pro-grid">
+            <div class="pro-item">
+                <div class="pro-label"><span>Exposure</span><span id="exposureVal">0.0</span></div>
+                <input type="range" id="exposureSlider" min="-100" max="100" value="0">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Gamma</span><span id="gammaVal">1.0</span></div>
+                <input type="range" id="gammaSlider" min="50" max="200" value="100">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Temperature</span><span id="tempVal">0K</span></div>
+                <input type="range" id="tempSlider" min="-100" max="100" value="0">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Tint</span><span id="tintVal">0</span></div>
+                <input type="range" id="tintSlider" min="-100" max="100" value="0">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Sharpness</span><span id="sharpVal">0</span></div>
+                <input type="range" id="sharpSlider" min="0" max="100" value="0">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Highlights</span><span id="highVal">0</span></div>
+                <input type="range" id="highSlider" min="-100" max="100" value="0">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Shadows</span><span id="shadowVal">0</span></div>
+                <input type="range" id="shadowSlider" min="-100" max="100" value="0">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Saturation</span><span id="satVal">100%</span></div>
+                <input type="range" id="satSlider" min="0" max="250" value="100">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Hue</span><span id="hueVal">0°</span></div>
+                <input type="range" id="hueSlider" min="-180" max="180" value="0">
+            </div>
+            <div class="pro-item">
+                <div class="pro-label"><span>Grain</span><span id="grainVal">0</span></div>
+                <input type="range" id="grainSlider" min="0" max="100" value="0">
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== SKY DATA SHEET ====================== -->
+    <div class="sheet" id="skySheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+            <h2><i class="fas fa-satellite-dish"></i> LIVE SKY DATA</h2>
+            <button id="closeSkySheet">✕</button>
+        </div>
+        
+        <div class="data-section">
+            <h3><i class="fas fa-sun"></i> Sun & Moon</h3>
+            <div class="data-row"><span>Sunrise</span><span id="sunrise">--:--</span></div>
+            <div class="data-row"><span>Sunset</span><span id="sunset">--:--</span></div>
+            <div class="data-row"><span>Moon Phase</span><span id="moonPhase">--</span></div>
+            <div class="data-row"><span>Illumination</span><span id="moonIllum">--%</span></div>
+        </div>
+
+        <div class="data-section">
+            <h3><i class="fas fa-cloud-sun"></i> Viewing Conditions</h3>
+            <div class="data-row"><span>Temperature</span><span id="temperature">--°C</span></div>
+            <div class="data-row"><span>Cloud Cover</span><span id="cloudCover">--%</span></div>
+            <div class="data-row"><span>Humidity</span><span id="humidity">--%</span></div>
+            <div class="data-row"><span>Quality</span><span id="viewQuality">--</span></div>
+        </div>
+
+        <div class="data-section">
+            <h3><i class="fas fa-rocket"></i> ISS Live Tracker</h3>
+            <div class="data-row"><span>Latitude</span><span id="issLat">--</span></div>
+            <div class="data-row"><span>Longitude</span><span id="issLng">--</span></div>
+        </div>
+
+        <div class="data-section">
+            <h3><i class="fas fa-globe"></i> Planet Visibility</h3>
+            <div id="planetList"></div>
+        </div>
+
+        <div class="data-section">
+            <h3><i class="fas fa-star"></i> Bright Stars</h3>
+            <div id="starList"></div>
+        </div>
+
+        <div class="data-section">
+            <h3><i class="fas fa-map-marker-alt"></i> Your Location</h3>
+            <div class="data-row"><span>Latitude</span><span id="userLat">--</span></div>
+            <div class="data-row"><span>Longitude</span><span id="userLng">--</span></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="permModal">
+        <div class="modal-card">
+            <i class="fas fa-satellite-dish" style="font-size: 3.5rem; color: var(--neon-cyan); margin-bottom: 25px;"></i>
+            <h2>SAQSKYSCOOP PRO</h2>
+            <p>Industrial-grade telescope with real-time surface enhancement, auto object detection, transparent color overlays, and pro controls.</p>
+            <button class="btn-primary" id="allowCamBtn">Initialize Camera</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="loadingModal">
+        <div class="modal-card">
+            <i class="fas fa-circle-notch fa-spin" style="font-size: 2.5rem; color: var(--neon-cyan); margin-bottom: 20px;"></i>
+            <h2>CALIBRATING OPTICS</h2>
+            <p>Connecting to 4K sensor...</p>
+        </div>
+    </div>
+
+    <script>
+        // ========================
+        // 🌌 PARTICLES
+        // ========================
+        const particleCanvas = document.getElementById('particleCanvas');
+        const pctx = particleCanvas.getContext('2d');
+        let particles = [];
+
+        function resizeParticles() {
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeParticles);
+        resizeParticles();
+
+        class Particle {
+            constructor(x, y, isShower = false) {
+                this.x = x; this.y = y;
+                this.size = isShower ? Math.random() * 3 + 1.5 : Math.random() * 1.5 + 0.5;
+                this.speedX = isShower ? (Math.random() - 0.5) * 10 : (Math.random() - 0.5) * 0.3;
+                this.speedY = isShower ? (Math.random() - 0.5) * 10 : (Math.random() - 0.5) * 0.3;
+                this.life = isShower ? 80 : Infinity;
+                this.color = isShower 
+                    ? `hsl(${Math.random() * 60 + 180}, 100%, 70%)` 
+                    : `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1})`;
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (this.life !== Infinity) this.life--;
+                if (this.speedX !== undefined) { this.speedX *= 0.95; this.speedY *= 0.95; }
+            }
+            draw() {
+                pctx.fillStyle = this.color;
+                pctx.beginPath();
+                pctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                pctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 80; i++) {
+            particles.push(new Particle(Math.random() * window.innerWidth, Math.random() * window.innerHeight));
+        }
+
+        function animateParticles() {
+            pctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        function triggerShower(x, y) {
+            for (let i = 0; i < 12; i++) particles.push(new Particle(x, y, true));
+        }
+
+        // ========================
+        // 🎮 RIPPLE
+        // ========================
+        document.querySelectorAll('button, .preset-chip, .effect-chip, .color-dot').forEach(el => {
+            el.addEventListener('pointerdown', function(e) {
+                const rect = this.getBoundingClientRect();
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = `${size}px`;
+                ripple.style.left = `${e.clientX - rect.left - size/2}px`;
+                ripple.style.top = `${e.clientY - rect.top - size/2}px`;
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 700);
+                triggerShower(e.clientX, e.clientY);
+            });
+        });
+
+        // ========================
+        // 🔭 MAIN TELESCOPE ENGINE
+        // ========================
+        (() => {
+            const video = document.getElementById('video');
+            const finderVideo = document.getElementById('finderVideo');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d', { alpha: false });
+            const cameraView = document.getElementById('cameraView');
+            const pinchHint = document.getElementById('pinchHint');
+            const objectBadge = document.getElementById('objectBadge');
+            const objectName = document.getElementById('objectName');
+            
+            const zoomSlider = document.getElementById('zoomSlider');
+            const zoomValue = document.getElementById('zoomValue');
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            
+            const brightSlider = document.getElementById('brightSlider');
+            const brightVal = document.getElementById('brightVal');
+            const contSlider = document.getElementById('contSlider');
+            const contVal = document.getElementById('contVal');
+            const focusSlider = document.getElementById('focusSlider');
+            const focusVal = document.getElementById('focusVal');
+            
+            const telescopeBtn = document.getElementById('telescopeBtn');
+            const stackBtn = document.getElementById('stackBtn');
+            const hdrBtn = document.getElementById('hdrBtn');
+            const gridBtn = document.getElementById('gridBtn');
+            const nightBtn = document.getElementById('nightBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const captureBtn = document.getElementById('captureBtn');
+            const recordBtn = document.getElementById('recordBtn');
+            const finderBtn = document.getElementById('finderBtn');
+            const transparentBtn = document.getElementById('transparentBtn');
+            const skyDataBtn = document.getElementById('skyDataBtn');
+            const fxBtn = document.getElementById('fxBtn');
+            const proBtn = document.getElementById('proBtn');
+            const surfaceBtn = document.getElementById('surfaceBtn');
+            const falseColorBtn = document.getElementById('falseColorBtn');
+            
+            const fxSheet = document.getElementById('fxSheet');
+            const proSheet = document.getElementById('proSheet');
+            const skySheet = document.getElementById('skySheet');
+            const closeFxSheet = document.getElementById('closeFxSheet');
+            const closeProSheet = document.getElementById('closeProSheet');
+            const closeSkySheet = document.getElementById('closeSkySheet');
+            
+            const finderScope = document.getElementById('finderScope');
+            const presetChips = document.querySelectorAll('.preset-chip');
+            const colorDots = document.querySelectorAll('.color-dot');
+            const effectChips = document.querySelectorAll('.effect-chip[data-effect]');
+            const gradeChips = document.querySelectorAll('.effect-chip[data-grade]');
+            
+            // FX sliders
+            const opacitySlider = document.getElementById('opacitySlider');
+            const opacityVal = document.getElementById('opacityVal');
+            const vignetteSlider = document.getElementById('vignetteSlider');
+            const vignetteVal = document.getElementById('vignetteVal');
+            const leakSlider = document.getElementById('leakSlider');
+            const leakVal = document.getElementById('leakVal');
+            
+            // PRO sliders
+            const exposureSlider = document.getElementById('exposureSlider');
+            const exposureVal = document.getElementById('exposureVal');
+            const gammaSlider = document.getElementById('gammaSlider');
+            const gammaVal = document.getElementById('gammaVal');
+            const tempSlider = document.getElementById('tempSlider');
+            const tempVal = document.getElementById('tempVal');
+            const tintSlider = document.getElementById('tintSlider');
+            const tintVal = document.getElementById('tintVal');
+            const sharpSlider = document.getElementById('sharpSlider');
+            const sharpVal = document.getElementById('sharpVal');
+            const highSlider = document.getElementById('highSlider');
+            const highVal = document.getElementById('highVal');
+            const shadowSlider = document.getElementById('shadowSlider');
+            const shadowVal = document.getElementById('shadowVal');
+            const satSlider = document.getElementById('satSlider');
+            const satVal = document.getElementById('satVal');
+            const hueSlider = document.getElementById('hueSlider');
+            const hueVal = document.getElementById('hueVal');
+            const grainSlider = document.getElementById('grainSlider');
+            const grainVal = document.getElementById('grainVal');
+            
+            const permModal = document.getElementById('permModal');
+            const loadingModal = document.getElementById('loadingModal');
+            const allowCamBtn = document.getElementById('allowCamBtn');
+
+            // ============ STATE ============
+            let stream = null;
+            let zoom = 1;
+            
+            // Base
+            let brightness = 100, contrast = 100, focus = 50;
+            
+            // FX
+            let activeColor = 'none';
+            let colorOpacity = 25;
+            let activeEffect = 'none';
+            let activeGrade = 'none';
+            let vignetteAmount = 0;
+            let leakAmount = 0;
+            
+            // PRO
+            let exposure = 0, gamma = 100, temperature = 0, tint = 0;
+            let sharpness = 0, highlights = 0, shadows = 0;
+            let saturation = 100, hue = 0, grain = 0;
+            
+            // Modes
+            let isTelescopeMode = false;
+            let isDeepStack = false;
+            let isHdr = false;
+            let isGrid = false;
+            let isNight = false;
+            let isRecording = false;
+            let isTransparent = false;
+            let isSurfaceEnhance = false;
+            let isFalseColor = false;
+            
+            let mediaRecorder = null;
+            let recordedChunks = [];
+            let stackBuffer = null;
+            let stackCount = 0;
+            
+            // Object detection
+            let objectCenter = { x: 0.5, y: 0.5 };
+            let frameCounter = 0;
+            let detectedObject = 'none';
+            const detectionCanvas = document.createElement('canvas');
+            const detectionCtx = detectionCanvas.getContext('2d', { willReadFrequently: true });
+            
+            // Continuous zoom
+            let zoomHoldTimer = null;
+            let zoomHoldDir = 0;
+            
+            // Grain canvas for noise
+            const grainCanvas = document.createElement('canvas');
+            grainCanvas.width = 128; grainCanvas.height = 128;
+
+            // ============ PRESETS ============
+            const PRESETS = {
+                normal: { bright: 100, cont: 100, sat: 100, focus: 50, exposure: 0, gamma: 100, temperature: 0, tint: 0, sharpness: 0 },
+                moon:   { bright: 118, cont: 155, sat: 80, focus: 82, exposure: 5, gamma: 105, temperature: -15, tint: 0, sharpness: 60 },
+                jupiter:{ bright: 112, cont: 165, sat: 135, focus: 85, exposure: 0, gamma: 110, temperature: 10, tint: -10, sharpness: 70 },
+                saturn: { bright: 115, cont: 160, sat: 140, focus: 85, exposure: 0, gamma: 105, temperature: 15, tint: 0, sharpness: 65 },
+                mars:   { bright: 115, cont: 150, sat: 155, focus: 80, exposure: 5, gamma: 100, temperature: 25, tint: 5, sharpness: 55 },
+                venus:  { bright: 125, cont: 145, sat: 105, focus: 80, exposure: -5, gamma: 110, temperature: -20, tint: 0, sharpness: 60 },
+                nebula: { bright: 105, cont: 140, sat: 180, focus: 55, exposure: 15, gamma: 115, temperature: 20, tint: 10, sharpness: 30 },
+                deepsky:{ bright: 95, cont: 180, sat: 150, focus: 50, exposure: 20, gamma: 120, temperature: 0, tint: 0, sharpness: 20 }
+            };
+
+            function init() {
+                bindEvents();
+                permModal.classList.remove('hidden');
+                loadSkyData();
+                setInterval(loadSkyData, 60000);
+                updateZoomUI();
+            }
+
+            function bindEvents() {
+                allowCamBtn.addEventListener('click', startCamera);
+                
+                // ZOOM SLIDER
+                zoomSlider.addEventListener('input', (e) => {
+                    e.stopPropagation();
+                    zoom = parseFloat(zoomSlider.value);
+                    updateZoomUI();
+                });
+                ['touchstart','touchmove','touchend'].forEach(ev => {
+                    zoomSlider.addEventListener(ev, e => e.stopPropagation());
+                });
+                
+                // CONTINUOUS ZOOM
+                function startZoomHold(dir) {
+                    if (zoomHoldTimer) return;
+                    zoomHoldDir = dir;
+                    zoomInBtn.classList.toggle('pressing', dir === 1);
+                    zoomOutBtn.classList.toggle('pressing', dir === -1);
+                    applyZoomStep();
+                    zoomHoldTimer = setInterval(applyZoomStep, 30);
+                }
+                function stopZoomHold() {
+                    if (zoomHoldTimer) { clearInterval(zoomHoldTimer); zoomHoldTimer = null; }
+                    zoomHoldDir = 0;
+                    zoomInBtn.classList.remove('pressing');
+                    zoomOutBtn.classList.remove('pressing');
+                }
+                function applyZoomStep() {
+                    if (zoomHoldDir === 0) return;
+                    let step;
+                    if (zoom < 2) step = 0.02;
+                    else if (zoom < 10) step = 0.1;
+                    else if (zoom < 100) step = 1;
+                    else if (zoom < 1000) step = 10;
+                    else if (zoom < 10000) step = 100;
+                    else step = 500;
+                    zoom = Math.max(0.5, Math.min(50000, zoom + (zoomHoldDir * step)));
+                    updateZoomUI();
+                }
+                zoomInBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); startZoomHold(1); });
+                zoomOutBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); startZoomHold(-1); });
+                [zoomInBtn, zoomOutBtn].forEach(b => {
+                    b.addEventListener('pointerup', e => { e.stopPropagation(); stopZoomHold(); });
+                    b.addEventListener('pointerleave', stopZoomHold);
+                    b.addEventListener('pointercancel', stopZoomHold);
+                });
+                
+                // BASE SLIDERS
+                brightSlider.addEventListener('input', () => {
+                    brightness = parseInt(brightSlider.value);
+                    brightVal.textContent = brightness + '%';
+                });
+                contSlider.addEventListener('input', () => {
+                    contrast = parseInt(contSlider.value);
+                    contVal.textContent = contrast + '%';
+                });
+                focusSlider.addEventListener('input', () => {
+                    focus = parseInt(focusSlider.value);
+                    focusVal.textContent = focus + '%';
+                });
+                
+                // PRESETS
+                presetChips.forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        presetChips.forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        applyPreset(chip.dataset.preset);
+                    });
+                });
+                
+                // FX BUTTONS
+                fxBtn.addEventListener('click', () => {
+                    fxSheet.classList.add('open');
+                    proSheet.classList.remove('open');
+                    skySheet.classList.remove('open');
+                });
+                closeFxSheet.addEventListener('click', () => fxSheet.classList.remove('open'));
+                
+                proBtn.addEventListener('click', () => {
+                    proSheet.classList.add('open');
+                    fxSheet.classList.remove('open');
+                    skySheet.classList.remove('open');
+                });
+                closeProSheet.addEventListener('click', () => proSheet.classList.remove('open'));
+                
+                skyDataBtn.addEventListener('click', () => {
+                    skySheet.classList.toggle('open');
+                    fxSheet.classList.remove('open');
+                    proSheet.classList.remove('open');
+                    if (skySheet.classList.contains('open')) loadSkyData();
+                });
+                closeSkySheet.addEventListener('click', () => skySheet.classList.remove('open'));
+                
+                // FX CONTROLS
+                colorDots.forEach(dot => {
+                    dot.addEventListener('click', () => {
+                        colorDots.forEach(d => d.classList.remove('active'));
+                        dot.classList.add('active');
+                        activeColor = dot.dataset.color;
+                        showToast(activeColor === 'none' ? '🎨 Color Overlay: OFF' : '🎨 Color Overlay Applied');
+                    });
+                });
+                
+                opacitySlider.addEventListener('input', () => {
+                    colorOpacity = parseInt(opacitySlider.value);
+                    opacityVal.textContent = colorOpacity + '%';
+                });
+                
+                vignetteSlider.addEventListener('input', () => {
+                    vignetteAmount = parseInt(vignetteSlider.value);
+                    vignetteVal.textContent = vignetteAmount + '%';
+                });
+                
+                leakSlider.addEventListener('input', () => {
+                    leakAmount = parseInt(leakSlider.value);
+                    leakVal.textContent = leakAmount + '%';
+                });
+                
+                effectChips.forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        effectChips.forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        activeEffect = chip.dataset.effect;
+                        showToast(`🎬 Effect: ${activeEffect.toUpperCase()}`);
+                    });
+                });
+                
+                gradeChips.forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        gradeChips.forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        activeGrade = chip.dataset.grade;
+                        showToast(`🌡️ Grade: ${activeGrade.toUpperCase()}`);
+                    });
+                });
+                
+                // PRO SLIDERS
+                exposureSlider.addEventListener('input', () => {
+                    exposure = parseInt(exposureSlider.value);
+                    exposureVal.textContent = (exposure > 0 ? '+' : '') + (exposure / 50).toFixed(1);
+                });
+                gammaSlider.addEventListener('input', () => {
+                    gamma = parseInt(gammaSlider.value);
+                    gammaVal.textContent = (gamma / 100).toFixed(2);
+                });
+                tempSlider.addEventListener('input', () => {
+                    temperature = parseInt(tempSlider.value);
+                    tempVal.textContent = temperature > 0 ? `+${temperature}` : temperature;
+                });
+                tintSlider.addEventListener('input', () => {
+                    tint = parseInt(tintSlider.value);
+                    tintVal.textContent = tint;
+                });
+                sharpSlider.addEventListener('input', () => {
+                    sharpness = parseInt(sharpSlider.value);
+                    sharpVal.textContent = sharpness;
+                });
+                highSlider.addEventListener('input', () => {
+                    highlights = parseInt(highSlider.value);
+                    highVal.textContent = highlights;
+                });
+                shadowSlider.addEventListener('input', () => {
+                    shadows = parseInt(shadowSlider.value);
+                    shadowVal.textContent = shadows;
+                });
+                satSlider.addEventListener('input', () => {
+                    saturation = parseInt(satSlider.value);
+                    satVal.textContent = saturation + '%';
+                });
+                hueSlider.addEventListener('input', () => {
+                    hue = parseInt(hueSlider.value);
+                    hueVal.textContent = hue + '°';
+                });
+                grainSlider.addEventListener('input', () => {
+                    grain = parseInt(grainSlider.value);
+                    grainVal.textContent = grain;
+                });
+                
+                // ACTION BUTTONS
+                telescopeBtn.addEventListener('click', () => {
+                    isTelescopeMode = !isTelescopeMode;
+                    telescopeBtn.classList.toggle('active-btn', isTelescopeMode);
+                    showToast(isTelescopeMode ? '🔭 Auto Dark Surround: ON' : 'Dark Surround: OFF');
+                });
+                
+                surfaceBtn.addEventListener('click', () => {
+                    isSurfaceEnhance = !isSurfaceEnhance;
+                    surfaceBtn.classList.toggle('active-btn', isSurfaceEnhance);
+                    showToast(isSurfaceEnhance ? '🏔️ Surface Detail Enhancement: ON' : 'Surface Enhancement: OFF');
+                });
+                
+                falseColorBtn.addEventListener('click', () => {
+                    isFalseColor = !isFalseColor;
+                    falseColorBtn.classList.toggle('active-btn', isFalseColor);
+                    showToast(isFalseColor ? '🌈 False Color Mode: ON' : 'False Color: OFF');
+                });
+                
+                stackBtn.addEventListener('click', () => {
+                    isDeepStack = !isDeepStack;
+                    stackBtn.classList.toggle('active-btn', isDeepStack);
+                    if (isDeepStack) {
+                        stackBuffer = new Float32Array(canvas.width * canvas.height * 4);
+                        stackCount = 0;
+                        showToast('🌌 Deep Stack: ON');
+                    } else {
+                        stackBuffer = null;
+                        showToast('Deep Stack: OFF');
+                    }
+                });
+                
+                hdrBtn.addEventListener('click', () => {
+                    isHdr = !isHdr;
+                    hdrBtn.classList.toggle('active-btn', isHdr);
+                    showToast(isHdr ? '✨ HDR: ON' : 'HDR: OFF');
+                });
+                
+                gridBtn.addEventListener('click', () => {
+                    isGrid = !isGrid;
+                    gridBtn.classList.toggle('active-btn', isGrid);
+                });
+                
+                nightBtn.addEventListener('click', () => {
+                    isNight = !isNight;
+                    nightBtn.classList.toggle('active-btn', isNight);
+                    document.body.classList.toggle('night-mode', isNight);
+                    showToast(isNight ? '🔴 Night Vision: ON' : 'Night Mode: OFF');
+                });
+                
+                transparentBtn.addEventListener('click', () => {
+                    isTransparent = !isTransparent;
+                    transparentBtn.classList.toggle('active', isTransparent);
+                    document.documentElement.style.setProperty('--ui-opacity', isTransparent ? '0.3' : '1');
+                    showToast(isTransparent ? '👻 Ghost UI: ON' : 'Ghost UI: OFF');
+                });
+                
+                resetBtn.addEventListener('click', resetAll);
+                captureBtn.addEventListener('click', captureImage);
+                recordBtn.addEventListener('click', toggleRecording);
+                
+                finderBtn.addEventListener('click', () => {
+                    const showing = finderScope.style.display === 'block';
+                    finderScope.style.display = showing ? 'none' : 'block';
+                    finderBtn.classList.toggle('active', !showing);
+                });
+                
+                // PINCH ZOOM
+                let pinch = { active: false, dist: 0, zoom: 1 };
+                cameraView.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        pinch.active = true;
+                        pinch.dist = getDist(e.touches[0], e.touches[1]);
+                        pinch.zoom = zoom;
+                        pinchHint.classList.add('show');
+                        setTimeout(() => pinchHint.classList.remove('show'), 800);
+                    }
+                }, { passive: false });
+                cameraView.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2 && pinch.active) {
+                        e.preventDefault();
+                        const d = getDist(e.touches[0], e.touches[1]);
+                        const ratio = d / pinch.dist;
+                        zoom = Math.max(0.5, Math.min(50000, pinch.zoom * Math.pow(ratio, 1.5)));
+                        updateZoomUI();
+                    }
+                }, { passive: false });
+                cameraView.addEventListener('touchend', (e) => {
+                    if (e.touches.length < 2) pinch.active = false;
+                });
+                
+                let lastTap = 0;
+                cameraView.addEventListener('touchend', (e) => {
+                    if (e.touches.length === 0) {
+                        const now = Date.now();
+                        if (now - lastTap < 300) {
+                            if (zoom < 5) zoom = 10;
+                            else if (zoom < 20) zoom = 50;
+                            else if (zoom < 100) zoom = 500;
+                            else zoom = 1;
+                            updateZoomUI();
+                            showToast(`Zoom: ${zoom.toFixed(2)}x`);
+                        }
+                        lastTap = now;
+                    }
+                });
+                
+                cameraView.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    zoom = Math.max(0.5, Math.min(50000, zoom * (1 - e.deltaY * 0.005)));
+                    updateZoomUI();
+                }, { passive: false });
+                
+                function getDist(t1, t2) {
+                    return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+                }
+            }
+
+            function applyPreset(name) {
+                const p = PRESETS[name] || PRESETS.normal;
+                brightness = p.bright; contrast = p.cont; saturation = p.sat; focus = p.focus;
+                exposure = p.exposure; gamma = p.gamma; temperature = p.temperature;
+                tint = p.tint; sharpness = p.sharpness;
+                
+                brightSlider.value = brightness; brightVal.textContent = brightness + '%';
+                contSlider.value = contrast; contVal.textContent = contrast + '%';
+                focusSlider.value = focus; focusVal.textContent = focus + '%';
+                
+                // Update pro sliders too
+                satSlider.value = saturation; satVal.textContent = saturation + '%';
+                exposureSlider.value = exposure; exposureVal.textContent = (exposure > 0 ? '+' : '') + (exposure / 50).toFixed(1);
+                gammaSlider.value = gamma; gammaVal.textContent = (gamma / 100).toFixed(2);
+                tempSlider.value = temperature; tempVal.textContent = temperature > 0 ? `+${temperature}` : temperature;
+                tintSlider.value = tint; tintVal.textContent = tint;
+                sharpSlider.value = sharpness; sharpVal.textContent = sharpness;
+                
+                // Auto-enable surface enhancement for celestial presets
+                if (['moon','jupiter','saturn','mars','venus'].includes(name)) {
+                    isSurfaceEnhance = true;
+                    surfaceBtn.classList.add('active-btn');
+                }
+                
+                showToast(`✨ ${name.toUpperCase()} Preset Applied`);
+            }
+
+            function resetAll() {
+                zoom = 1; brightness = 100; contrast = 100; focus = 50;
+                exposure = 0; gamma = 100; temperature = 0; tint = 0;
+                sharpness = 0; highlights = 0; shadows = 0; saturation = 100;
+                hue = 0; grain = 0; colorOpacity = 25; vignetteAmount = 0; leakAmount = 0;
+                activeColor = 'none'; activeEffect = 'none'; activeGrade = 'none';
+                
+                isTelescopeMode = false; isDeepStack = false; isHdr = false;
+                isGrid = false; isNight = false; isTransparent = false;
+                isSurfaceEnhance = false; isFalseColor = false;
+                
+                // Reset UI
+                zoomSlider.value = 1; brightSlider.value = 100; contSlider.value = 100; focusSlider.value = 50;
+                exposureSlider.value = 0; gammaSlider.value = 100; tempSlider.value = 0; tintSlider.value = 0;
+                sharpSlider.value = 0; highSlider.value = 0; shadowSlider.value = 0; satSlider.value = 100;
+                hueSlider.value = 0; grainSlider.value = 0; opacitySlider.value = 25;
+                vignetteSlider.value = 0; leakSlider.value = 0;
+                
+                updateZoomUI();
+                brightVal.textContent = '100%'; contVal.textContent = '100%'; focusVal.textContent = '50%';
+                exposureVal.textContent = '0.0'; gammaVal.textContent = '1.00';
+                tempVal.textContent = '0'; tintVal.textContent = '0'; sharpVal.textContent = '0';
+                highVal.textContent = '0'; shadowVal.textContent = '0'; satVal.textContent = '100%';
+                hueVal.textContent = '0°'; grainVal.textContent = '0'; opacityVal.textContent = '25%';
+                vignetteVal.textContent = '0%'; leakVal.textContent = '0%';
+                
+                [telescopeBtn, stackBtn, hdrBtn, gridBtn, nightBtn, transparentBtn, surfaceBtn, falseColorBtn]
+                    .forEach(b => b.classList.remove('active-btn', 'active'));
+                document.body.classList.remove('night-mode');
+                document.documentElement.style.setProperty('--ui-opacity', '1');
+                
+                colorDots.forEach((d, i) => d.classList.toggle('active', i === 0));
+                effectChips.forEach((c, i) => c.classList.toggle('active', i === 0));
+                gradeChips.forEach((c, i) => c.classList.toggle('active', i === 0));
+                presetChips.forEach((c, i) => c.classList.toggle('active', i === 0));
+                
+                showToast('✅ All Settings Reset');
+            }
+
+            async function startCamera() {
+                permModal.classList.add('hidden');
+                loadingModal.classList.remove('hidden');
+                
+                const timeoutId = setTimeout(() => {
+                    loadingModal.classList.add('hidden');
+                    alert('Camera timeout. Please check permissions.');
+                }, 10000);
+
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { 
+                            facingMode: 'environment', 
+                            width: { ideal: 1920 }, 
+                            height: { ideal: 1080 },
+                            frameRate: { ideal: 30 }
+                        },
+                        audio: false
+                    });
+                    
+                    video.srcObject = stream;
+                    finderVideo.srcObject = stream;
+                    
+                    video.onloadedmetadata = () => {
+                        clearTimeout(timeoutId);
+                        video.play();
+                        canvas.width = window.innerWidth;
+                        canvas.height = window.innerHeight;
+                        loadingModal.classList.add('hidden');
+                        requestAnimationFrame(renderLoop);
+                        showToast('✅ 4K Sensor Ready');
+                    };
+                } catch (err) {
+                    clearTimeout(timeoutId);
+                    loadingModal.classList.add('hidden');
+                    alert('Camera Error: ' + err.message);
+                }
+            }
+
+            function renderLoop() {
+                if (video.readyState >= video.HAVE_ENOUGH_DATA) renderFrame();
+                requestAnimationFrame(renderLoop);
+            }
+
+            function renderFrame() {
+                const vw = video.videoWidth;
+                const vh = video.videoHeight;
+                if (!vw || !vh) return;
+
+                const baseCrop = 2.0;
+                const totalZoom = zoom * baseCrop;
+                const srcW = vw / totalZoom;
+                const srcH = vh / totalZoom;
+                
+                frameCounter++;
+                if (frameCounter % 20 === 0) detectObject();
+                
+                let srcX, srcY;
+                if (isTelescopeMode && objectCenter.x !== 0.5) {
+                    srcX = Math.max(0, Math.min((vw * objectCenter.x) - (srcW / 2), vw - srcW));
+                    srcY = Math.max(0, Math.min((vh * objectCenter.y) - (srcH / 2), vh - srcH));
+                } else {
+                    srcX = (vw - srcW) / 2;
+                    srcY = (vh - srcH) / 2;
+                }
+
+                const destW = canvas.width;
+                const destH = canvas.height;
+
+                // ============ BUILD COMPREHENSIVE FILTER ============
+                let cssFilter = buildCSSFilter();
+
+                ctx.clearRect(0, 0, destW, destH);
+                ctx.filter = cssFilter;
+                ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, destW, destH);
+                ctx.filter = 'none';
+
+                // Post-processing overlays (in order)
+                if (isFalseColor) applyFalseColor();
+                if (isSurfaceEnhance) applySurfaceEnhancement();
+                if (isDeepStack && stackBuffer) applyDeepStack();
+                if (isTelescopeMode && zoom > 1.5) applyAutoDarkSurround();
+                if (isHdr) applyHdrBoost();
+                if (activeColor !== 'none') applyColorOverlay();
+                if (vignetteAmount > 0) applyVignette();
+                if (leakAmount > 0) applyLightLeak();
+                if (grain > 0) applyGrain();
+                if (isGrid) drawGrid();
+
+                updateObjectBadge();
+            }
+
+            function buildCSSFilter() {
+                let f = '';
+                // Base
+                f += `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) `;
+                
+                // Exposure
+                if (exposure !== 0) {
+                    const expBright = 100 + (exposure * 0.5);
+                    f += `brightness(${expBright}%) `;
+                }
+                
+                // Gamma (approximated with brightness/contrast)
+                if (gamma !== 100) {
+                    const g = gamma / 100;
+                    f += `contrast(${Math.round(100 / g)}%) brightness(${Math.round(100 * g)}%) `;
+                }
+                
+                // Temperature (warm/cool)
+                if (temperature !== 0) {
+                    const sepia = Math.max(0, temperature / 100);
+                    const hueRot = temperature > 0 ? -10 : 15;
+                    f += `sepia(${Math.abs(sepia)}) hue-rotate(${hueRot}deg) `;
+                }
+                
+                // Tint
+                if (tint !== 0) {
+                    f += `hue-rotate(${tint * 0.3}deg) `;
+                }
+                
+                // Hue
+                if (hue !== 0) {
+                    f += `hue-rotate(${hue}deg) `;
+                }
+                
+                // Effects
+                if (activeEffect === 'invert') f += `invert(1) `;
+                if (activeEffect === 'grayscale') f += `grayscale(1) `;
+                if (activeEffect === 'sepia') f += `sepia(1) `;
+                if (activeEffect === 'blur') f += `blur(2px) `;
+                if (activeEffect === 'sharpen') f += `contrast(140%) `;
+                if (activeEffect === 'contrast') f += `contrast(130%) brightness(105%) `;
+                if (activeEffect === 'vivid') f += `saturate(180%) contrast(115%) `;
+                
+                // Color Grade
+                if (activeGrade === 'warm') f += `sepia(0.3) saturate(140%) `;
+                if (activeGrade === 'cool') f += `hue-rotate(20deg) saturate(110%) `;
+                if (activeGrade === 'sunset') f += `sepia(0.5) saturate(150%) hue-rotate(-15deg) `;
+                if (activeGrade === 'ocean') f += `hue-rotate(180deg) saturate(120%) `;
+                if (activeGrade === 'forest') f += `hue-rotate(80deg) saturate(130%) `;
+                if (activeGrade === 'noir') f += `grayscale(1) contrast(140%) `;
+                if (activeGrade === 'vintage') f += `sepia(0.6) saturate(80%) contrast(110%) `;
+                
+                // Focus
+                if (focus < 50) {
+                    f += `blur(${((50 - focus) / 50) * 10}px) `;
+                } else {
+                    const sharp = ((focus - 50) / 50) * 40;
+                    f += `contrast(${100 + sharp}%) `;
+                }
+                
+                // Sharpness
+                if (sharpness > 0) {
+                    f += `contrast(${100 + sharpness * 0.4}%) `;
+                }
+                
+                // Highlights / Shadows (approx via brightness)
+                if (highlights !== 0 || shadows !== 0) {
+                    const net = (highlights - shadows) * 0.2;
+                    f += `brightness(${100 + net}%) `;
+                }
+                
+                return f.trim();
+            }
+
+            // ============ OBJECT DETECTION ============
+            function detectObject() {
+                const w = 120;
+                const h = Math.floor(120 * (canvas.height / canvas.width));
+                detectionCanvas.width = w; detectionCanvas.height = h;
+                detectionCtx.drawImage(canvas, 0, 0, w, h);
+                
+                try {
+                    const imgData = detectionCtx.getImageData(0, 0, w, h);
+                    const data = imgData.data;
+                    
+                    let maxBright = 0, bx = 0, by = 0;
+                    let totalBright = 0, brightPixels = 0;
+                    
+                    for (let y = 0; y < h; y++) {
+                        for (let x = 0; x < w; x++) {
+                            const idx = (y * w + x) * 4;
+                            const lum = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+                            totalBright += lum;
+                            if (lum > 100) brightPixels++;
+                            if (lum > maxBright) { maxBright = lum; bx = x; by = y; }
+                        }
+                    }
+                    
+                    if (maxBright > 180) {
+                        objectCenter.x = bx / w;
+                        objectCenter.y = by / h;
+                        
+                        // Analyze shape to detect object type
+                        const brightRatio = brightPixels / (w * h);
+                        const avgBright = totalBright / (w * h);
+                        
+                        if (brightRatio > 0.1 && avgBright > 120) {
+                            detectedObject = 'moon';
+                        } else if (brightRatio > 0.02 && avgBright > 80) {
+                            detectedObject = 'planet';
+                        } else if (maxBright > 200) {
+                            detectedObject = 'star';
+                        } else {
+                            detectedObject = 'object';
+                        }
+                    } else {
+                        objectCenter = { x: 0.5, y: 0.5 };
+                        detectedObject = 'none';
+                    }
+                } catch (e) { /* ignore */ }
+            }
+
+            function updateObjectBadge() {
+                if (detectedObject === 'none' || !isTelescopeMode) {
+                    objectBadge.classList.remove('show');
+                    return;
+                }
+                
+                const names = {
+                    moon: '🌕 Moon Detected',
+                    planet: '🪐 Planet Detected',
+                    star: '⭐ Star Detected',
+                    object: '🔭 Object Locked'
+                };
+                
+                objectName.textContent = names[detectedObject] || 'Object Locked';
+                objectBadge.classList.add('show');
+            }
+
+            // ============ SURFACE ENHANCEMENT (CRATERS, BANDS) ============
+            function applySurfaceEnhancement() {
+                // Local contrast enhancement for surface detail
+                const strength = 0.4;
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                const w = canvas.width, h = canvas.height;
+                
+                // Unsharp mask approximation - enhance edges
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const idx = (y * w + x) * 4;
+                        const rightIdx = (y * w + (x+1)) * 4;
+                        const downIdx = ((y+1) * w + x) * 4;
+                        
+                        // Enhance edges only (where there's actual detail)
+                        const edgeX = Math.abs(data[idx] - data[rightIdx]);
+                        const edgeY = Math.abs(data[idx] - data[downIdx]);
+                        
+                        if (edgeX > 15 || edgeY > 15) {
+                            const boost = (edgeX + edgeY) * strength * 0.05;
+                            for (let c = 0; c < 3; c++) {
+                                const cur = data[idx + c];
+                                const nr = data[rightIdx + c];
+                                const nb = data[downIdx + c];
+                                data[idx + c] = Math.min(255, Math.max(0, cur + (cur - (nr + nb) / 2) * strength));
+                            }
+                        }
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            }
+
+            // ============ FALSE COLOR ============
+            function applyFalseColor() {
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const lum = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                    // Map luminance to rainbow false color
+                    const hue = (1 - lum / 255) * 240; // 240=blue, 0=red
+                    const [r, g, b] = hslToRgb(hue / 360, 0.9, 0.5);
+                    data[i] = r; data[i+1] = g; data[i+2] = b;
+                }
+                ctx.putImageData(imgData, 0, 0);
+            }
+
+            function hslToRgb(h, s, l) {
+                let r, g, b;
+                if (s === 0) { r = g = b = l; }
+                else {
+                    const hue2rgb = (p, q, t) => {
+                        if (t < 0) t += 1; if (t > 1) t -= 1;
+                        if (t < 1/6) return p + (q - p) * 6 * t;
+                        if (t < 1/2) return q;
+                        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                        return p;
+                    };
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    r = hue2rgb(p, q, h + 1/3);
+                    g = hue2rgb(p, q, h);
+                    b = hue2rgb(p, q, h - 1/3);
+                }
+                return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+            }
+
+            // ============ DEEP STACK ============
+            function applyDeepStack() {
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                const len = data.length;
+
+                if (stackCount === 0) {
+                    for (let i = 0; i < len; i++) stackBuffer[i] = data[i];
+                    stackCount = 1;
+                } else {
+                    const alpha = 1 / Math.min(stackCount + 1, 12);
+                    for (let i = 0; i < len; i++) {
+                        stackBuffer[i] = stackBuffer[i] * (1 - alpha) + data[i] * alpha;
+                        data[i] = stackBuffer[i];
+                    }
+                    stackCount++;
+                }
+                ctx.putImageData(imgData, 0, 0);
+            }
+
+            // ============ AUTO DARK SURROUND ============
+            function applyAutoDarkSurround() {
+                const cx = canvas.width * objectCenter.x;
+                const cy = canvas.height * objectCenter.y;
+                const maxRadius = Math.min(canvas.width, canvas.height);
+                const radius = maxRadius * (0.5 / Math.sqrt(Math.min(zoom, 50)));
+                
+                const gradient = ctx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radius * 2.0);
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(0.3, 'rgba(0,0,0,0.15)');
+                gradient.addColorStop(0.6, 'rgba(0,0,0,0.75)');
+                gradient.addColorStop(1, 'rgba(0,0,0,0.99)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // ============ HDR ============
+            function applyHdrBoost() {
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+                    if (avg < 50) {
+                        data[i] = Math.min(255, data[i] * 1.5);
+                        data[i+1] = Math.min(255, data[i+1] * 1.5);
+                        data[i+2] = Math.min(255, data[i+2] * 1.5);
+                    } else if (avg > 200) {
+                        data[i] = Math.min(255, data[i] * 0.85);
+                        data[i+1] = Math.min(255, data[i+1] * 0.85);
+                        data[i+2] = Math.min(255, data[i+2] * 0.85);
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            }
+
+            // ============ COLOR OVERLAY (Transparent Colors) ============
+            function applyColorOverlay() {
+                const match = activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
+                if (!match) return;
+                ctx.save();
+                ctx.globalCompositeOperation = 'overlay';
+                ctx.fillStyle = `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${colorOpacity / 100})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // ============ VIGNETTE ============
+            function applyVignette() {
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const radius = Math.min(canvas.width, canvas.height) * 0.7;
+                const gradient = ctx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radius);
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(1, `rgba(0,0,0,${vignetteAmount / 100})`);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // ============ LIGHT LEAK ============
+            function applyLightLeak() {
+                const opacity = leakAmount / 100;
+                const gradient = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
+                gradient.addColorStop(0, `rgba(255, 180, 100, ${opacity * 0.6})`);
+                gradient.addColorStop(0.5, `rgba(255, 100, 200, ${opacity * 0.3})`);
+                gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.save();
+                ctx.globalCompositeOperation = 'screen';
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // ============ GRAIN ============
+            function applyGrain() {
+                const intensity = grain / 100;
+                const noiseData = new ImageData(canvas.width, canvas.height);
+                const d = noiseData.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const n = (Math.random() - 0.5) * 255 * intensity;
+                    d[i] = d[i+1] = d[i+2] = Math.max(0, Math.min(255, 128 + n));
+                    d[i+3] = intensity * 30;
+                }
+                const tempC = document.createElement('canvas');
+                tempC.width = canvas.width; tempC.height = canvas.height;
+                tempC.getContext('2d').putImageData(noiseData, 0, 0);
+                ctx.save();
+                ctx.globalCompositeOperation = 'overlay';
+                ctx.globalAlpha = 0.5;
+                ctx.drawImage(tempC, 0, 0);
+                ctx.restore();
+            }
+
+            function drawGrid() {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
+                ctx.lineWidth = 1;
+                const step = 60;
+                for (let x = step; x < canvas.width; x += step) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+                }
+                for (let y = step; y < canvas.height; y += step) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+                }
+                ctx.strokeStyle = 'rgba(255, 0, 127, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2 - 25, canvas.height/2); ctx.lineTo(canvas.width/2 + 25, canvas.height/2);
+                ctx.moveTo(canvas.width/2, canvas.height/2 - 25); ctx.lineTo(canvas.width/2, canvas.height/2 + 25);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function updateZoomUI() {
+                zoomSlider.value = zoom;
+                let d;
+                if (zoom < 10) d = zoom.toFixed(2);
+                else if (zoom < 100) d = zoom.toFixed(1);
+                else if (zoom < 1000) d = Math.round(zoom).toString();
+                else if (zoom < 10000) d = (zoom/1000).toFixed(2) + 'K';
+                else d = (zoom/1000).toFixed(1) + 'K';
+                zoomValue.innerHTML = d + '<span class="zoom-unit">x</span>';
+            }
+
+            function captureImage() {
+                const a = document.createElement('a');
+                a.download = 'saqskyscoop-' + Date.now() + '.png';
+                canvas.toBlob(b => {
+                    a.href = URL.createObjectURL(b);
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                    showToast('📸 Image Captured!');
+                }, 'image/png');
+            }
+
+            function toggleRecording() {
+                if (!isRecording) {
+                    recordedChunks = [];
+                    const cStream = canvas.captureStream(30);
+                    mediaRecorder = new MediaRecorder(cStream, { 
+                        mimeType: 'video/webm;codecs=vp9', 
+                        videoBitsPerSecond: 5000000 
+                    });
+                    mediaRecorder.ondataavailable = e => { if (e.data.size) recordedChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'saqskyscoop-vid-' + Date.now() + '.webm';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    };
+                    mediaRecorder.start(1000);
+                    recordBtn.classList.add('active-btn');
+                    showToast('🔴 Recording Started');
+                } else {
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+                    recordBtn.classList.remove('active-btn');
+                    showToast('✅ Video Saved');
+                }
+                isRecording = !isRecording;
+            }
+
+            function showToast(msg) {
+                document.querySelectorAll('.toast').forEach(t => t.remove());
+                const t = document.createElement('div');
+                t.className = 'toast';
+                t.textContent = msg;
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 2500);
+            }
+
+            window.showToast = showToast;
+            init();
+        })();
+
+        // ========================
+        // 🌍 LIVE SKY DATA
+        // ========================
+        let userLat = null, userLng = null;
+
+        async function loadSkyData() {
+            if (userLat === null) {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            userLat = pos.coords.latitude;
+                            userLng = pos.coords.longitude;
+                            document.getElementById('userLat').textContent = userLat.toFixed(4);
+                            document.getElementById('userLng').textContent = userLng.toFixed(4);
+                            fetchSkyData();
+                        },
+                        () => {
+                            fetch('https://ipapi.co/json/')
+                                .then(r => r.json())
+                                .then(d => {
+                                    userLat = d.latitude; userLng = d.longitude;
+                                    document.getElementById('userLat').textContent = userLat.toFixed(4);
+                                    document.getElementById('userLng').textContent = userLng.toFixed(4);
+                                    fetchSkyData();
+                                })
+                                .catch(() => {});
+                        },
+                        { timeout: 8000 }
+                    );
+                }
+            } else { fetchSkyData(); }
+            
+            updateMoonPhase();
+            updatePlanets();
+            updateStars();
+        }
+
+        async function fetchSkyData() {
+            if (userLat === null) return;
+            
+            try {
+                const r = await fetch(`https://api.sunrise-sunset.org/json?lat=${userLat}&lng=${userLng}&formatted=0`);
+                const d = await r.json();
+                if (d.results) {
+                    const sr = new Date(d.results.sunrise);
+                    const ss = new Date(d.results.sunset);
+                    document.getElementById('sunrise').textContent = sr.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                    document.getElementById('sunset').textContent = ss.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                }
+            } catch (e) {}
+            
+            try {
+                const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLng}&current=temperature_2m,cloud_cover,relative_humidity_2m`);
+                const d = await r.json();
+                if (d.current) {
+                    document.getElementById('temperature').textContent = `${d.current.temperature_2m}°C`;
+                    document.getElementById('cloudCover').textContent = `${d.current.cloud_cover}%`;
+                    document.getElementById('humidity').textContent = `${d.current.relative_humidity_2m}%`;
+                    let q = 'Excellent';
+                    if (d.current.cloud_cover > 70) q = 'Poor';
+                    else if (d.current.cloud_cover > 40) q = 'Fair';
+                    else if (d.current.cloud_cover > 15) q = 'Good';
+                    document.getElementById('viewQuality').textContent = q;
+                }
+            } catch (e) {}
+            
+            try {
+                const r = await fetch('http://api.open-notify.org/iss-now.json');
+                const d = await r.json();
+                if (d.iss_position) {
+                    document.getElementById('issLat').textContent = parseFloat(d.iss_position.latitude).toFixed(4);
+                    document.getElementById('issLng').textContent = parseFloat(d.iss_position.longitude).toFixed(4);
+                }
+            } catch (e) {
+                document.getElementById('issLat').textContent = 'N/A';
+                document.getElementById('issLng').textContent = 'N/A';
+            }
+        }
+
+        function updateMoonPhase() {
+            const now = new Date();
+            const y = now.getFullYear(), m = now.getMonth() + 1, day = now.getDate();
+            let jd;
+            if (m <= 2) { const yy = y - 1, mm = m + 12; jd = Math.floor(365.25 * (yy + 4716)) + Math.floor(30.6001 * (mm + 1)) + day - 1524.5; }
+            else { jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day - 1524.5; }
+            const ds = jd - 2451549.5;
+            const nm = ds / 29.53058867;
+            const phase = nm - Math.floor(nm);
+            const illum = Math.round((1 - Math.cos(phase * 2 * Math.PI)) * 50);
+            let pn = '';
+            if (phase < 0.0625 || phase >= 0.9375) pn = 'New Moon';
+            else if (phase < 0.1875) pn = 'Waxing Crescent';
+            else if (phase < 0.3125) pn = 'First Quarter';
+            else if (phase < 0.4375) pn = 'Waxing Gibbous';
+            else if (phase < 0.5625) pn = 'Full Moon';
+            else if (phase < 0.6875) pn = 'Waning Gibbous';
+            else if (phase < 0.8125) pn = 'Last Quarter';
+            else pn = 'Waning Crescent';
+            document.getElementById('moonPhase').textContent = pn;
+            document.getElementById('moonIllum').textContent = illum + '%';
+        }
+
+        function updatePlanets() {
+            const mi = new Date().getMonth();
+            const planets = [
+                { name: 'Mercury', months: [0,1,2,3,10,11], mag: '-0.4' },
+                { name: 'Venus', months: [0,1,2,3,4,5,6,7,8,9,10,11], mag: '-4.6' },
+                { name: 'Mars', months: [3,4,5,6,7,8], mag: '-1.2' },
+                { name: 'Jupiter', months: [0,1,2,3,4,5,6,7,8,9,10,11], mag: '-2.5' },
+                { name: 'Saturn', months: [5,6,7,8,9,10], mag: '0.5' },
+                { name: 'Uranus', months: [8,9,10,11,0,1], mag: '5.7' },
+                { name: 'Neptune', months: [6,7,8,9,10,11], mag: '7.8' }
+            ];
+            const c = document.getElementById('planetList');
+            c.innerHTML = '';
+            planets.forEach(p => {
+                const v = p.months.includes(mi);
+                const r = document.createElement('div');
+                r.className = 'data-row';
+                r.innerHTML = `<span>${p.name} <small style="opacity:0.5">(Mag: ${p.mag})</small></span><span style="color:${v ? '#00ff64' : '#ff6464'}">${v ? '● VISIBLE' : '○ HIDDEN'}</span>`;
+                c.appendChild(r);
+            });
+        }
+
+        function updateStars() {
+            const stars = [
+                { name: 'Sirius', mag: '-1.46' }, { name: 'Canopus', mag: '-0.74' },
+                { name: 'Arcturus', mag: '-0.05' }, { name: 'Vega', mag: '0.03' },
+                { name: 'Capella', mag: '0.08' }, { name: 'Rigel', mag: '0.13' },
+                { name: 'Procyon', mag: '0.34' }, { name: 'Betelgeuse', mag: '0.50' },
+                { name: 'Altair', mag: '0.77' }, { name: 'Aldebaran', mag: '0.85' }
+            ];
+            const c = document.getElementById('starList');
+            c.innerHTML = '';
+            stars.forEach(s => {
+                const r = document.createElement('div');
+                r.className = 'data-row';
+                r.innerHTML = `<span>${s.name}</span><span>${s.mag}</span>`;
+                c.appendChild(r);
+            });
+        }
+
+    </script>
+</body>
+</html>
