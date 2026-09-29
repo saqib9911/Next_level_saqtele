@@ -7,6 +7,23 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Saqskyscoop Pro – Industrial 4K Telescope</title>
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Saqskyscoop Pro – Cinematic 4K Telescope">
+    <meta property="og:description" content="Industrial telescope with real-time surface enhancement, Deep Stack astrophotography, and cinematic optics.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://saqib9911.github.io/Final-optimiEd-telescoop/">
+    <meta property="og:image" content="https://saqib9911.github.io/Final-optimiEd-telescoop/og-preview.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:site_name" content="Saqskyscoop">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Saqskyscoop Pro – Cinematic 4K Telescope">
+    <meta name="twitter:description" content="Industrial telescope with cinematic optics.">
+    <meta name="twitter:image" content="https://saqib9911.github.io/Final-optimiEd-telescoop/og-preview.png">
+    
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -15,7 +32,6 @@
             --neon-pink: #ff007f;
             --neon-purple: #8a2be2;
             --neon-gold: #ffb700;
-            --neon-green: #00ff88;
             --glass-bg: rgba(10, 20, 40, 0.55);
             --glass-border: rgba(0, 240, 255, 0.25);
             --text-main: #ffffff;
@@ -43,6 +59,65 @@
         }
         #video { display: none; }
         #canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* 🎬 Cinematic Bars Overlay */
+        .cinematic-bars {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 5; pointer-events: none; display: none;
+        }
+        .cinematic-bars.show { display: block; }
+        .cinematic-bars::before, .cinematic-bars::after {
+            content: ''; position: absolute; left: 0; width: 100%;
+            background: #000; height: 8%;
+        }
+        .cinematic-bars::before { top: 0; }
+        .cinematic-bars::after { bottom: 0; }
+
+        /* 🎬 Anamorphic Lens Flare */
+        .lens-flare {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 4; pointer-events: none; display: none;
+            background: 
+                radial-gradient(ellipse 60% 3% at 50% 45%, rgba(0, 180, 255, 0.5) 0%, transparent 70%),
+                radial-gradient(ellipse 30% 2% at 50% 45%, rgba(0, 240, 255, 0.7) 0%, transparent 60%),
+                radial-gradient(circle 15% at 60% 40%, rgba(0, 100, 255, 0.15) 0%, transparent 70%);
+            mix-blend-mode: screen;
+            animation: flare-flicker 3s infinite;
+        }
+        .lens-flare.show { display: block; }
+        @keyframes flare-flicker {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        /* 🎬 Chromatic Aberration edges */
+        .chroma-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 3; pointer-events: none; display: none;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9);
+        }
+        .chroma-overlay.show { display: block; }
+
+        /* ⭐ Star Burst */
+        .star-burst {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 400px; height: 400px; z-index: 4; pointer-events: none;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg, rgba(0, 240, 255, 0.4) 5deg, transparent 10deg,
+                transparent 80deg, rgba(0, 240, 255, 0.3) 85deg, transparent 90deg,
+                transparent 170deg, rgba(0, 240, 255, 0.4) 175deg, transparent 180deg,
+                transparent 260deg, rgba(0, 240, 255, 0.3) 265deg, transparent 270deg,
+                transparent 350deg, rgba(0, 240, 255, 0.4) 355deg, transparent 360deg
+            );
+            opacity: 0; transition: opacity 0.3s;
+            mix-blend-mode: screen;
+        }
+        .star-burst.show { opacity: 0.6; animation: burst-pulse 2s infinite; }
+        @keyframes burst-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.8; }
+        }
 
         body.night-mode #canvas {
             filter: sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.7) contrast(1.2);
@@ -101,7 +176,6 @@
             color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0,240,255,0.5); 
         }
 
-        /* ====================== AUTO OBJECT BADGE ====================== */
         .object-badge {
             position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 240, 255, 0.15); backdrop-filter: blur(15px);
@@ -129,7 +203,6 @@
         .control-panel::-webkit-scrollbar { width: 3px; }
         .control-panel::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 2px; }
 
-        /* ZOOM BAR */
         .zoom-container {
             display: flex; align-items: center; justify-content: space-between;
             background: rgba(0, 10, 30, 0.8); border-radius: 30px;
@@ -165,7 +238,6 @@
         }
         .zoom-value .zoom-unit { font-size: 0.65rem; opacity: 0.8; }
 
-        /* PRESET ROW */
         .preset-row {
             display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto;
             scrollbar-width: none; padding-bottom: 2px;
@@ -190,7 +262,6 @@
             color: var(--neon-cyan); text-shadow: 0 0 12px var(--neon-cyan); transform: scale(1.15);
         }
 
-        /* QUICK SLIDERS */
         .sliders-grid {
             display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;
         }
@@ -205,7 +276,6 @@
         }
         .slider-label span:last-child { color: var(--neon-cyan); font-weight: bold; }
 
-        /* ACTION GRID */
         .action-grid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
         }
@@ -225,11 +295,10 @@
         }
         .action-btn.active-btn i { color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); }
         .action-btn:active { transform: scale(0.94); }
-
         .action-btn.fx-btn i { color: var(--neon-pink); }
         .action-btn.pro-btn i { color: var(--neon-gold); }
+        .action-btn.cinema-btn i { color: #ffb700; }
 
-        /* RIPPLE */
         .ripple {
             position: absolute; border-radius: 50%;
             background: rgba(0, 240, 255, 0.5);
@@ -271,7 +340,6 @@
             font-size: 1.4rem; cursor: pointer; padding: 5px 10px;
         }
 
-        /* FX GRID */
         .fx-section-title {
             font-size: 0.6rem; color: var(--neon-pink); text-transform: uppercase;
             letter-spacing: 1.5px; margin-bottom: 10px; margin-top: 12px;
@@ -327,7 +395,6 @@
             min-width: 45px; text-align: right; font-family: monospace;
         }
 
-        /* PRO CONTROLS GRID */
         .pro-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
         }
@@ -342,7 +409,6 @@
         }
         .pro-label span:last-child { color: var(--neon-cyan); font-weight: bold; font-family: monospace; }
 
-        /* SKY DATA */
         .data-section {
             margin-bottom: 12px;
             background: rgba(0, 10, 30, 0.5);
@@ -363,7 +429,6 @@
         .data-row span:first-child { color: var(--text-dim); }
         .data-row span:last-child { color: var(--neon-cyan); font-weight: 700; font-family: monospace; }
 
-        /* MODALS */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(5,5,16,0.95);
             display: flex; justify-content: center; align-items: center;
@@ -384,7 +449,6 @@
         }
         .btn-primary:active { transform: scale(0.95); }
 
-        /* TOAST */
         .toast {
             position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 240, 255, 0.95); color: #000;
@@ -406,6 +470,39 @@
         }
         .pinch-hint.show { opacity: 1; }
 
+        /* ====================== INSTALL BANNER POPUP ====================== */
+        .install-popup {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(200%);
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.95), rgba(138, 43, 226, 0.95));
+            border-radius: 20px; padding: 15px 20px;
+            z-index: 3000; box-shadow: 0 10px 40px rgba(0, 240, 255, 0.5);
+            display: flex; align-items: center; gap: 15px;
+            max-width: 92vw; width: 400px;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .install-popup.show { transform: translateX(-50%) translateY(0); }
+        .install-icon {
+            width: 50px; height: 50px; border-radius: 12px;
+            background: rgba(0,0,0,0.3); display: flex; align-items: center;
+            justify-content: center; font-size: 1.5rem; color: #fff;
+            flex-shrink: 0;
+        }
+        .install-text { flex: 1; color: #fff; }
+        .install-text h4 { font-size: 0.85rem; font-weight: 800; margin-bottom: 3px; letter-spacing: 0.5px; }
+        .install-text p { font-size: 0.65rem; opacity: 0.9; line-height: 1.3; }
+        .install-actions { display: flex; flex-direction: column; gap: 5px; }
+        .install-btn-yes {
+            background: #fff; color: #050510; border: none;
+            padding: 6px 14px; border-radius: 15px; font-weight: 800;
+            font-size: 0.65rem; cursor: pointer; white-space: nowrap;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .install-btn-no {
+            background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.3);
+            padding: 5px 14px; border-radius: 15px; font-weight: 600;
+            font-size: 0.6rem; cursor: pointer; white-space: nowrap;
+        }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -416,6 +513,12 @@
     <div class="camera-view" id="cameraView">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
+        
+        <!-- 🎬 Cinematic Effects Layers -->
+        <div class="lens-flare" id="lensFlare"></div>
+        <div class="chroma-overlay" id="chromaOverlay"></div>
+        <div class="cinematic-bars" id="cinematicBars"></div>
+        <div class="star-burst" id="starBurst"></div>
         
         <div class="finder-scope" id="finderScope">
             <video id="finderVideo" autoplay playsinline muted></video>
@@ -448,17 +551,15 @@
 
         <div class="control-panel">
             
-            <!-- ZOOM -->
             <div class="zoom-container">
                 <button class="zoom-btn" id="zoomOutBtn">−</button>
                 <div class="zoom-slider-wrap">
-                    <input type="range" id="zoomSlider" min="0.5" max="50000" value="1" step="0.01">
+                    <input type="range" id="zoomSlider" min="1" max="50000" value="1" step="0.01">
                 </div>
                 <button class="zoom-btn" id="zoomInBtn">+</button>
                 <div class="zoom-value" id="zoomValue">1.00<span class="zoom-unit">x</span></div>
             </div>
 
-            <!-- PRESETS -->
             <div class="preset-row">
                 <button class="preset-chip active" data-preset="normal"><i class="fas fa-eye"></i><span>Normal</span></button>
                 <button class="preset-chip" data-preset="moon"><i class="fas fa-moon"></i><span>Moon</span></button>
@@ -470,7 +571,6 @@
                 <button class="preset-chip" data-preset="deepsky"><i class="fas fa-galaxy"></i><span>Deep</span></button>
             </div>
 
-            <!-- QUICK SLIDERS -->
             <div class="sliders-grid">
                 <div class="slider-item">
                     <div class="slider-label"><span>Bright</span><span id="brightVal">100%</span></div>
@@ -486,11 +586,10 @@
                 </div>
             </div>
 
-            <!-- ACTIONS -->
             <div class="action-grid">
                 <button class="action-btn" id="telescopeBtn"><i class="fas fa-eye"></i><span>Dark</span></button>
                 <button class="action-btn" id="stackBtn"><i class="fas fa-layer-group"></i><span>Stack</span></button>
-                <button class="action-btn" id="hdrBtn"><i class="fas fa-magic"></i><span>HDR</span></button>
+                <button class="action-btn cinema-btn" id="cinemaBtn"><i class="fas fa-film"></i><span>Cinema</span></button>
                 <button class="action-btn" id="gridBtn"><i class="fas fa-th"></i><span>Grid</span></button>
                 <button class="action-btn fx-btn" id="fxBtn"><i class="fas fa-palette"></i><span>FX</span></button>
                 <button class="action-btn pro-btn" id="proBtn"><i class="fas fa-sliders-h"></i><span>Pro</span></button>
@@ -504,7 +603,7 @@
         </div>
     </div>
 
-    <!-- ====================== FX SHEET (Transparent Colors Menu) ====================== -->
+    <!-- FX SHEET -->
     <div class="sheet" id="fxSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title">
@@ -569,7 +668,7 @@
         </div>
     </div>
 
-    <!-- ====================== PRO SHEET ====================== -->
+    <!-- PRO SHEET -->
     <div class="sheet" id="proSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title">
@@ -621,7 +720,7 @@
         </div>
     </div>
 
-    <!-- ====================== SKY DATA SHEET ====================== -->
+    <!-- SKY DATA SHEET -->
     <div class="sheet" id="skySheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title">
@@ -663,8 +762,23 @@
 
         <div class="data-section">
             <h3><i class="fas fa-map-marker-alt"></i> Your Location</h3>
-            <div class="data-row"><span>Latitude</span><span id="userLat">--</span></div>
-            <div class="data-row"><span>Longitude</span><span id="userLng">--</span></div>
+            <div class="data-row"><span>Latitude</span><div id="userLat">--</div></div>
+            <div class="data-row"><span>Longitude</span><div id="userLng">--</div></div>
+        </div>
+    </div>
+
+    <!-- 📲 INSTALL POPUP BANNER -->
+    <div class="install-popup" id="installPopup">
+        <div class="install-icon">
+            <i class="fas fa-satellite-dish"></i>
+        </div>
+        <div class="install-text">
+            <h4>Install Saqskyscoop</h4>
+            <p>Add to your home screen for full-screen telescope experience</p>
+        </div>
+        <div class="install-actions">
+            <button class="install-btn-yes" id="installYes">Install</button>
+            <button class="install-btn-no" id="installNo">Later</button>
         </div>
     </div>
 
@@ -672,7 +786,7 @@
         <div class="modal-card">
             <i class="fas fa-satellite-dish" style="font-size: 3.5rem; color: var(--neon-cyan); margin-bottom: 25px;"></i>
             <h2>SAQSKYSCOOP PRO</h2>
-            <p>Industrial-grade telescope with real-time surface enhancement, auto object detection, transparent color overlays, and pro controls.</p>
+            <p>Cinematic 4K telescope with real-time surface enhancement, transparent color overlays, and pro controls.</p>
             <button class="btn-primary" id="allowCamBtn">Initialize Camera</button>
         </div>
     </div>
@@ -686,6 +800,69 @@
     </div>
 
     <script>
+        // ========================
+        // 📲 INSTALL BANNER LOGIC
+        // ========================
+        (function() {
+            const popup = document.getElementById('installPopup');
+            const yesBtn = document.getElementById('installYes');
+            const noBtn = document.getElementById('installNo');
+            let deferredPrompt = null;
+
+            // Check if already dismissed or already installed
+            const dismissed = localStorage.getItem('saqskyscoop-install-dismissed');
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            
+            // Listen for the beforeinstallprompt event (Android Chrome)
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                // Show popup after 2 seconds if not dismissed
+                if (!dismissed && !isStandalone) {
+                    setTimeout(() => popup.classList.add('show'), 2000);
+                }
+            });
+
+            // If already installed or dismissed, don't show
+            if (dismissed || isStandalone) {
+                popup.style.display = 'none';
+            } else {
+                // Fallback: Show popup even if beforeinstallprompt doesn't fire (iOS, Firefox)
+                setTimeout(() => {
+                    if (!dismissed && !isStandalone) {
+                        popup.classList.add('show');
+                    }
+                }, 3000);
+            }
+
+            yesBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const result = await deferredPrompt.userChoice;
+                    console.log('Install:', result.outcome);
+                    deferredPrompt = null;
+                } else {
+                    // iOS / Firefox manual instructions
+                    const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+                    alert(isIOS 
+                        ? '📱 iOS: Tap the Share button → "Add to Home Screen"' 
+                        : '📱 Open browser menu (⋮) → "Install app" or "Add to Home screen"');
+                }
+                popup.classList.remove('show');
+                localStorage.setItem('saqskyscoop-install-dismissed', 'true');
+            });
+
+            noBtn.addEventListener('click', () => {
+                popup.classList.remove('show');
+                localStorage.setItem('saqskyscoop-install-dismissed', 'true');
+            });
+
+            window.addEventListener('appinstalled', () => {
+                popup.classList.remove('show');
+                localStorage.setItem('saqskyscoop-install-dismissed', 'true');
+            });
+        })();
+
         // ========================
         // 🌌 PARTICLES
         // ========================
@@ -707,9 +884,7 @@
                 this.speedX = isShower ? (Math.random() - 0.5) * 10 : (Math.random() - 0.5) * 0.3;
                 this.speedY = isShower ? (Math.random() - 0.5) * 10 : (Math.random() - 0.5) * 0.3;
                 this.life = isShower ? 80 : Infinity;
-                this.color = isShower 
-                    ? `hsl(${Math.random() * 60 + 180}, 100%, 70%)` 
-                    : `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1})`;
+                this.color = isShower ? `hsl(${Math.random() * 60 + 180}, 100%, 70%)` : `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1})`;
             }
             update() {
                 this.x += this.speedX; this.y += this.speedY;
@@ -761,7 +936,7 @@
         });
 
         // ========================
-        // 🔭 MAIN TELESCOPE ENGINE
+        // 🔭 TELESCOPE ENGINE
         // ========================
         (() => {
             const video = document.getElementById('video');
@@ -772,6 +947,11 @@
             const pinchHint = document.getElementById('pinchHint');
             const objectBadge = document.getElementById('objectBadge');
             const objectName = document.getElementById('objectName');
+            
+            const lensFlare = document.getElementById('lensFlare');
+            const chromaOverlay = document.getElementById('chromaOverlay');
+            const cinematicBars = document.getElementById('cinematicBars');
+            const starBurst = document.getElementById('starBurst');
             
             const zoomSlider = document.getElementById('zoomSlider');
             const zoomValue = document.getElementById('zoomValue');
@@ -789,6 +969,7 @@
             const stackBtn = document.getElementById('stackBtn');
             const hdrBtn = document.getElementById('hdrBtn');
             const gridBtn = document.getElementById('gridBtn');
+            const cinemaBtn = document.getElementById('cinemaBtn');
             const nightBtn = document.getElementById('nightBtn');
             const resetBtn = document.getElementById('resetBtn');
             const captureBtn = document.getElementById('captureBtn');
@@ -814,7 +995,6 @@
             const effectChips = document.querySelectorAll('.effect-chip[data-effect]');
             const gradeChips = document.querySelectorAll('.effect-chip[data-grade]');
             
-            // FX sliders
             const opacitySlider = document.getElementById('opacitySlider');
             const opacityVal = document.getElementById('opacityVal');
             const vignetteSlider = document.getElementById('vignetteSlider');
@@ -822,7 +1002,6 @@
             const leakSlider = document.getElementById('leakSlider');
             const leakVal = document.getElementById('leakVal');
             
-            // PRO sliders
             const exposureSlider = document.getElementById('exposureSlider');
             const exposureVal = document.getElementById('exposureVal');
             const gammaSlider = document.getElementById('gammaSlider');
@@ -848,27 +1027,20 @@
             const loadingModal = document.getElementById('loadingModal');
             const allowCamBtn = document.getElementById('allowCamBtn');
 
-            // ============ STATE ============
+            // STATE
             let stream = null;
             let zoom = 1;
-            
-            // Base
             let brightness = 100, contrast = 100, focus = 50;
-            
-            // FX
             let activeColor = 'none';
             let colorOpacity = 25;
             let activeEffect = 'none';
             let activeGrade = 'none';
             let vignetteAmount = 0;
             let leakAmount = 0;
-            
-            // PRO
             let exposure = 0, gamma = 100, temperature = 0, tint = 0;
             let sharpness = 0, highlights = 0, shadows = 0;
             let saturation = 100, hue = 0, grain = 0;
             
-            // Modes
             let isTelescopeMode = false;
             let isDeepStack = false;
             let isHdr = false;
@@ -878,28 +1050,23 @@
             let isTransparent = false;
             let isSurfaceEnhance = false;
             let isFalseColor = false;
+            let isCinema = false;
             
             let mediaRecorder = null;
             let recordedChunks = [];
             let stackBuffer = null;
             let stackCount = 0;
             
-            // Object detection
             let objectCenter = { x: 0.5, y: 0.5 };
             let frameCounter = 0;
             let detectedObject = 'none';
             const detectionCanvas = document.createElement('canvas');
             const detectionCtx = detectionCanvas.getContext('2d', { willReadFrequently: true });
             
-            // Continuous zoom
             let zoomHoldTimer = null;
             let zoomHoldDir = 0;
-            
-            // Grain canvas for noise
-            const grainCanvas = document.createElement('canvas');
-            grainCanvas.width = 128; grainCanvas.height = 128;
 
-            // ============ PRESETS ============
+            // PRESETS
             const PRESETS = {
                 normal: { bright: 100, cont: 100, sat: 100, focus: 50, exposure: 0, gamma: 100, temperature: 0, tint: 0, sharpness: 0 },
                 moon:   { bright: 118, cont: 155, sat: 80, focus: 82, exposure: 5, gamma: 105, temperature: -15, tint: 0, sharpness: 60 },
@@ -922,7 +1089,6 @@
             function bindEvents() {
                 allowCamBtn.addEventListener('click', startCamera);
                 
-                // ZOOM SLIDER
                 zoomSlider.addEventListener('input', (e) => {
                     e.stopPropagation();
                     zoom = parseFloat(zoomSlider.value);
@@ -932,7 +1098,6 @@
                     zoomSlider.addEventListener(ev, e => e.stopPropagation());
                 });
                 
-                // CONTINUOUS ZOOM
                 function startZoomHold(dir) {
                     if (zoomHoldTimer) return;
                     zoomHoldDir = dir;
@@ -956,7 +1121,7 @@
                     else if (zoom < 1000) step = 10;
                     else if (zoom < 10000) step = 100;
                     else step = 500;
-                    zoom = Math.max(0.5, Math.min(50000, zoom + (zoomHoldDir * step)));
+                    zoom = Math.max(1, Math.min(50000, zoom + (zoomHoldDir * step)));
                     updateZoomUI();
                 }
                 zoomInBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); startZoomHold(1); });
@@ -967,7 +1132,6 @@
                     b.addEventListener('pointercancel', stopZoomHold);
                 });
                 
-                // BASE SLIDERS
                 brightSlider.addEventListener('input', () => {
                     brightness = parseInt(brightSlider.value);
                     brightVal.textContent = brightness + '%';
@@ -981,7 +1145,6 @@
                     focusVal.textContent = focus + '%';
                 });
                 
-                // PRESETS
                 presetChips.forEach(chip => {
                     chip.addEventListener('click', () => {
                         presetChips.forEach(c => c.classList.remove('active'));
@@ -990,7 +1153,6 @@
                     });
                 });
                 
-                // FX BUTTONS
                 fxBtn.addEventListener('click', () => {
                     fxSheet.classList.add('open');
                     proSheet.classList.remove('open');
@@ -1013,13 +1175,12 @@
                 });
                 closeSkySheet.addEventListener('click', () => skySheet.classList.remove('open'));
                 
-                // FX CONTROLS
                 colorDots.forEach(dot => {
                     dot.addEventListener('click', () => {
                         colorDots.forEach(d => d.classList.remove('active'));
                         dot.classList.add('active');
                         activeColor = dot.dataset.color;
-                        showToast(activeColor === 'none' ? '🎨 Color Overlay: OFF' : '🎨 Color Overlay Applied');
+                        showToast(activeColor === 'none' ? '🎨 Color OFF' : '🎨 Color ON');
                     });
                 });
                 
@@ -1027,12 +1188,10 @@
                     colorOpacity = parseInt(opacitySlider.value);
                     opacityVal.textContent = colorOpacity + '%';
                 });
-                
                 vignetteSlider.addEventListener('input', () => {
                     vignetteAmount = parseInt(vignetteSlider.value);
                     vignetteVal.textContent = vignetteAmount + '%';
                 });
-                
                 leakSlider.addEventListener('input', () => {
                     leakAmount = parseInt(leakSlider.value);
                     leakVal.textContent = leakAmount + '%';
@@ -1043,7 +1202,7 @@
                         effectChips.forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
                         activeEffect = chip.dataset.effect;
-                        showToast(`🎬 Effect: ${activeEffect.toUpperCase()}`);
+                        showToast(`🎬 ${activeEffect.toUpperCase()}`);
                     });
                 });
                 
@@ -1052,11 +1211,10 @@
                         gradeChips.forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
                         activeGrade = chip.dataset.grade;
-                        showToast(`🌡️ Grade: ${activeGrade.toUpperCase()}`);
+                        showToast(`🌡️ ${activeGrade.toUpperCase()}`);
                     });
                 });
                 
-                // PRO SLIDERS
                 exposureSlider.addEventListener('input', () => {
                     exposure = parseInt(exposureSlider.value);
                     exposureVal.textContent = (exposure > 0 ? '+' : '') + (exposure / 50).toFixed(1);
@@ -1098,23 +1256,32 @@
                     grainVal.textContent = grain;
                 });
                 
-                // ACTION BUTTONS
                 telescopeBtn.addEventListener('click', () => {
                     isTelescopeMode = !isTelescopeMode;
                     telescopeBtn.classList.toggle('active-btn', isTelescopeMode);
-                    showToast(isTelescopeMode ? '🔭 Auto Dark Surround: ON' : 'Dark Surround: OFF');
+                    showToast(isTelescopeMode ? '🔭 Dark Surround: ON' : 'Dark Surround: OFF');
                 });
                 
                 surfaceBtn.addEventListener('click', () => {
                     isSurfaceEnhance = !isSurfaceEnhance;
                     surfaceBtn.classList.toggle('active-btn', isSurfaceEnhance);
-                    showToast(isSurfaceEnhance ? '🏔️ Surface Detail Enhancement: ON' : 'Surface Enhancement: OFF');
+                    showToast(isSurfaceEnhance ? '🏔️ Surface Detail: ON' : 'Surface: OFF');
                 });
                 
                 falseColorBtn.addEventListener('click', () => {
                     isFalseColor = !isFalseColor;
                     falseColorBtn.classList.toggle('active-btn', isFalseColor);
-                    showToast(isFalseColor ? '🌈 False Color Mode: ON' : 'False Color: OFF');
+                    showToast(isFalseColor ? '🌈 False Color: ON' : 'False Color: OFF');
+                });
+                
+                cinemaBtn.addEventListener('click', () => {
+                    isCinema = !isCinema;
+                    cinemaBtn.classList.toggle('active-btn', isCinema);
+                    lensFlare.classList.toggle('show', isCinema);
+                    chromaOverlay.classList.toggle('show', isCinema);
+                    cinematicBars.classList.toggle('show', isCinema);
+                    starBurst.classList.toggle('show', isCinema);
+                    showToast(isCinema ? '🎬 Cinema Mode: ON' : 'Cinema Mode: OFF');
                 });
                 
                 stackBtn.addEventListener('click', () => {
@@ -1145,7 +1312,7 @@
                     isNight = !isNight;
                     nightBtn.classList.toggle('active-btn', isNight);
                     document.body.classList.toggle('night-mode', isNight);
-                    showToast(isNight ? '🔴 Night Vision: ON' : 'Night Mode: OFF');
+                    showToast(isNight ? '🔴 Night Vision: ON' : 'Night: OFF');
                 });
                 
                 transparentBtn.addEventListener('click', () => {
@@ -1171,7 +1338,7 @@
                     if (e.touches.length === 2) {
                         e.preventDefault();
                         pinch.active = true;
-                        pinch.dist = getDist(e.touches[0], e.touches[1]);
+                        pinch.dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                         pinch.zoom = zoom;
                         pinchHint.classList.add('show');
                         setTimeout(() => pinchHint.classList.remove('show'), 800);
@@ -1180,9 +1347,8 @@
                 cameraView.addEventListener('touchmove', (e) => {
                     if (e.touches.length === 2 && pinch.active) {
                         e.preventDefault();
-                        const d = getDist(e.touches[0], e.touches[1]);
-                        const ratio = d / pinch.dist;
-                        zoom = Math.max(0.5, Math.min(50000, pinch.zoom * Math.pow(ratio, 1.5)));
+                        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        zoom = Math.max(1, Math.min(50000, pinch.zoom * Math.pow(d / pinch.dist, 1.5)));
                         updateZoomUI();
                     }
                 }, { passive: false });
@@ -1208,13 +1374,9 @@
                 
                 cameraView.addEventListener('wheel', (e) => {
                     e.preventDefault();
-                    zoom = Math.max(0.5, Math.min(50000, zoom * (1 - e.deltaY * 0.005)));
+                    zoom = Math.max(1, Math.min(50000, zoom * (1 - e.deltaY * 0.005)));
                     updateZoomUI();
                 }, { passive: false });
-                
-                function getDist(t1, t2) {
-                    return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-                }
             }
 
             function applyPreset(name) {
@@ -1226,8 +1388,6 @@
                 brightSlider.value = brightness; brightVal.textContent = brightness + '%';
                 contSlider.value = contrast; contVal.textContent = contrast + '%';
                 focusSlider.value = focus; focusVal.textContent = focus + '%';
-                
-                // Update pro sliders too
                 satSlider.value = saturation; satVal.textContent = saturation + '%';
                 exposureSlider.value = exposure; exposureVal.textContent = (exposure > 0 ? '+' : '') + (exposure / 50).toFixed(1);
                 gammaSlider.value = gamma; gammaVal.textContent = (gamma / 100).toFixed(2);
@@ -1235,13 +1395,12 @@
                 tintSlider.value = tint; tintVal.textContent = tint;
                 sharpSlider.value = sharpness; sharpVal.textContent = sharpness;
                 
-                // Auto-enable surface enhancement for celestial presets
                 if (['moon','jupiter','saturn','mars','venus'].includes(name)) {
                     isSurfaceEnhance = true;
                     surfaceBtn.classList.add('active-btn');
                 }
                 
-                showToast(`✨ ${name.toUpperCase()} Preset Applied`);
+                showToast(`✨ ${name.toUpperCase()} Applied`);
             }
 
             function resetAll() {
@@ -1253,9 +1412,8 @@
                 
                 isTelescopeMode = false; isDeepStack = false; isHdr = false;
                 isGrid = false; isNight = false; isTransparent = false;
-                isSurfaceEnhance = false; isFalseColor = false;
+                isSurfaceEnhance = false; isFalseColor = false; isCinema = false;
                 
-                // Reset UI
                 zoomSlider.value = 1; brightSlider.value = 100; contSlider.value = 100; focusSlider.value = 50;
                 exposureSlider.value = 0; gammaSlider.value = 100; tempSlider.value = 0; tintSlider.value = 0;
                 sharpSlider.value = 0; highSlider.value = 0; shadowSlider.value = 0; satSlider.value = 100;
@@ -1270,17 +1428,21 @@
                 hueVal.textContent = '0°'; grainVal.textContent = '0'; opacityVal.textContent = '25%';
                 vignetteVal.textContent = '0%'; leakVal.textContent = '0%';
                 
-                [telescopeBtn, stackBtn, hdrBtn, gridBtn, nightBtn, transparentBtn, surfaceBtn, falseColorBtn]
+                [telescopeBtn, stackBtn, hdrBtn, gridBtn, nightBtn, transparentBtn, surfaceBtn, falseColorBtn, cinemaBtn]
                     .forEach(b => b.classList.remove('active-btn', 'active'));
                 document.body.classList.remove('night-mode');
                 document.documentElement.style.setProperty('--ui-opacity', '1');
+                lensFlare.classList.remove('show');
+                chromaOverlay.classList.remove('show');
+                cinematicBars.classList.remove('show');
+                starBurst.classList.remove('show');
                 
                 colorDots.forEach((d, i) => d.classList.toggle('active', i === 0));
                 effectChips.forEach((c, i) => c.classList.toggle('active', i === 0));
                 gradeChips.forEach((c, i) => c.classList.toggle('active', i === 0));
                 presetChips.forEach((c, i) => c.classList.toggle('active', i === 0));
                 
-                showToast('✅ All Settings Reset');
+                showToast('✅ Reset');
             }
 
             async function startCamera() {
@@ -1289,7 +1451,7 @@
                 
                 const timeoutId = setTimeout(() => {
                     loadingModal.classList.add('hidden');
-                    alert('Camera timeout. Please check permissions.');
+                    alert('Camera timeout. Check permissions.');
                 }, 10000);
 
                 try {
@@ -1332,7 +1494,8 @@
                 const vh = video.videoHeight;
                 if (!vw || !vh) return;
 
-                const baseCrop = 2.0;
+                // 🎯 baseCrop = 4.0 → 1x = aapki aankh ka view (4x pehle jaisa)
+                const baseCrop = 4.0;
                 const totalZoom = zoom * baseCrop;
                 const srcW = vw / totalZoom;
                 const srcH = vh / totalZoom;
@@ -1352,7 +1515,6 @@
                 const destW = canvas.width;
                 const destH = canvas.height;
 
-                // ============ BUILD COMPREHENSIVE FILTER ============
                 let cssFilter = buildCSSFilter();
 
                 ctx.clearRect(0, 0, destW, destH);
@@ -1360,7 +1522,6 @@
                 ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, destW, destH);
                 ctx.filter = 'none';
 
-                // Post-processing overlays (in order)
                 if (isFalseColor) applyFalseColor();
                 if (isSurfaceEnhance) applySurfaceEnhancement();
                 if (isDeepStack && stackBuffer) applyDeepStack();
@@ -1370,46 +1531,27 @@
                 if (vignetteAmount > 0) applyVignette();
                 if (leakAmount > 0) applyLightLeak();
                 if (grain > 0) applyGrain();
+                if (isCinema) applyChromaticAberration();
                 if (isGrid) drawGrid();
 
                 updateObjectBadge();
             }
 
             function buildCSSFilter() {
-                let f = '';
-                // Base
-                f += `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) `;
+                let f = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) `;
                 
-                // Exposure
-                if (exposure !== 0) {
-                    const expBright = 100 + (exposure * 0.5);
-                    f += `brightness(${expBright}%) `;
-                }
-                
-                // Gamma (approximated with brightness/contrast)
+                if (exposure !== 0) f += `brightness(${100 + exposure * 0.5}%) `;
                 if (gamma !== 100) {
                     const g = gamma / 100;
                     f += `contrast(${Math.round(100 / g)}%) brightness(${Math.round(100 * g)}%) `;
                 }
-                
-                // Temperature (warm/cool)
                 if (temperature !== 0) {
                     const sepia = Math.max(0, temperature / 100);
-                    const hueRot = temperature > 0 ? -10 : 15;
-                    f += `sepia(${Math.abs(sepia)}) hue-rotate(${hueRot}deg) `;
+                    f += `sepia(${Math.abs(sepia)}) hue-rotate(${temperature > 0 ? -10 : 15}deg) `;
                 }
+                if (tint !== 0) f += `hue-rotate(${tint * 0.3}deg) `;
+                if (hue !== 0) f += `hue-rotate(${hue}deg) `;
                 
-                // Tint
-                if (tint !== 0) {
-                    f += `hue-rotate(${tint * 0.3}deg) `;
-                }
-                
-                // Hue
-                if (hue !== 0) {
-                    f += `hue-rotate(${hue}deg) `;
-                }
-                
-                // Effects
                 if (activeEffect === 'invert') f += `invert(1) `;
                 if (activeEffect === 'grayscale') f += `grayscale(1) `;
                 if (activeEffect === 'sepia') f += `sepia(1) `;
@@ -1418,7 +1560,6 @@
                 if (activeEffect === 'contrast') f += `contrast(130%) brightness(105%) `;
                 if (activeEffect === 'vivid') f += `saturate(180%) contrast(115%) `;
                 
-                // Color Grade
                 if (activeGrade === 'warm') f += `sepia(0.3) saturate(140%) `;
                 if (activeGrade === 'cool') f += `hue-rotate(20deg) saturate(110%) `;
                 if (activeGrade === 'sunset') f += `sepia(0.5) saturate(150%) hue-rotate(-15deg) `;
@@ -1427,74 +1568,46 @@
                 if (activeGrade === 'noir') f += `grayscale(1) contrast(140%) `;
                 if (activeGrade === 'vintage') f += `sepia(0.6) saturate(80%) contrast(110%) `;
                 
-                // Focus
-                if (focus < 50) {
-                    f += `blur(${((50 - focus) / 50) * 10}px) `;
-                } else {
-                    const sharp = ((focus - 50) / 50) * 40;
-                    f += `contrast(${100 + sharp}%) `;
-                }
+                if (focus < 50) f += `blur(${((50 - focus) / 50) * 10}px) `;
+                else f += `contrast(${100 + ((focus - 50) / 50) * 40}%) `;
                 
-                // Sharpness
-                if (sharpness > 0) {
-                    f += `contrast(${100 + sharpness * 0.4}%) `;
-                }
-                
-                // Highlights / Shadows (approx via brightness)
-                if (highlights !== 0 || shadows !== 0) {
-                    const net = (highlights - shadows) * 0.2;
-                    f += `brightness(${100 + net}%) `;
-                }
+                if (sharpness > 0) f += `contrast(${100 + sharpness * 0.4}%) `;
+                if (highlights !== 0 || shadows !== 0) f += `brightness(${100 + (highlights - shadows) * 0.2}%) `;
                 
                 return f.trim();
             }
 
-            // ============ OBJECT DETECTION ============
             function detectObject() {
                 const w = 120;
                 const h = Math.floor(120 * (canvas.height / canvas.width));
                 detectionCanvas.width = w; detectionCanvas.height = h;
                 detectionCtx.drawImage(canvas, 0, 0, w, h);
-                
                 try {
-                    const imgData = detectionCtx.getImageData(0, 0, w, h);
-                    const data = imgData.data;
-                    
-                    let maxBright = 0, bx = 0, by = 0;
-                    let totalBright = 0, brightPixels = 0;
-                    
+                    const d = detectionCtx.getImageData(0, 0, w, h).data;
+                    let maxB = 0, bx = 0, by = 0, totalB = 0, bright = 0;
                     for (let y = 0; y < h; y++) {
                         for (let x = 0; x < w; x++) {
-                            const idx = (y * w + x) * 4;
-                            const lum = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
-                            totalBright += lum;
-                            if (lum > 100) brightPixels++;
-                            if (lum > maxBright) { maxBright = lum; bx = x; by = y; }
+                            const i = (y * w + x) * 4;
+                            const l = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+                            totalB += l;
+                            if (l > 100) bright++;
+                            if (l > maxB) { maxB = l; bx = x; by = y; }
                         }
                     }
-                    
-                    if (maxBright > 180) {
+                    if (maxB > 180) {
                         objectCenter.x = bx / w;
                         objectCenter.y = by / h;
-                        
-                        // Analyze shape to detect object type
-                        const brightRatio = brightPixels / (w * h);
-                        const avgBright = totalBright / (w * h);
-                        
-                        if (brightRatio > 0.1 && avgBright > 120) {
-                            detectedObject = 'moon';
-                        } else if (brightRatio > 0.02 && avgBright > 80) {
-                            detectedObject = 'planet';
-                        } else if (maxBright > 200) {
-                            detectedObject = 'star';
-                        } else {
-                            detectedObject = 'object';
-                        }
+                        const ratio = bright / (w * h);
+                        const avg = totalB / (w * h);
+                        if (ratio > 0.1 && avg > 120) detectedObject = 'moon';
+                        else if (ratio > 0.02 && avg > 80) detectedObject = 'planet';
+                        else if (maxB > 200) detectedObject = 'star';
+                        else detectedObject = 'object';
                     } else {
                         objectCenter = { x: 0.5, y: 0.5 };
                         detectedObject = 'none';
                     }
-                } catch (e) { /* ignore */ }
+                } catch (e) {}
             }
 
             function updateObjectBadge() {
@@ -1502,43 +1615,33 @@
                     objectBadge.classList.remove('show');
                     return;
                 }
-                
                 const names = {
                     moon: '🌕 Moon Detected',
                     planet: '🪐 Planet Detected',
                     star: '⭐ Star Detected',
                     object: '🔭 Object Locked'
                 };
-                
-                objectName.textContent = names[detectedObject] || 'Object Locked';
+                objectName.textContent = names[detectedObject] || 'Locked';
                 objectBadge.classList.add('show');
             }
 
-            // ============ SURFACE ENHANCEMENT (CRATERS, BANDS) ============
             function applySurfaceEnhancement() {
-                // Local contrast enhancement for surface detail
                 const strength = 0.4;
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imgData.data;
                 const w = canvas.width, h = canvas.height;
-                
-                // Unsharp mask approximation - enhance edges
                 for (let y = 1; y < h - 1; y++) {
                     for (let x = 1; x < w - 1; x++) {
                         const idx = (y * w + x) * 4;
-                        const rightIdx = (y * w + (x+1)) * 4;
-                        const downIdx = ((y+1) * w + x) * 4;
-                        
-                        // Enhance edges only (where there's actual detail)
-                        const edgeX = Math.abs(data[idx] - data[rightIdx]);
-                        const edgeY = Math.abs(data[idx] - data[downIdx]);
-                        
+                        const rIdx = (y * w + (x+1)) * 4;
+                        const dIdx = ((y+1) * w + x) * 4;
+                        const edgeX = Math.abs(data[idx] - data[rIdx]);
+                        const edgeY = Math.abs(data[idx] - data[dIdx]);
                         if (edgeX > 15 || edgeY > 15) {
-                            const boost = (edgeX + edgeY) * strength * 0.05;
                             for (let c = 0; c < 3; c++) {
                                 const cur = data[idx + c];
-                                const nr = data[rightIdx + c];
-                                const nb = data[downIdx + c];
+                                const nr = data[rIdx + c];
+                                const nb = data[dIdx + c];
                                 data[idx + c] = Math.min(255, Math.max(0, cur + (cur - (nr + nb) / 2) * strength));
                             }
                         }
@@ -1547,15 +1650,13 @@
                 ctx.putImageData(imgData, 0, 0);
             }
 
-            // ============ FALSE COLOR ============
             function applyFalseColor() {
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imgData.data;
                 for (let i = 0; i < data.length; i += 4) {
                     const lum = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-                    // Map luminance to rainbow false color
-                    const hue = (1 - lum / 255) * 240; // 240=blue, 0=red
-                    const [r, g, b] = hslToRgb(hue / 360, 0.9, 0.5);
+                    const h = (1 - lum / 255) * 240;
+                    const [r, g, b] = hslToRgb(h / 360, 0.9, 0.5);
                     data[i] = r; data[i+1] = g; data[i+2] = b;
                 }
                 ctx.putImageData(imgData, 0, 0);
@@ -1581,12 +1682,10 @@
                 return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
             }
 
-            // ============ DEEP STACK ============
             function applyDeepStack() {
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imgData.data;
                 const len = data.length;
-
                 if (stackCount === 0) {
                     for (let i = 0; i < len; i++) stackBuffer[i] = data[i];
                     stackCount = 1;
@@ -1601,80 +1700,65 @@
                 ctx.putImageData(imgData, 0, 0);
             }
 
-            // ============ AUTO DARK SURROUND ============
             function applyAutoDarkSurround() {
                 const cx = canvas.width * objectCenter.x;
                 const cy = canvas.height * objectCenter.y;
-                const maxRadius = Math.min(canvas.width, canvas.height);
-                const radius = maxRadius * (0.5 / Math.sqrt(Math.min(zoom, 50)));
-                
-                const gradient = ctx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radius * 2.0);
+                const maxR = Math.min(canvas.width, canvas.height);
+                const r = maxR * (0.5 / Math.sqrt(Math.min(zoom, 50)));
+                const gradient = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 2.0);
                 gradient.addColorStop(0, 'rgba(0,0,0,0)');
                 gradient.addColorStop(0.3, 'rgba(0,0,0,0.15)');
                 gradient.addColorStop(0.6, 'rgba(0,0,0,0.75)');
                 gradient.addColorStop(1, 'rgba(0,0,0,0.99)');
-                
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // ============ HDR ============
             function applyHdrBoost() {
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imgData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-                    if (avg < 50) {
-                        data[i] = Math.min(255, data[i] * 1.5);
-                        data[i+1] = Math.min(255, data[i+1] * 1.5);
-                        data[i+2] = Math.min(255, data[i+2] * 1.5);
-                    } else if (avg > 200) {
-                        data[i] = Math.min(255, data[i] * 0.85);
-                        data[i+1] = Math.min(255, data[i+1] * 0.85);
-                        data[i+2] = Math.min(255, data[i+2] * 0.85);
-                    }
+                const d = imgData.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const avg = (d[i] + d[i+1] + d[i+2]) / 3;
+                    if (avg < 50) { d[i] = Math.min(255, d[i] * 1.5); d[i+1] = Math.min(255, d[i+1] * 1.5); d[i+2] = Math.min(255, d[i+2] * 1.5); }
+                    else if (avg > 200) { d[i] *= 0.85; d[i+1] *= 0.85; d[i+2] *= 0.85; }
                 }
                 ctx.putImageData(imgData, 0, 0);
             }
 
-            // ============ COLOR OVERLAY (Transparent Colors) ============
             function applyColorOverlay() {
-                const match = activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
-                if (!match) return;
+                const m = activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
+                if (!m) return;
                 ctx.save();
                 ctx.globalCompositeOperation = 'overlay';
-                ctx.fillStyle = `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${colorOpacity / 100})`;
+                ctx.fillStyle = `rgba(${m[1]}, ${m[2]}, ${m[3]}, ${colorOpacity / 100})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.restore();
             }
 
-            // ============ VIGNETTE ============
             function applyVignette() {
                 const cx = canvas.width / 2;
                 const cy = canvas.height / 2;
-                const radius = Math.min(canvas.width, canvas.height) * 0.7;
-                const gradient = ctx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radius);
-                gradient.addColorStop(0, 'rgba(0,0,0,0)');
-                gradient.addColorStop(1, `rgba(0,0,0,${vignetteAmount / 100})`);
-                ctx.fillStyle = gradient;
+                const r = Math.min(canvas.width, canvas.height) * 0.7;
+                const g = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r);
+                g.addColorStop(0, 'rgba(0,0,0,0)');
+                g.addColorStop(1, `rgba(0,0,0,${vignetteAmount / 100})`);
+                ctx.fillStyle = g;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // ============ LIGHT LEAK ============
             function applyLightLeak() {
-                const opacity = leakAmount / 100;
-                const gradient = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
-                gradient.addColorStop(0, `rgba(255, 180, 100, ${opacity * 0.6})`);
-                gradient.addColorStop(0.5, `rgba(255, 100, 200, ${opacity * 0.3})`);
-                gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                const o = leakAmount / 100;
+                const g = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
+                g.addColorStop(0, `rgba(255, 180, 100, ${o * 0.6})`);
+                g.addColorStop(0.5, `rgba(255, 100, 200, ${o * 0.3})`);
+                g.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.save();
                 ctx.globalCompositeOperation = 'screen';
-                ctx.fillStyle = gradient;
+                ctx.fillStyle = g;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.restore();
             }
 
-            // ============ GRAIN ============
             function applyGrain() {
                 const intensity = grain / 100;
                 const noiseData = new ImageData(canvas.width, canvas.height);
@@ -1694,17 +1778,27 @@
                 ctx.restore();
             }
 
+            function applyChromaticAberration() {
+                // Simulated through edge tinting - subtle effect
+                ctx.save();
+                ctx.globalCompositeOperation = 'screen';
+                ctx.globalAlpha = 0.08;
+                // Red tint edges
+                const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.width*0.3, canvas.width/2, canvas.height/2, canvas.width*0.7);
+                grad.addColorStop(0, 'rgba(255,0,0,0)');
+                grad.addColorStop(1, 'rgba(255,0,0,0.4)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
             function drawGrid() {
                 ctx.save();
                 ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
                 ctx.lineWidth = 1;
                 const step = 60;
-                for (let x = step; x < canvas.width; x += step) {
-                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-                }
-                for (let y = step; y < canvas.height; y += step) {
-                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-                }
+                for (let x = step; x < canvas.width; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+                for (let y = step; y < canvas.height; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
                 ctx.strokeStyle = 'rgba(255, 0, 127, 0.6)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
@@ -1732,7 +1826,7 @@
                     a.href = URL.createObjectURL(b);
                     a.click();
                     URL.revokeObjectURL(a.href);
-                    showToast('📸 Image Captured!');
+                    showToast('📸 Captured!');
                 }, 'image/png');
             }
 
@@ -1740,10 +1834,7 @@
                 if (!isRecording) {
                     recordedChunks = [];
                     const cStream = canvas.captureStream(30);
-                    mediaRecorder = new MediaRecorder(cStream, { 
-                        mimeType: 'video/webm;codecs=vp9', 
-                        videoBitsPerSecond: 5000000 
-                    });
+                    mediaRecorder = new MediaRecorder(cStream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 5000000 });
                     mediaRecorder.ondataavailable = e => { if (e.data.size) recordedChunks.push(e.data); };
                     mediaRecorder.onstop = () => {
                         const blob = new Blob(recordedChunks, { type: 'video/webm' });
@@ -1756,11 +1847,11 @@
                     };
                     mediaRecorder.start(1000);
                     recordBtn.classList.add('active-btn');
-                    showToast('🔴 Recording Started');
+                    showToast('🔴 Recording');
                 } else {
                     if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
                     recordBtn.classList.remove('active-btn');
-                    showToast('✅ Video Saved');
+                    showToast('✅ Saved');
                 }
                 isRecording = !isRecording;
             }
@@ -1779,7 +1870,7 @@
         })();
 
         // ========================
-        // 🌍 LIVE SKY DATA
+        // 🌍 SKY DATA
         // ========================
         let userLat = null, userLng = null;
 
@@ -1795,21 +1886,17 @@
                             fetchSkyData();
                         },
                         () => {
-                            fetch('https://ipapi.co/json/')
-                                .then(r => r.json())
-                                .then(d => {
-                                    userLat = d.latitude; userLng = d.longitude;
-                                    document.getElementById('userLat').textContent = userLat.toFixed(4);
-                                    document.getElementById('userLng').textContent = userLng.toFixed(4);
-                                    fetchSkyData();
-                                })
-                                .catch(() => {});
+                            fetch('https://ipapi.co/json/').then(r => r.json()).then(d => {
+                                userLat = d.latitude; userLng = d.longitude;
+                                document.getElementById('userLat').textContent = userLat.toFixed(4);
+                                document.getElementById('userLng').textContent = userLng.toFixed(4);
+                                fetchSkyData();
+                            }).catch(() => {});
                         },
                         { timeout: 8000 }
                     );
                 }
             } else { fetchSkyData(); }
-            
             updateMoonPhase();
             updatePlanets();
             updateStars();
@@ -1817,18 +1904,14 @@
 
         async function fetchSkyData() {
             if (userLat === null) return;
-            
             try {
                 const r = await fetch(`https://api.sunrise-sunset.org/json?lat=${userLat}&lng=${userLng}&formatted=0`);
                 const d = await r.json();
                 if (d.results) {
-                    const sr = new Date(d.results.sunrise);
-                    const ss = new Date(d.results.sunset);
-                    document.getElementById('sunrise').textContent = sr.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-                    document.getElementById('sunset').textContent = ss.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                    document.getElementById('sunrise').textContent = new Date(d.results.sunrise).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                    document.getElementById('sunset').textContent = new Date(d.results.sunset).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
                 }
             } catch (e) {}
-            
             try {
                 const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLng}&current=temperature_2m,cloud_cover,relative_humidity_2m`);
                 const d = await r.json();
@@ -1843,7 +1926,6 @@
                     document.getElementById('viewQuality').textContent = q;
                 }
             } catch (e) {}
-            
             try {
                 const r = await fetch('http://api.open-notify.org/iss-now.json');
                 const d = await r.json();
@@ -1919,7 +2001,6 @@
                 c.appendChild(r);
             });
         }
-
     </script>
 </body>
 </html>
