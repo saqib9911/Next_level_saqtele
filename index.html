@@ -345,7 +345,7 @@
         <div class="modal-card">
             <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:25px"></i>
             <h2>SAQSKYSCOOP ULTRA</h2>
-            <p>Hybrid 4K telescope with Safe Lock (auto-save settings), auto-detection, surface details, HDR, Stack, and cinematic optics.</p>
+            <p>Hybrid 4K telescope with auto-detection, surface details, HDR, Stack, and cinematic optics.</p>
             <button class="btn-primary" id="allowCamBtn">Initialize Camera</button>
         </div>
     </div>
@@ -464,11 +464,8 @@
         let exposure=0,gamma=100,temperature=0,tint=0,sharpness=0,highlights=0,shadows=0,saturation=100;
         let surfaceStrength=50,highlightRecovery=0,purpleNoiseFix=0;
         let isTelescopeMode=false,isGrid=false,isNight=false,isRecording=false,isTransparent=false;
-        let isSurfaceEnhance=false,isFalseColor=false,isQualityMode=false,isZebra=false,isHistogram=false;
+        let isSurfaceEnhance=false,isFalseColor=false,isQualityMode=false,isZebra=false,isExposureLocked=false,isHistogram=false;
         let isStack=false,isHdr=false,isCinema=false;
-        // ✅ SAFE LOCK state
-        let isExposureLocked=false;
-        let savedExposureSettings=null;
         
         let mediaRecorder=null;let recordedChunks=[];
         let stackBuffer=null;let stackCount=0;
@@ -539,85 +536,20 @@
             
             telescopeBtn.addEventListener('click',()=>{isTelescopeMode=!isTelescopeMode;telescopeBtn.classList.toggle('active-btn',isTelescopeMode);showToast(isTelescopeMode?'🔭 Telescope: ON':'Telescope: OFF')});
             
-            // ✅ SAFE LOCK — Auto-save + Auto-revert + No conflict
+            // ✅ LOCK BUTTON — Simple toggle (jaisa original code mein tha)
             lockBtn.addEventListener('click',async()=>{
-                const track=stream&&stream.getVideoTracks()[0];
-                
-                if(!isExposureLocked){
-                    // ⚡ LOCKING - Save current settings and apply manual with same values
-                    try{
-                        if(track){
-                            const caps=track.getCapabilities?track.getCapabilities():{};
-                            const cur=track.getSettings?track.getSettings():{};
-                            
-                            // Save current exposure settings
-                            savedExposureSettings={
-                                exposureTime:cur.exposureTime,
-                                iso:cur.iso,
-                                exposureCompensation:cur.exposureCompensation,
-                                colorTemperature:cur.colorTemperature
-                            };
-                            
-                            if(caps.exposureMode&&caps.exposureMode.includes('manual')){
-                                const adv={exposureMode:'manual'};
-                                // Apply SAME exposureTime (not default)
-                                if(caps.exposureTime&&cur.exposureTime!==undefined){
-                                    const min=caps.exposureTime.min||100;
-                                    const max=caps.exposureTime.max||10000;
-                                    adv.exposureTime=Math.max(min,Math.min(max,cur.exposureTime));
-                                }
-                                // Apply SAME ISO
-                                if(caps.iso&&cur.iso!==undefined){
-                                    const min=caps.iso.min||100;
-                                    const max=caps.iso.max||3200;
-                                    adv.iso=Math.max(min,Math.min(max,cur.iso));
-                                }
-                                // Apply SAME exposureCompensation
-                                if(caps.exposureCompensation&&cur.exposureCompensation!==undefined){
-                                    adv.exposureCompensation=cur.exposureCompensation;
-                                }
-                                await track.applyConstraints({advanced:[adv]});
-                            }
+                isExposureLocked=!isExposureLocked;
+                lockBtn.classList.toggle('locked',isExposureLocked);
+                try{
+                    const track=stream&&stream.getVideoTracks()[0];
+                    if(track){
+                        const caps=track.getCapabilities?track.getCapabilities():{};
+                        if(caps.exposureMode){
+                            await track.applyConstraints({advanced:[{exposureMode:isExposureLocked?'manual':'continuous'}]});
                         }
-                    }catch(e){console.log('Safe Lock apply error:',e)}
-                    
-                    isExposureLocked=true;
-                    lockBtn.classList.add('locked');
-                    showToast('🔒 Safe Lock: ON — Settings Saved');
-                    
-                    // ⚡ Auto-revert if video goes dark within 1 second
-                    setTimeout(async()=>{
-                        if(!isExposureLocked)return;
-                        if(!track)return;
-                        try{
-                            const bw=40,bh=30;
-                            detectionCanvas.width=bw;detectionCanvas.height=bh;
-                            detectionCtx.drawImage(video,0,0,bw,bh);
-                            const sd=detectionCtx.getImageData(0,0,bw,bh).data;
-                            let sum=0;
-                            for(let i=0;i<sd.length;i+=4)sum+=(sd[i]+sd[i+1]+sd[i+2])/3;
-                            const avg=sum/(bw*bh);
-                            if(avg<15){
-                                // Video went dark — auto revert
-                                try{await track.applyConstraints({advanced:[{exposureMode:'continuous'}]})}catch(e){}
-                                isExposureLocked=false;
-                                lockBtn.classList.remove('locked');
-                                showToast('⚠️ Auto-unlock: Exposure safe');
-                            }
-                        }catch(e){}
-                    },1000);
-                }else{
-                    // ⚡ UNLOCKING — Restore
-                    try{
-                        if(track){
-                            await track.applyConstraints({advanced:[{exposureMode:'continuous'}]});
-                        }
-                    }catch(e){console.log('Unlock error:',e)}
-                    savedExposureSettings=null;
-                    isExposureLocked=false;
-                    lockBtn.classList.remove('locked');
-                    showToast('🔓 Auto Exposure Restored');
-                }
+                    }
+                }catch(e){}
+                showToast(isExposureLocked?'🔒 Exposure Locked':'🔓 Auto Exposure');
             });
             
             surfaceBtn.addEventListener('click',()=>{isSurfaceEnhance=!isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',isSurfaceEnhance);setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'Surface Enhancement');showToast(isSurfaceEnhance?'🏔️ Surface: ON':'Surface: OFF')});
@@ -692,12 +624,12 @@
         
         function resetAll(){
             closeAllSheets();
-            // Reset Safe Lock first
+            // Reset lock
             if(isExposureLocked&&stream){
                 const track=stream.getVideoTracks()[0];
                 if(track)track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});
             }
-            isExposureLocked=false;savedExposureSettings=null;
+            isExposureLocked=false;
             
             zoom=1;brightness=100;contrast=100;focus=50;
             exposure=0;gamma=100;temperature=0;tint=0;sharpness=0;highlights=0;shadows=0;saturation=100;
