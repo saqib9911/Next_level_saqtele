@@ -6,24 +6,14 @@
     <meta name="theme-color" content="#050510">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Saqskyscoop Pro – Industrial 4K Telescope</title>
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="Saqskyscoop Pro – Cinematic 4K Telescope">
-    <meta property="og:description" content="Industrial telescope with real-time surface enhancement, Deep Stack astrophotography, and cinematic optics.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://saqib9911.github.io/Final-optimiEd-telescoop/">
+    <title>Saqskyscoop Ultra – Hybrid 4K Telescope</title>
+    <meta property="og:title" content="Saqskyscoop Ultra – Hybrid 4K Telescope">
+    <meta property="og:description" content="Auto-detects Moon & Planets. Hybrid Quality Mode. Zero Lag.">
     <meta property="og:image" content="https://saqib9911.github.io/Final-optimiEd-telescoop/og-preview.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:site_name" content="Saqskyscoop">
-    
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Saqskyscoop Pro – Cinematic 4K Telescope">
-    <meta name="twitter:description" content="Industrial telescope with cinematic optics.">
     <meta name="twitter:image" content="https://saqib9911.github.io/Final-optimiEd-telescoop/og-preview.png">
-    
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -32,97 +22,64 @@
             --neon-pink: #ff007f;
             --neon-purple: #8a2be2;
             --neon-gold: #ffb700;
+            --neon-green: #00ff88;
             --glass-bg: rgba(10, 20, 40, 0.55);
             --glass-border: rgba(0, 240, 255, 0.25);
             --text-main: #ffffff;
             --text-dim: #88aaff;
-            --ui-opacity: 1;
         }
-
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
-        
         body {
             background: #000; color: var(--text-main);
             font-family: 'Segoe UI', -apple-system, sans-serif;
             overflow: hidden; height: 100vh; width: 100vw;
             position: fixed; touch-action: none;
         }
-
+        body.ghost-mode .ui-overlay { opacity: 0.22 !important; }
+        body.ghost-mode .ui-overlay:active { opacity: 0.85 !important; }
         #particleCanvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none; opacity: 0.6;
+            z-index: 0; pointer-events: none; opacity: 0.5;
         }
-
         .camera-view {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 1; overflow: hidden; background: #000; touch-action: none;
         }
         #video { display: none; }
-        #canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-        /* === LENS EFFECTS === */
+        #canvas {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            will-change: filter; transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        body.night-mode #canvas {
+            filter: sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.7) !important;
+        }
+        /* LENS OVERLAYS */
         .lens-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 5; pointer-events: none; display: none;
         }
         .lens-overlay.show { display: block; }
-
-        /* Anamorphic */
         .lens-anamorphic {
-            background: 
-                radial-gradient(ellipse 70% 2% at 50% 45%, rgba(0, 180, 255, 0.7) 0%, transparent 70%),
-                radial-gradient(ellipse 30% 1.5% at 50% 45%, rgba(0, 240, 255, 0.9) 0%, transparent 60%);
+            background:
+                radial-gradient(ellipse 70% 2% at 50% 45%, rgba(0, 180, 255, 0.6) 0%, transparent 70%),
+                radial-gradient(ellipse 30% 1.5% at 50% 45%, rgba(0, 240, 255, 0.8) 0%, transparent 60%);
             mix-blend-mode: screen;
-            animation: flare-flicker 3s infinite;
         }
-        @keyframes flare-flicker { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
-
-        /* Vintage */
         .lens-vintage {
-            background: radial-gradient(circle, transparent 40%, rgba(120, 60, 0, 0.5) 100%);
-            box-shadow: inset 0 0 120px rgba(80, 30, 0, 0.8);
+            background: radial-gradient(circle, transparent 40%, rgba(120, 60, 0, 0.45) 100%);
+            box-shadow: inset 0 0 120px rgba(80, 30, 0, 0.7);
         }
-
-        /* Fisheye */
-        .lens-fisheye {
-            background: radial-gradient(circle at 50% 50%, transparent 50%, rgba(0,0,0,0.9) 100%);
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
-        }
-
-        /* Telephoto */
-        .lens-telephoto {
-            background: linear-gradient(180deg, rgba(0, 30, 80, 0.3) 0%, transparent 30%, transparent 70%, rgba(0, 30, 80, 0.3) 100%);
-        }
-
-        /* Macro */
-        .lens-macro {
-            background: 
-                radial-gradient(circle at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%),
-                radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.15) 30%, transparent 50%);
-        }
-
-        /* Portrait Bokeh */
+        .lens-fisheye { background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(0,0,0,0.85) 100%); }
+        .lens-telephoto { background: linear-gradient(180deg, rgba(0, 30, 80, 0.25) 0%, transparent 30%, transparent 70%, rgba(0, 30, 80, 0.25) 100%); }
+        .lens-macro { background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(0,0,0,0.55) 100%); }
         .lens-portrait {
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(255, 200, 100, 0.15), transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(100, 200, 255, 0.15), transparent 40%),
-                radial-gradient(circle at 70% 20%, rgba(255, 100, 200, 0.1), transparent 35%);
+            background:
+                radial-gradient(circle at 20% 30%, rgba(255, 200, 100, 0.12), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(100, 200, 255, 0.12), transparent 40%);
         }
-
-        /* Night Vision */
-        .lens-nightvision {
-            background: linear-gradient(rgba(0, 255, 0, 0.15), rgba(0, 255, 0, 0.15));
-            mix-blend-mode: multiply;
-            box-shadow: inset 0 0 100px rgba(0, 100, 0, 0.4);
-        }
-
-        /* Infrared */
-        .lens-infrared {
-            background: linear-gradient(rgba(255, 0, 0, 0.15), rgba(255, 0, 0, 0.15));
-            mix-blend-mode: multiply;
-        }
-
-        /* Cinema Bars */
+        .lens-nightvision { background: rgba(0, 255, 0, 0.12); box-shadow: inset 0 0 100px rgba(0, 100, 0, 0.3); }
+        .lens-infrared { background: rgba(255, 0, 0, 0.12); }
         .cinema-bars {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 5; pointer-events: none; display: none;
@@ -134,17 +91,11 @@
         }
         .cinema-bars::before { top: 0; }
         .cinema-bars::after { bottom: 0; }
-
-        body.night-mode #canvas {
-            filter: sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.7) contrast(1.2);
-        }
-
-        /* === FINDER SCOPE === */
         .finder-scope {
             position: absolute; top: 20px; right: 20px;
             width: 100px; height: 100px; border-radius: 50%;
             border: 2px solid var(--neon-cyan);
-            box-shadow: 0 0 20px var(--neon-cyan), inset 0 0 20px rgba(0,240,255,0.4);
+            box-shadow: 0 0 20px var(--neon-cyan);
             overflow: hidden; z-index: 10; display: none; background: #000;
         }
         .finder-scope video { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
@@ -152,17 +103,13 @@
             content: ''; position: absolute; top: 50%; left: 50%;
             width: 12px; height: 12px; border: 1.5px solid var(--neon-pink);
             transform: translate(-50%, -50%); border-radius: 50%;
-            box-shadow: 0 0 8px var(--neon-pink);
         }
-
-        /* === UI OVERLAY === */
         .ui-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 100; pointer-events: none;
             display: flex; flex-direction: column; justify-content: space-between;
-            opacity: var(--ui-opacity); transition: opacity 0.3s;
+            transition: opacity 0.3s;
         }
-
         .top-hud {
             display: flex; justify-content: space-between; align-items: flex-start;
             padding: 15px 20px; pointer-events: auto; gap: 10px;
@@ -172,43 +119,52 @@
             border: 1px solid var(--glass-border); border-radius: 12px;
             padding: 8px 15px; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
             color: var(--neon-cyan); display: flex; align-items: center; gap: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            transition: all 0.3s;
         }
-        .hud-badge i { color: var(--neon-pink); animation: pulse-glow 2s infinite; }
-        @keyframes pulse-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        
-        .top-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .hud-badge i { color: var(--neon-pink); }
+        .hud-badge.quality-mode {
+            background: linear-gradient(135deg, rgba(255, 183, 0, 0.3), rgba(255, 0, 127, 0.3));
+            border-color: var(--neon-gold); color: var(--neon-gold);
+        }
+        .hud-badge.quality-mode i { color: var(--neon-gold); }
+        .top-buttons { display: flex; gap: 8px; }
         .icon-btn {
             width: 42px; height: 42px; border-radius: 50%;
             background: var(--glass-bg); backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border); color: var(--text-main);
             display: flex; justify-content: center; align-items: center;
-            font-size: 1rem; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            font-size: 1rem; cursor: pointer; transition: 0.2s;
         }
         .icon-btn:active { transform: scale(0.9); }
-        .icon-btn.active { 
-            background: rgba(0, 240, 255, 0.3); border-color: var(--neon-cyan); 
-            color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0,240,255,0.5); 
+        .icon-btn.active {
+            background: rgba(0, 240, 255, 0.3); border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
         }
-
         .object-badge {
             position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 240, 255, 0.15); backdrop-filter: blur(15px);
-            border: 1px solid var(--neon-cyan); border-radius: 20px;
-            padding: 6px 16px; font-size: 0.7rem; font-weight: 700;
-            color: var(--neon-cyan); display: none; align-items: center; gap: 8px;
-            z-index: 50; animation: pulse-badge 1.5s infinite;
-            text-transform: uppercase; letter-spacing: 1px;
-            box-shadow: 0 0 20px rgba(0,240,255,0.4);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.25), rgba(0, 240, 255, 0.25));
+            backdrop-filter: blur(15px);
+            border: 1.5px solid var(--neon-green); border-radius: 20px;
+            padding: 8px 18px; font-size: 0.75rem; font-weight: 800;
+            color: var(--neon-green); display: none; align-items: center; gap: 8px;
+            z-index: 50; text-transform: uppercase; letter-spacing: 1.5px;
+            box-shadow: 0 0 30px rgba(0,255,136,0.5);
+            animation: badge-pulse 1.2s infinite;
         }
         .object-badge.show { display: flex; }
-        @keyframes pulse-badge { 
-            0%, 100% { box-shadow: 0 0 20px rgba(0,240,255,0.4); } 
-            50% { box-shadow: 0 0 30px rgba(0,240,255,0.7); } 
+        @keyframes badge-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(0,255,136,0.4); }
+            50% { box-shadow: 0 0 40px rgba(0,255,136,0.9); }
         }
-
-        /* === CONTROL PANEL === */
+        .quality-badge {
+            position: absolute; top: 120px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 183, 0, 0.2);
+            border: 1px solid var(--neon-gold); border-radius: 15px;
+            padding: 4px 12px; font-size: 0.6rem; font-weight: 700;
+            color: var(--neon-gold); display: none; align-items: center; gap: 6px;
+            z-index: 50; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .quality-badge.show { display: flex; }
         .control-panel {
             background: linear-gradient(0deg, rgba(5,5,16,0.98) 0%, rgba(5,5,16,0.75) 70%, transparent 100%);
             padding: 12px 12px 22px; pointer-events: auto;
@@ -218,42 +174,37 @@
         }
         .control-panel::-webkit-scrollbar { width: 3px; }
         .control-panel::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 2px; }
-
         .zoom-container {
             display: flex; align-items: center; justify-content: space-between;
             background: rgba(0, 10, 30, 0.8); border-radius: 30px;
             padding: 5px 8px; margin-bottom: 10px;
             border: 1px solid rgba(0, 240, 255, 0.25);
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
         }
         .zoom-btn {
             width: 40px; height: 40px; border-radius: 50%; border: none;
             background: rgba(0, 240, 255, 0.12); color: var(--neon-cyan);
             font-size: 1.3rem; display: flex; justify-content: center; align-items: center;
-            cursor: pointer; transition: 0.15s; font-weight: bold;
-            touch-action: none; flex-shrink: 0;
+            cursor: pointer; font-weight: bold; touch-action: none; flex-shrink: 0;
         }
-        .zoom-btn:active, .zoom-btn.pressing { 
-            background: var(--neon-cyan); color: #000; box-shadow: 0 0 20px var(--neon-cyan); 
+        .zoom-btn:active, .zoom-btn.pressing {
+            background: var(--neon-cyan); color: #000;
         }
         .zoom-slider-wrap { flex: 1; margin: 0 10px; }
         input[type="range"] {
             -webkit-appearance: none; width: 100%; height: 4px;
-            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
             border-radius: 2px; outline: none; touch-action: none;
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 22px; height: 22px;
             background: #fff; border: 2px solid var(--neon-cyan); border-radius: 50%;
-            box-shadow: 0 0 15px var(--neon-cyan); cursor: pointer;
+            cursor: pointer;
         }
         .zoom-value {
             font-family: 'Courier New', monospace; font-size: 0.95rem; font-weight: 900;
             color: var(--neon-cyan); min-width: 65px; text-align: right;
-            text-shadow: 0 0 10px rgba(0,240,255,0.6); letter-spacing: -0.5px;
         }
         .zoom-value .zoom-unit { font-size: 0.65rem; opacity: 0.8; }
-
         .preset-row {
             display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto;
             scrollbar-width: none; padding-bottom: 2px;
@@ -261,23 +212,19 @@
         .preset-row::-webkit-scrollbar { display: none; }
         .preset-chip {
             flex: 0 0 auto; min-width: 60px; padding: 8px 6px;
-            background: var(--glass-bg); backdrop-filter: blur(10px);
+            background: var(--glass-bg);
             border: 1px solid var(--glass-border); border-radius: 12px;
             color: var(--text-dim); font-size: 0.52rem; font-weight: 700;
             display: flex; flex-direction: column; align-items: center; gap: 4px;
-            cursor: pointer; transition: all 0.3s; text-transform: uppercase;
-            letter-spacing: 0.5px; position: relative; overflow: hidden;
+            cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+            position: relative; overflow: hidden;
         }
-        .preset-chip i { font-size: 1.05rem; color: var(--text-main); transition: 0.3s; }
+        .preset-chip i { font-size: 1.05rem; color: var(--text-main); }
         .preset-chip.active {
             background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(138, 43, 226, 0.25));
             border-color: var(--neon-cyan); color: var(--neon-cyan);
-            box-shadow: 0 0 20px rgba(0,240,255,0.3);
         }
-        .preset-chip.active i { 
-            color: var(--neon-cyan); text-shadow: 0 0 12px var(--neon-cyan); transform: scale(1.15);
-        }
-
+        .preset-chip.active i { color: var(--neon-cyan); }
         .sliders-grid {
             display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;
         }
@@ -288,42 +235,38 @@
         .slider-label {
             display: flex; justify-content: space-between;
             font-size: 0.48rem; color: var(--text-dim); margin-bottom: 4px;
-            text-transform: uppercase; letter-spacing: 0.4px;
+            text-transform: uppercase;
         }
         .slider-label span:last-child { color: var(--neon-cyan); font-weight: bold; }
-
         .action-grid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
         }
         .action-btn {
-            background: var(--glass-bg); backdrop-filter: blur(10px);
+            background: var(--glass-bg);
             border: 1px solid var(--glass-border); border-radius: 12px;
             padding: 8px 3px; display: flex; flex-direction: column;
             align-items: center; gap: 3px; cursor: pointer;
             color: var(--text-dim); font-size: 0.45rem; font-weight: 700;
-            transition: all 0.3s; position: relative; overflow: hidden;
-            text-transform: uppercase; letter-spacing: 0.3px;
+            transition: all 0.2s; position: relative; overflow: hidden;
+            text-transform: uppercase;
         }
-        .action-btn i { font-size: 1.15rem; color: var(--text-main); transition: 0.3s; }
+        .action-btn i { font-size: 1.15rem; color: var(--text-main); }
         .action-btn.active-btn {
             background: rgba(0, 240, 255, 0.18); border-color: var(--neon-cyan);
-            color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0,240,255,0.35);
+            color: var(--neon-cyan);
         }
-        .action-btn.active-btn i { color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); }
+        .action-btn.active-btn i { color: var(--neon-cyan); }
         .action-btn:active { transform: scale(0.94); }
         .action-btn.fx-btn i { color: var(--neon-pink); }
         .action-btn.pro-btn i { color: var(--neon-gold); }
         .action-btn.lens-btn i { color: #ffb700; }
-
         .ripple {
             position: absolute; border-radius: 50%;
             background: rgba(0, 240, 255, 0.5);
-            transform: scale(0); animation: ripple-anim 0.7s ease-out;
+            transform: scale(0); animation: ripple-anim 0.5s ease-out;
             pointer-events: none;
         }
         @keyframes ripple-anim { to { transform: scale(5); opacity: 0; } }
-
-        /* === BOTTOM SHEETS === */
         .sheet {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: linear-gradient(180deg, rgba(10, 20, 40, 0.98), rgba(5, 5, 16, 0.99));
@@ -331,15 +274,12 @@
             border-radius: 24px 24px 0 0;
             padding: 18px 18px 30px; z-index: 500;
             transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(20px);
+            transition: transform 0.3s ease;
             max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 -10px 40px rgba(0, 240, 255, 0.2);
         }
         .sheet.open { transform: translateY(0); }
         .sheet::-webkit-scrollbar { width: 3px; }
         .sheet::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 2px; }
-        
         .sheet-handle {
             width: 50px; height: 4px; background: var(--neon-cyan);
             border-radius: 2px; margin: 0 auto 12px; opacity: 0.5;
@@ -347,7 +287,7 @@
         .sheet-title {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
         }
-        .sheet-title h2 { 
+        .sheet-title h2 {
             font-size: 0.95rem; color: var(--neon-cyan); letter-spacing: 1.5px;
             display: flex; align-items: center; gap: 8px;
         }
@@ -355,48 +295,36 @@
             background: none; border: none; color: var(--text-main);
             font-size: 1.4rem; cursor: pointer; padding: 5px 10px;
         }
-
         .fx-section-title {
             font-size: 0.6rem; color: var(--neon-pink); text-transform: uppercase;
             letter-spacing: 1.5px; margin-bottom: 10px; margin-top: 12px;
             display: flex; align-items: center; gap: 8px;
         }
         .fx-section-title:first-of-type { margin-top: 0; }
-        
         .fx-grid {
             display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
             margin-bottom: 8px;
         }
-        
         .color-dot {
             aspect-ratio: 1; border-radius: 50%;
             border: 2px solid transparent; cursor: pointer;
-            transition: 0.2s; position: relative;
-            box-shadow: 0 0 8px rgba(0,0,0,0.5);
         }
-        .color-dot.active { 
-            border-color: #fff; transform: scale(1.15); 
-            box-shadow: 0 0 15px currentColor;
-        }
+        .color-dot.active { border-color: #fff; transform: scale(1.15); }
         .color-dot.none-dot {
             background: transparent; border: 2px dashed #666;
             display: flex; align-items: center; justify-content: center;
             font-size: 0.7rem; color: #666;
         }
-        
         .effect-chip {
             padding: 8px 6px; background: var(--glass-bg);
             border: 1px solid var(--glass-border); border-radius: 10px;
             color: var(--text-dim); font-size: 0.55rem; font-weight: 700;
-            cursor: pointer; transition: 0.3s; text-align: center;
-            text-transform: uppercase; letter-spacing: 0.5px;
+            cursor: pointer; text-align: center; text-transform: uppercase;
         }
         .effect-chip.active {
             background: rgba(0, 240, 255, 0.2); border-color: var(--neon-cyan);
-            color: var(--neon-cyan); box-shadow: 0 0 12px rgba(0,240,255,0.3);
+            color: var(--neon-cyan);
         }
-
-        /* LENS GRID */
         .lens-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
             margin-bottom: 15px;
@@ -405,22 +333,19 @@
             background: rgba(0, 10, 30, 0.5); border: 1px solid var(--glass-border);
             border-radius: 14px; padding: 12px 8px; cursor: pointer;
             display: flex; flex-direction: column; align-items: center; gap: 6px;
-            transition: all 0.3s; position: relative; overflow: hidden;
+            transition: all 0.2s;
         }
-        .lens-card i { font-size: 1.5rem; color: var(--text-main); transition: 0.3s; }
-        .lens-card span { 
+        .lens-card i { font-size: 1.5rem; color: var(--text-main); }
+        .lens-card span {
             font-size: 0.6rem; font-weight: 700; color: var(--text-dim);
-            text-transform: uppercase; letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
         .lens-card.active {
             background: linear-gradient(135deg, rgba(255, 183, 0, 0.25), rgba(255, 0, 127, 0.25));
-            border-color: var(--neon-gold); color: var(--neon-gold);
-            box-shadow: 0 0 20px rgba(255, 183, 0, 0.4);
+            border-color: var(--neon-gold);
         }
-        .lens-card.active i { color: var(--neon-gold); text-shadow: 0 0 15px var(--neon-gold); transform: scale(1.15); }
+        .lens-card.active i { color: var(--neon-gold); }
         .lens-card.active span { color: var(--neon-gold); }
-        .lens-card:active { transform: scale(0.95); }
-
         .fx-slider-row {
             display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
             background: rgba(0, 10, 30, 0.4); padding: 10px 12px; border-radius: 12px;
@@ -428,14 +353,13 @@
         }
         .fx-slider-row label {
             font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase;
-            letter-spacing: 0.5px; min-width: 70px;
+            min-width: 70px;
         }
         .fx-slider-row input[type="range"] { flex: 1; }
         .fx-slider-row .val {
             font-size: 0.65rem; color: var(--neon-cyan); font-weight: bold;
             min-width: 45px; text-align: right; font-family: monospace;
         }
-
         .pro-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
         }
@@ -446,10 +370,9 @@
         .pro-label {
             display: flex; justify-content: space-between;
             font-size: 0.55rem; color: var(--text-dim); margin-bottom: 6px;
-            text-transform: uppercase; letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
         .pro-label span:last-child { color: var(--neon-cyan); font-weight: bold; font-family: monospace; }
-
         .data-section {
             margin-bottom: 12px;
             background: rgba(0, 10, 30, 0.5);
@@ -469,48 +392,33 @@
         .data-row:last-child { border-bottom: none; }
         .data-row span:first-child { color: var(--text-dim); }
         .data-row span:last-child { color: var(--neon-cyan); font-weight: 700; font-family: monospace; }
-
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(5,5,16,0.95);
             display: flex; justify-content: center; align-items: center;
-            z-index: 1000; backdrop-filter: blur(15px); padding: 20px;
+            z-index: 1000; padding: 20px;
         }
         .modal-card {
-            background: rgba(10, 20, 40, 0.85); border: 1px solid var(--neon-cyan);
+            background: rgba(10, 20, 40, 0.9); border: 1px solid var(--neon-cyan);
             border-radius: 24px; padding: 35px 25px; text-align: center;
-            max-width: 380px; width: 100%; box-shadow: 0 0 50px rgba(0,240,255,0.15);
+            max-width: 380px; width: 100%;
         }
         .modal-card h2 { color: var(--neon-cyan); margin-bottom: 15px; font-size: 1.5rem; }
         .modal-card p { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 25px; line-height: 1.6; }
         .btn-primary {
             background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
             border: none; color: #fff; padding: 14px 35px; border-radius: 30px;
-            font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 0 25px rgba(0,240,255,0.4); text-transform: uppercase; letter-spacing: 1px;
+            font-weight: 800; font-size: 1rem; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
         }
         .btn-primary:active { transform: scale(0.95); }
-
         .toast {
             position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 240, 255, 0.95); color: #000;
             padding: 10px 22px; border-radius: 30px; font-weight: 800;
             font-size: 0.72rem; z-index: 2000;
-            box-shadow: 0 0 20px rgba(0,240,255,0.5);
             text-align: center; max-width: 90vw;
-            animation: toast-in 0.3s ease;
         }
-        @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 20px); } }
-
-        .pinch-hint {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0, 240, 255, 0.2);
-            border: 2px solid var(--neon-cyan); border-radius: 20px;
-            padding: 12px 24px; font-size: 0.8rem; color: var(--neon-cyan);
-            font-weight: 800; z-index: 200; pointer-events: none;
-            opacity: 0; transition: opacity 0.3s; backdrop-filter: blur(10px);
-        }
-        .pinch-hint.show { opacity: 1; }
-
+        /* ====================== INSTALL POPUP ====================== */
         .install-popup {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: linear-gradient(135deg, rgba(0, 240, 255, 0.95), rgba(138, 43, 226, 0.95));
@@ -541,7 +449,7 @@
             padding: 5px 14px; border-radius: 15px; font-weight: 600;
             font-size: 0.6rem; cursor: pointer; white-space: nowrap;
         }
-
+        .install-btn-yes:active, .install-btn-no:active { transform: scale(0.95); }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -552,8 +460,7 @@
     <div class="camera-view" id="cameraView">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
-        
-        <!-- LENS EFFECT OVERLAYS -->
+
         <div class="lens-overlay lens-anamorphic" id="lensAnamorphic"></div>
         <div class="lens-overlay lens-vintage" id="lensVintage"></div>
         <div class="lens-overlay lens-fisheye" id="lensFisheye"></div>
@@ -563,30 +470,31 @@
         <div class="lens-overlay lens-nightvision" id="lensNightVision"></div>
         <div class="lens-overlay lens-infrared" id="lensInfrared"></div>
         <div class="cinema-bars" id="cinemaBars"></div>
-        
+
         <div class="finder-scope" id="finderScope">
             <video id="finderVideo" autoplay playsinline muted></video>
         </div>
-        
+
         <div class="object-badge" id="objectBadge">
             <i class="fas fa-crosshairs"></i>
             <span id="objectName">Scanning...</span>
         </div>
-        
-        <div class="pinch-hint" id="pinchHint">
-            <i class="fas fa-hand-pointer"></i> Pinch to Zoom
+
+        <div class="quality-badge" id="qualityBadge">
+            <i class="fas fa-gem"></i>
+            <span>QUALITY MODE</span>
         </div>
     </div>
 
     <div class="ui-overlay" id="uiOverlay">
         <div>
             <div class="top-hud">
-                <div class="hud-badge">
+                <div class="hud-badge" id="statusBadge">
                     <i class="fas fa-satellite"></i>
                     <span id="statusText">4K READY</span>
                 </div>
                 <div class="top-buttons">
-                    <button class="icon-btn" id="skyDataBtn" title="Sky Data"><i class="fas fa-globe"></i></button>
+                    <button class="icon-btn" id="skyDataBtn" title="Sky"><i class="fas fa-globe"></i></button>
                     <button class="icon-btn" id="finderBtn" title="Finder"><i class="fas fa-search-plus"></i></button>
                     <button class="icon-btn" id="transparentBtn" title="Ghost"><i class="fas fa-ghost"></i></button>
                 </div>
@@ -594,11 +502,10 @@
         </div>
 
         <div class="control-panel">
-            
             <div class="zoom-container">
                 <button class="zoom-btn" id="zoomOutBtn">−</button>
                 <div class="zoom-slider-wrap">
-                    <input type="range" id="zoomSlider" min="1" max="50000" value="1" step="0.01">
+                    <input type="range" id="zoomSlider" min="0.3" max="50000" value="1" step="0.01">
                 </div>
                 <button class="zoom-btn" id="zoomInBtn">+</button>
                 <div class="zoom-value" id="zoomValue">1.00<span class="zoom-unit">x</span></div>
@@ -632,7 +539,7 @@
 
             <div class="action-grid">
                 <button class="action-btn" id="telescopeBtn"><i class="fas fa-eye"></i><span>Dark</span></button>
-                <button class="action-btn" id="stackBtn"><i class="fas fa-layer-group"></i><span>Stack</span></button>
+                <button class="action-btn" id="surfaceBtn"><i class="fas fa-mountain"></i><span>Surface</span></button>
                 <button class="action-btn lens-btn" id="lensBtn"><i class="fas fa-camera-retro"></i><span>Lens</span></button>
                 <button class="action-btn" id="gridBtn"><i class="fas fa-th"></i><span>Grid</span></button>
                 <button class="action-btn fx-btn" id="fxBtn"><i class="fas fa-palette"></i><span>FX</span></button>
@@ -640,7 +547,7 @@
                 <button class="action-btn" id="nightBtn"><i class="fas fa-moon"></i><span>Night</span></button>
                 <button class="action-btn" id="captureBtn"><i class="fas fa-camera"></i><span>Shot</span></button>
                 <button class="action-btn" id="recordBtn"><i class="fas fa-video"></i><span>Rec</span></button>
-                <button class="action-btn" id="surfaceBtn"><i class="fas fa-mountain"></i><span>Surface</span></button>
+                <button class="action-btn" id="stackBtn"><i class="fas fa-layer-group"></i><span>Stack</span></button>
                 <button class="action-btn" id="falseColorBtn"><i class="fas fa-rainbow"></i><span>False</span></button>
                 <button class="action-btn" id="resetBtn"><i class="fas fa-undo"></i><span>Reset</span></button>
             </div>
@@ -654,38 +561,17 @@
             <h2><i class="fas fa-camera-retro"></i> HIGH QUALITY LENSES</h2>
             <button class="close-sheet" data-sheet="lensSheet">✕</button>
         </div>
-
         <div class="lens-grid">
-            <div class="lens-card active" data-lens="none">
-                <i class="fas fa-ban"></i><span>None</span>
-            </div>
-            <div class="lens-card" data-lens="anamorphic">
-                <i class="fas fa-arrows-alt-h"></i><span>Anamorphic</span>
-            </div>
-            <div class="lens-card" data-lens="vintage">
-                <i class="fas fa-history"></i><span>Vintage</span>
-            </div>
-            <div class="lens-card" data-lens="fisheye">
-                <i class="fas fa-circle-notch"></i><span>Fisheye</span>
-            </div>
-            <div class="lens-card" data-lens="telephoto">
-                <i class="fas fa-search"></i><span>Telephoto</span>
-            </div>
-            <div class="lens-card" data-lens="macro">
-                <i class="fas fa-search-plus"></i><span>Macro</span>
-            </div>
-            <div class="lens-card" data-lens="portrait">
-                <i class="fas fa-user-circle"></i><span>Portrait</span>
-            </div>
-            <div class="lens-card" data-lens="nightvision">
-                <i class="fas fa-eye"></i><span>Night Vision</span>
-            </div>
-            <div class="lens-card" data-lens="infrared">
-                <i class="fas fa-fire"></i><span>Infrared</span>
-            </div>
-            <div class="lens-card" data-lens="cinemabars">
-                <i class="fas fa-film"></i><span>Cinema Bars</span>
-            </div>
+            <div class="lens-card active" data-lens="none"><i class="fas fa-ban"></i><span>None</span></div>
+            <div class="lens-card" data-lens="anamorphic"><i class="fas fa-arrows-alt-h"></i><span>Anamorphic</span></div>
+            <div class="lens-card" data-lens="vintage"><i class="fas fa-history"></i><span>Vintage</span></div>
+            <div class="lens-card" data-lens="fisheye"><i class="fas fa-circle-notch"></i><span>Fisheye</span></div>
+            <div class="lens-card" data-lens="telephoto"><i class="fas fa-search"></i><span>Telephoto</span></div>
+            <div class="lens-card" data-lens="macro"><i class="fas fa-search-plus"></i><span>Macro</span></div>
+            <div class="lens-card" data-lens="portrait"><i class="fas fa-user-circle"></i><span>Portrait</span></div>
+            <div class="lens-card" data-lens="nightvision"><i class="fas fa-eye"></i><span>Night Vision</span></div>
+            <div class="lens-card" data-lens="infrared"><i class="fas fa-fire"></i><span>Infrared</span></div>
+            <div class="lens-card" data-lens="cinemabars"><i class="fas fa-film"></i><span>Cinema</span></div>
         </div>
     </div>
 
@@ -696,21 +582,20 @@
             <h2><i class="fas fa-palette"></i> COLORS & FILTERS</h2>
             <button class="close-sheet" data-sheet="fxSheet">✕</button>
         </div>
-
-        <div class="fx-section-title"><i class="fas fa-fill-drip"></i> Transparent Color Overlay</div>
+        <div class="fx-section-title"><i class="fas fa-fill-drip"></i> Color Overlay</div>
         <div class="fx-grid">
             <div class="color-dot none-dot active" data-color="none">✕</div>
-            <div class="color-dot" data-color="rgba(255,0,0,1)" style="background:#ff0000;color:#ff0000"></div>
-            <div class="color-dot" data-color="rgba(0,255,0,1)" style="background:#00ff00;color:#00ff00"></div>
-            <div class="color-dot" data-color="rgba(0,100,255,1)" style="background:#0064ff;color:#0064ff"></div>
-            <div class="color-dot" data-color="rgba(255,215,0,1)" style="background:#ffd700;color:#ffd700"></div>
-            <div class="color-dot" data-color="rgba(255,0,200,1)" style="background:#ff00c8;color:#ff00c8"></div>
-            <div class="color-dot" data-color="rgba(0,255,255,1)" style="background:#00ffff;color:#00ffff"></div>
-            <div class="color-dot" data-color="rgba(255,140,0,1)" style="background:#ff8c00;color:#ff8c00"></div>
-            <div class="color-dot" data-color="rgba(138,43,226,1)" style="background:#8a2be2;color:#8a2be2"></div>
-            <div class="color-dot" data-color="rgba(255,255,255,1)" style="background:#ffffff;color:#ffffff"></div>
-            <div class="color-dot" data-color="rgba(50,205,50,1)" style="background:#32cd32;color:#32cd32"></div>
-            <div class="color-dot" data-color="rgba(0,0,0,1)" style="background:#000;color:#000;border:1px solid #444"></div>
+            <div class="color-dot" data-color="rgba(255,0,0,1)" style="background:#ff0000"></div>
+            <div class="color-dot" data-color="rgba(0,255,0,1)" style="background:#00ff00"></div>
+            <div class="color-dot" data-color="rgba(0,100,255,1)" style="background:#0064ff"></div>
+            <div class="color-dot" data-color="rgba(255,215,0,1)" style="background:#ffd700"></div>
+            <div class="color-dot" data-color="rgba(255,0,200,1)" style="background:#ff00c8"></div>
+            <div class="color-dot" data-color="rgba(0,255,255,1)" style="background:#00ffff"></div>
+            <div class="color-dot" data-color="rgba(255,140,0,1)" style="background:#ff8c00"></div>
+            <div class="color-dot" data-color="rgba(138,43,226,1)" style="background:#8a2be2"></div>
+            <div class="color-dot" data-color="rgba(255,255,255,1)" style="background:#ffffff"></div>
+            <div class="color-dot" data-color="rgba(50,205,50,1)" style="background:#32cd32"></div>
+            <div class="color-dot" data-color="rgba(0,0,0,1)" style="background:#000;border:1px solid #444"></div>
         </div>
         <div class="fx-slider-row">
             <label>Opacity</label>
@@ -736,9 +621,9 @@
             <div class="effect-chip" data-effect="invert">Invert</div>
             <div class="effect-chip" data-effect="grayscale">B&W</div>
             <div class="effect-chip" data-effect="sepia">Sepia</div>
-            <div class="effect-chip" data-effect="blur">Dreamy</div>
+            <div class="effect-chip" data-effect="dreamy">Dreamy</div>
             <div class="effect-chip" data-effect="sharpen">Sharpen</div>
-            <div class="effect-chip" data-effect="contrast">Punch</div>
+            <div class="effect-chip" data-effect="punch">Punch</div>
             <div class="effect-chip" data-effect="vivid">Vivid</div>
         </div>
 
@@ -761,7 +646,6 @@
             <h2><i class="fas fa-sliders-h"></i> PRO CONTROLS</h2>
             <button class="close-sheet" data-sheet="proSheet">✕</button>
         </div>
-
         <div class="pro-grid">
             <div class="pro-item">
                 <div class="pro-label"><span>Exposure</span><span id="exposureVal">0.0</span></div>
@@ -772,7 +656,7 @@
                 <input type="range" id="gammaSlider" min="50" max="200" value="100">
             </div>
             <div class="pro-item">
-                <div class="pro-label"><span>Temperature</span><span id="tempVal">0K</span></div>
+                <div class="pro-label"><span>Temperature</span><span id="tempVal">0</span></div>
                 <input type="range" id="tempSlider" min="-100" max="100" value="0">
             </div>
             <div class="pro-item">
@@ -800,8 +684,8 @@
                 <input type="range" id="hueSlider" min="-180" max="180" value="0">
             </div>
             <div class="pro-item">
-                <div class="pro-label"><span>Grain</span><span id="grainVal">0</span></div>
-                <input type="range" id="grainSlider" min="0" max="100" value="0">
+                <div class="pro-label"><span>Surface Strength</span><span id="grainVal">50</span></div>
+                <input type="range" id="grainSlider" min="0" max="100" value="50">
             </div>
         </div>
     </div>
@@ -813,7 +697,6 @@
             <h2><i class="fas fa-satellite-dish"></i> LIVE SKY DATA</h2>
             <button class="close-sheet" data-sheet="skySheet">✕</button>
         </div>
-        
         <div class="data-section">
             <h3><i class="fas fa-sun"></i> Sun & Moon</h3>
             <div class="data-row"><span>Sunrise</span><span id="sunrise">--:--</span></div>
@@ -821,7 +704,6 @@
             <div class="data-row"><span>Moon Phase</span><span id="moonPhase">--</span></div>
             <div class="data-row"><span>Illumination</span><span id="moonIllum">--%</span></div>
         </div>
-
         <div class="data-section">
             <h3><i class="fas fa-cloud-sun"></i> Viewing Conditions</h3>
             <div class="data-row"><span>Temperature</span><span id="temperature">--°C</span></div>
@@ -829,31 +711,24 @@
             <div class="data-row"><span>Humidity</span><span id="humidity">--%</span></div>
             <div class="data-row"><span>Quality</span><span id="viewQuality">--</span></div>
         </div>
-
-        <div class="data-section">
-            <h3><i class="fas fa-rocket"></i> ISS Live Tracker</h3>
-            <div class="data-row"><span>Latitude</span><span id="issLat">--</span></div>
-            <div class="data-row"><span>Longitude</span><span id="issLng">--</span></div>
-        </div>
-
         <div class="data-section">
             <h3><i class="fas fa-globe"></i> Planet Visibility</h3>
             <div id="planetList"></div>
         </div>
-
         <div class="data-section">
             <h3><i class="fas fa-star"></i> Bright Stars</h3>
             <div id="starList"></div>
         </div>
     </div>
 
+    <!-- 📲 INSTALL POPUP -->
     <div class="install-popup" id="installPopup">
         <div class="install-icon">
             <i class="fas fa-satellite-dish"></i>
         </div>
         <div class="install-text">
             <h4>Install Saqskyscoop</h4>
-            <p>Add to your home screen for full-screen telescope experience</p>
+            <p>Add to home screen for full-screen experience</p>
         </div>
         <div class="install-actions">
             <button class="install-btn-yes" id="installYes">Install</button>
@@ -864,8 +739,8 @@
     <div class="modal-overlay" id="permModal">
         <div class="modal-card">
             <i class="fas fa-satellite-dish" style="font-size: 3.5rem; color: var(--neon-cyan); margin-bottom: 25px;"></i>
-            <h2>SAQSKYSCOOP PRO</h2>
-            <p>Cinematic 4K telescope with real-time surface enhancement, high-quality lenses, and pro controls.</p>
+            <h2>SAQSKYSCOOP ULTRA</h2>
+            <p>Hybrid 4K telescope with auto-detection, surface details, and cinematic optics.</p>
             <button class="btn-primary" id="allowCamBtn">Initialize Camera</button>
         </div>
     </div>
@@ -880,32 +755,40 @@
 
     <script>
         // ========================
-        // 📲 INSTALL BANNER
+        // 📲 INSTALL POPUP LOGIC
         // ========================
         (function() {
             const popup = document.getElementById('installPopup');
             const yesBtn = document.getElementById('installYes');
             const noBtn = document.getElementById('installNo');
             let deferredPrompt = null;
+            let popupShown = false;
 
             const dismissed = localStorage.getItem('saqskyscoop-install-dismissed');
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-            
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                              || window.navigator.standalone === true;
+
+            function showPopup() {
+                if (popupShown) return;
+                if (dismissed || isStandalone) return;
+                popupShown = true;
+                popup.classList.add('show');
+            }
+
+            function hidePopup(forever) {
+                popup.classList.remove('show');
+                if (forever) localStorage.setItem('saqskyscoop-install-dismissed', 'true');
+            }
+
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                if (!dismissed && !isStandalone) {
-                    setTimeout(() => popup.classList.add('show'), 2000);
-                }
+                setTimeout(showPopup, 2000);
             });
 
-            if (dismissed || isStandalone) {
-                popup.style.display = 'none';
-            } else {
-                setTimeout(() => {
-                    if (!dismissed && !isStandalone) popup.classList.add('show');
-                }, 3000);
-            }
+            setTimeout(() => {
+                if (!popupShown && !dismissed && !isStandalone) showPopup();
+            }, 4000);
 
             yesBtn.addEventListener('click', async () => {
                 if (deferredPrompt) {
@@ -914,31 +797,32 @@
                     deferredPrompt = null;
                 } else {
                     const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-                    alert(isIOS 
-                        ? '📱 iOS: Tap Share button → "Add to Home Screen"' 
-                        : '📱 Open browser menu (⋮) → "Install app"');
+                    const isFirefox = /firefox/i.test(navigator.userAgent);
+                    let msg = '';
+                    if (isIOS) {
+                        msg = '📱 iOS Instructions:\n\n1. Tap the Share button (□↑)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"';
+                    } else if (isFirefox) {
+                        msg = '📱 Firefox Instructions:\n\n1. Tap the menu (⋮)\n2. Tap "Install" or "Add to Home screen"';
+                    } else {
+                        msg = '📱 Instructions:\n\n1. Tap the browser menu (⋮)\n2. Tap "Install app" or "Add to Home screen"';
+                    }
+                    alert(msg);
                 }
-                popup.classList.remove('show');
-                localStorage.setItem('saqskyscoop-install-dismissed', 'true');
+                hidePopup(true);
             });
 
-            noBtn.addEventListener('click', () => {
-                popup.classList.remove('show');
-                localStorage.setItem('saqskyscoop-install-dismissed', 'true');
-            });
+            noBtn.addEventListener('click', () => hidePopup(true));
 
-            window.addEventListener('appinstalled', () => {
-                popup.classList.remove('show');
-                localStorage.setItem('saqskyscoop-install-dismissed', 'true');
-            });
+            window.addEventListener('appinstalled', () => hidePopup(true));
         })();
 
         // ========================
-        // 🌌 PARTICLES
+        // 🌌 LIGHT PARTICLES
         // ========================
         const particleCanvas = document.getElementById('particleCanvas');
         const pctx = particleCanvas.getContext('2d');
         let particles = [];
+        let particleFrame = 0;
 
         function resizeParticles() {
             particleCanvas.width = window.innerWidth;
@@ -950,16 +834,16 @@
         class Particle {
             constructor(x, y, isShower = false) {
                 this.x = x; this.y = y;
-                this.size = isShower ? Math.random() * 3 + 1.5 : Math.random() * 1.5 + 0.5;
-                this.speedX = isShower ? (Math.random() - 0.5) * 10 : (Math.random() - 0.5) * 0.3;
-                this.speedY = isShower ? (Math.random() - 0.5) * 10 : (Math.random() - 0.5) * 0.3;
-                this.life = isShower ? 80 : Infinity;
-                this.color = isShower ? `hsl(${Math.random() * 60 + 180}, 100%, 70%)` : `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1})`;
+                this.size = isShower ? Math.random() * 2 + 1 : Math.random() * 1.5 + 0.5;
+                this.speedX = isShower ? (Math.random() - 0.5) * 8 : (Math.random() - 0.5) * 0.2;
+                this.speedY = isShower ? (Math.random() - 0.5) * 8 : (Math.random() - 0.5) * 0.2;
+                this.life = isShower ? 40 : Infinity;
+                this.color = isShower ? `rgba(0, 240, 255, 0.8)` : `rgba(255, 255, 255, ${Math.random() * 0.4 + 0.1})`;
             }
             update() {
                 this.x += this.speedX; this.y += this.speedY;
                 if (this.life !== Infinity) this.life--;
-                if (this.speedX !== undefined) { this.speedX *= 0.95; this.speedY *= 0.95; }
+                if (this.speedX !== undefined) { this.speedX *= 0.94; this.speedY *= 0.94; }
             }
             draw() {
                 pctx.fillStyle = this.color;
@@ -969,25 +853,26 @@
             }
         }
 
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 40; i++) {
             particles.push(new Particle(Math.random() * window.innerWidth, Math.random() * window.innerHeight));
         }
 
         function animateParticles() {
-            pctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
-            particles = particles.filter(p => p.life > 0);
-            particles.forEach(p => { p.update(); p.draw(); });
+            particleFrame++;
+            if (particleFrame % 2 === 0) {
+                pctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+                particles = particles.filter(p => p.life > 0);
+                particles.forEach(p => { p.update(); p.draw(); });
+            }
             requestAnimationFrame(animateParticles);
         }
         animateParticles();
 
         function triggerShower(x, y) {
-            for (let i = 0; i < 12; i++) particles.push(new Particle(x, y, true));
+            for (let i = 0; i < 8; i++) particles.push(new Particle(x, y, true));
         }
 
-        // ========================
-        // 🎮 RIPPLE
-        // ========================
+        // RIPPLE
         document.querySelectorAll('button, .preset-chip, .effect-chip, .color-dot, .lens-card').forEach(el => {
             el.addEventListener('pointerdown', function(e) {
                 const rect = this.getBoundingClientRect();
@@ -1000,13 +885,13 @@
                 this.style.position = 'relative';
                 this.style.overflow = 'hidden';
                 this.appendChild(ripple);
-                setTimeout(() => ripple.remove(), 700);
+                setTimeout(() => ripple.remove(), 500);
                 triggerShower(e.clientX, e.clientY);
             });
         });
 
         // ========================
-        // 🔭 TELESCOPE ENGINE
+        // 🔭 HYBRID TELESCOPE ENGINE
         // ========================
         (() => {
             const video = document.getElementById('video');
@@ -1014,10 +899,12 @@
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d', { alpha: false });
             const cameraView = document.getElementById('cameraView');
-            const pinchHint = document.getElementById('pinchHint');
             const objectBadge = document.getElementById('objectBadge');
             const objectName = document.getElementById('objectName');
-            
+            const qualityBadge = document.getElementById('qualityBadge');
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+
             const lensOverlays = {
                 anamorphic: document.getElementById('lensAnamorphic'),
                 vintage: document.getElementById('lensVintage'),
@@ -1029,22 +916,22 @@
                 infrared: document.getElementById('lensInfrared'),
                 cinemabars: document.getElementById('cinemaBars')
             };
-            
+
             const zoomSlider = document.getElementById('zoomSlider');
             const zoomValue = document.getElementById('zoomValue');
             const zoomInBtn = document.getElementById('zoomInBtn');
             const zoomOutBtn = document.getElementById('zoomOutBtn');
-            
+
             const brightSlider = document.getElementById('brightSlider');
             const brightVal = document.getElementById('brightVal');
             const contSlider = document.getElementById('contSlider');
             const contVal = document.getElementById('contVal');
             const focusSlider = document.getElementById('focusSlider');
             const focusVal = document.getElementById('focusVal');
-            
+
             const telescopeBtn = document.getElementById('telescopeBtn');
+            const surfaceBtn = document.getElementById('surfaceBtn');
             const stackBtn = document.getElementById('stackBtn');
-            const hdrBtn = document.getElementById('hdrBtn');
             const gridBtn = document.getElementById('gridBtn');
             const lensBtn = document.getElementById('lensBtn');
             const nightBtn = document.getElementById('nightBtn');
@@ -1056,14 +943,13 @@
             const skyDataBtn = document.getElementById('skyDataBtn');
             const fxBtn = document.getElementById('fxBtn');
             const proBtn = document.getElementById('proBtn');
-            const surfaceBtn = document.getElementById('surfaceBtn');
             const falseColorBtn = document.getElementById('falseColorBtn');
-            
+
             const lensSheet = document.getElementById('lensSheet');
             const fxSheet = document.getElementById('fxSheet');
             const proSheet = document.getElementById('proSheet');
             const skySheet = document.getElementById('skySheet');
-            
+
             const finderScope = document.getElementById('finderScope');
             const presetChips = document.querySelectorAll('.preset-chip');
             const colorDots = document.querySelectorAll('.color-dot');
@@ -1071,14 +957,14 @@
             const gradeChips = document.querySelectorAll('.effect-chip[data-grade]');
             const lensCards = document.querySelectorAll('.lens-card');
             const closeSheetBtns = document.querySelectorAll('.close-sheet');
-            
+
             const opacitySlider = document.getElementById('opacitySlider');
             const opacityVal = document.getElementById('opacityVal');
             const vignetteSlider = document.getElementById('vignetteSlider');
             const vignetteVal = document.getElementById('vignetteVal');
             const leakSlider = document.getElementById('leakSlider');
             const leakVal = document.getElementById('leakVal');
-            
+
             const exposureSlider = document.getElementById('exposureSlider');
             const exposureVal = document.getElementById('exposureVal');
             const gammaSlider = document.getElementById('gammaSlider');
@@ -1099,7 +985,7 @@
             const hueVal = document.getElementById('hueVal');
             const grainSlider = document.getElementById('grainSlider');
             const grainVal = document.getElementById('grainVal');
-            
+
             const permModal = document.getElementById('permModal');
             const loadingModal = document.getElementById('loadingModal');
             const allowCamBtn = document.getElementById('allowCamBtn');
@@ -1117,31 +1003,37 @@
             let leakAmount = 0;
             let exposure = 0, gamma = 100, temperature = 0, tint = 0;
             let sharpness = 0, highlights = 0, shadows = 0;
-            let saturation = 100, hue = 0, grain = 0;
-            
+            let saturation = 100, hue = 0;
+            let surfaceStrength = 50;
+
             let isTelescopeMode = false;
-            let isDeepStack = false;
-            let isHdr = false;
+            let isStack = false;
             let isGrid = false;
             let isNight = false;
             let isRecording = false;
             let isTransparent = false;
             let isSurfaceEnhance = false;
             let isFalseColor = false;
-            
+            let isQualityMode = false;
+
             let mediaRecorder = null;
             let recordedChunks = [];
-            let stackBuffer = null;
-            let stackCount = 0;
-            
+
             let objectCenter = { x: 0.5, y: 0.5 };
+            let objectBounds = { x: 0.4, y: 0.4, w: 0.2, h: 0.2 };
             let frameCounter = 0;
             let detectedObject = 'none';
             const detectionCanvas = document.createElement('canvas');
             const detectionCtx = detectionCanvas.getContext('2d', { willReadFrequently: true });
-            
+
+            const processCanvas = document.createElement('canvas');
+            const processCtx = processCanvas.getContext('2d', { willReadFrequently: true });
+
             let zoomHoldTimer = null;
             let zoomHoldDir = 0;
+
+            let cachedFilter = '';
+            let filterDirty = true;
 
             const PRESETS = {
                 normal: { bright: 100, cont: 100, sat: 100, focus: 50, exposure: 0, gamma: 100, temperature: 0, tint: 0, sharpness: 0 },
@@ -1154,11 +1046,26 @@
                 deepsky:{ bright: 95, cont: 180, sat: 150, focus: 50, exposure: 20, gamma: 120, temperature: 0, tint: 0, sharpness: 20 }
             };
 
+            function markFilterDirty() { filterDirty = true; }
+
+            function setQualityMode(on, reason) {
+                if (isQualityMode === on) return;
+                isQualityMode = on;
+                qualityBadge.classList.toggle('show', on);
+                statusBadge.classList.toggle('quality-mode', on);
+                if (on) {
+                    statusText.textContent = 'QUALITY MODE';
+                    if (reason) showToast(`💎 ${reason}`);
+                } else {
+                    statusText.textContent = '4K FAST';
+                }
+            }
+
             function init() {
                 bindEvents();
                 permModal.classList.remove('hidden');
                 loadSkyData();
-                setInterval(loadSkyData, 60000);
+                setInterval(loadSkyData, 120000);
                 updateZoomUI();
             }
 
@@ -1176,16 +1083,13 @@
 
             function bindEvents() {
                 allowCamBtn.addEventListener('click', startCamera);
-                
-                // Close sheet buttons
+
                 closeSheetBtns.forEach(btn => {
                     btn.addEventListener('click', () => {
-                        const sheetId = btn.dataset.sheet;
-                        document.getElementById(sheetId).classList.remove('open');
+                        document.getElementById(btn.dataset.sheet).classList.remove('open');
                     });
                 });
-                
-                // ZOOM
+
                 zoomSlider.addEventListener('input', (e) => {
                     e.stopPropagation();
                     zoom = parseFloat(zoomSlider.value);
@@ -1194,7 +1098,7 @@
                 ['touchstart','touchmove','touchend'].forEach(ev => {
                     zoomSlider.addEventListener(ev, e => e.stopPropagation());
                 });
-                
+
                 function startZoomHold(dir) {
                     if (zoomHoldTimer) return;
                     zoomHoldDir = dir;
@@ -1212,13 +1116,14 @@
                 function applyZoomStep() {
                     if (zoomHoldDir === 0) return;
                     let step;
-                    if (zoom < 2) step = 0.02;
+                    if (zoom < 1) step = 0.01;
+                    else if (zoom < 2) step = 0.02;
                     else if (zoom < 10) step = 0.1;
                     else if (zoom < 100) step = 1;
                     else if (zoom < 1000) step = 10;
                     else if (zoom < 10000) step = 100;
                     else step = 500;
-                    zoom = Math.max(1, Math.min(50000, zoom + (zoomHoldDir * step)));
+                    zoom = Math.max(0.3, Math.min(50000, zoom + (zoomHoldDir * step)));
                     updateZoomUI();
                 }
                 zoomInBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); startZoomHold(1); });
@@ -1228,22 +1133,23 @@
                     b.addEventListener('pointerleave', stopZoomHold);
                     b.addEventListener('pointercancel', stopZoomHold);
                 });
-                
-                // Sliders
+
                 brightSlider.addEventListener('input', () => {
                     brightness = parseInt(brightSlider.value);
                     brightVal.textContent = brightness + '%';
+                    markFilterDirty();
                 });
                 contSlider.addEventListener('input', () => {
                     contrast = parseInt(contSlider.value);
                     contVal.textContent = contrast + '%';
+                    markFilterDirty();
                 });
                 focusSlider.addEventListener('input', () => {
                     focus = parseInt(focusSlider.value);
                     focusVal.textContent = focus + '%';
+                    markFilterDirty();
                 });
-                
-                // Presets
+
                 presetChips.forEach(chip => {
                     chip.addEventListener('click', () => {
                         presetChips.forEach(c => c.classList.remove('active'));
@@ -1251,44 +1157,33 @@
                         applyPreset(chip.dataset.preset);
                     });
                 });
-                
-                // Sheet buttons
+
                 fxBtn.addEventListener('click', () => openSheet(fxSheet));
                 proBtn.addEventListener('click', () => openSheet(proSheet));
                 lensBtn.addEventListener('click', () => openSheet(lensSheet));
-                
                 skyDataBtn.addEventListener('click', () => {
-                    skySheet.classList.toggle('open');
-                    lensSheet.classList.remove('open');
-                    fxSheet.classList.remove('open');
-                    proSheet.classList.remove('open');
-                    if (skySheet.classList.contains('open')) loadSkyData();
+                    if (skySheet.classList.contains('open')) {
+                        skySheet.classList.remove('open');
+                    } else {
+                        openSheet(skySheet);
+                        loadSkyData();
+                    }
                 });
-                
-                // Lens cards
+
                 lensCards.forEach(card => {
                     card.addEventListener('click', () => {
                         lensCards.forEach(c => c.classList.remove('active'));
                         card.classList.add('active');
                         const lens = card.dataset.lens;
-                        
-                        // Remove all active overlays
                         Object.values(lensOverlays).forEach(o => o.classList.remove('show'));
-                        
-                        // Add new active
                         if (lens !== 'none' && lensOverlays[lens]) {
                             lensOverlays[lens].classList.add('show');
-                            // Apply lens-specific CSS filter
-                            applyLensFilter(lens);
-                        } else {
-                            clearLensFilter();
                         }
                         activeLens = lens;
-                        showToast(`📷 Lens: ${lens.toUpperCase()}`);
+                        showToast(`📷 ${lens.toUpperCase()}`);
                     });
                 });
-                
-                // Colors
+
                 colorDots.forEach(dot => {
                     dot.addEventListener('click', () => {
                         colorDots.forEach(d => d.classList.remove('active'));
@@ -1296,7 +1191,6 @@
                         activeColor = dot.dataset.color;
                     });
                 });
-                
                 opacitySlider.addEventListener('input', () => {
                     colorOpacity = parseInt(opacitySlider.value);
                     opacityVal.textContent = colorOpacity + '%';
@@ -1309,136 +1203,131 @@
                     leakAmount = parseInt(leakSlider.value);
                     leakVal.textContent = leakAmount + '%';
                 });
-                
+
                 effectChips.forEach(chip => {
                     chip.addEventListener('click', () => {
                         effectChips.forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
                         activeEffect = chip.dataset.effect;
+                        markFilterDirty();
                     });
                 });
-                
+
                 gradeChips.forEach(chip => {
                     chip.addEventListener('click', () => {
                         gradeChips.forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
                         activeGrade = chip.dataset.grade;
+                        markFilterDirty();
                     });
                 });
-                
+
                 exposureSlider.addEventListener('input', () => {
                     exposure = parseInt(exposureSlider.value);
                     exposureVal.textContent = (exposure > 0 ? '+' : '') + (exposure / 50).toFixed(1);
+                    markFilterDirty();
                 });
                 gammaSlider.addEventListener('input', () => {
                     gamma = parseInt(gammaSlider.value);
                     gammaVal.textContent = (gamma / 100).toFixed(2);
+                    markFilterDirty();
                 });
                 tempSlider.addEventListener('input', () => {
                     temperature = parseInt(tempSlider.value);
                     tempVal.textContent = temperature > 0 ? `+${temperature}` : temperature;
+                    markFilterDirty();
                 });
                 tintSlider.addEventListener('input', () => {
                     tint = parseInt(tintSlider.value);
                     tintVal.textContent = tint;
+                    markFilterDirty();
                 });
                 sharpSlider.addEventListener('input', () => {
                     sharpness = parseInt(sharpSlider.value);
                     sharpVal.textContent = sharpness;
+                    markFilterDirty();
                 });
                 highSlider.addEventListener('input', () => {
                     highlights = parseInt(highSlider.value);
                     highVal.textContent = highlights;
+                    markFilterDirty();
                 });
                 shadowSlider.addEventListener('input', () => {
                     shadows = parseInt(shadowSlider.value);
                     shadowVal.textContent = shadows;
+                    markFilterDirty();
                 });
                 satSlider.addEventListener('input', () => {
                     saturation = parseInt(satSlider.value);
                     satVal.textContent = saturation + '%';
+                    markFilterDirty();
                 });
                 hueSlider.addEventListener('input', () => {
                     hue = parseInt(hueSlider.value);
                     hueVal.textContent = hue + '°';
+                    markFilterDirty();
                 });
                 grainSlider.addEventListener('input', () => {
-                    grain = parseInt(grainSlider.value);
-                    grainVal.textContent = grain;
+                    surfaceStrength = parseInt(grainSlider.value);
+                    grainVal.textContent = surfaceStrength;
                 });
-                
-                // Action buttons
+
                 telescopeBtn.addEventListener('click', () => {
                     isTelescopeMode = !isTelescopeMode;
                     telescopeBtn.classList.toggle('active-btn', isTelescopeMode);
-                    showToast(isTelescopeMode ? '🔭 Dark Surround: ON' : 'Dark Surround: OFF');
+                    showToast(isTelescopeMode ? '🔭 Smart Dark Surround: ON' : 'Dark: OFF');
                 });
-                
+
                 surfaceBtn.addEventListener('click', () => {
                     isSurfaceEnhance = !isSurfaceEnhance;
                     surfaceBtn.classList.toggle('active-btn', isSurfaceEnhance);
+                    setQualityMode(isSurfaceEnhance || isFalseColor || isStack, 'Surface Enhancement');
                     showToast(isSurfaceEnhance ? '🏔️ Surface Detail: ON' : 'Surface: OFF');
                 });
-                
+
                 falseColorBtn.addEventListener('click', () => {
                     isFalseColor = !isFalseColor;
                     falseColorBtn.classList.toggle('active-btn', isFalseColor);
+                    setQualityMode(isSurfaceEnhance || isFalseColor || isStack, 'False Color');
                     showToast(isFalseColor ? '🌈 False Color: ON' : 'False Color: OFF');
                 });
-                
+
                 stackBtn.addEventListener('click', () => {
-                    isDeepStack = !isDeepStack;
-                    stackBtn.classList.toggle('active-btn', isDeepStack);
-                    if (isDeepStack) {
-                        stackBuffer = new Float32Array(canvas.width * canvas.height * 4);
-                        stackCount = 0;
-                        showToast('🌌 Deep Stack: ON');
-                    } else {
-                        stackBuffer = null;
-                        showToast('Deep Stack: OFF');
-                    }
+                    isStack = !isStack;
+                    stackBtn.classList.toggle('active-btn', isStack);
+                    setQualityMode(isSurfaceEnhance || isFalseColor || isStack, 'Deep Stack');
+                    showToast(isStack ? '🌌 Deep Stack: ON' : 'Stack: OFF');
                 });
-                
-                hdrBtn.addEventListener('click', () => {
-                    isHdr = !isHdr;
-                    hdrBtn.classList.toggle('active-btn', isHdr);
-                    showToast(isHdr ? '✨ HDR: ON' : 'HDR: OFF');
-                });
-                
+
                 gridBtn.addEventListener('click', () => {
                     isGrid = !isGrid;
                     gridBtn.classList.toggle('active-btn', isGrid);
                 });
-                
+
                 nightBtn.addEventListener('click', () => {
                     isNight = !isNight;
                     nightBtn.classList.toggle('active-btn', isNight);
                     document.body.classList.toggle('night-mode', isNight);
                     showToast(isNight ? '🔴 Night Vision: ON' : 'Night: OFF');
                 });
-                
+
                 transparentBtn.addEventListener('click', () => {
                     isTransparent = !isTransparent;
                     transparentBtn.classList.toggle('active', isTransparent);
-                    document.documentElement.style.setProperty('--ui-opacity', isTransparent ? '0.3' : '1');
-                    showToast(isTransparent ? '👻 Ghost UI: ON' : 'Ghost UI: OFF');
+                    document.body.classList.toggle('ghost-mode', isTransparent);
+                    showToast(isTransparent ? '👻 Ghost UI: ON' : 'Ghost: OFF');
                 });
-                
-                resetBtn.addEventListener('click', () => {
-                    closeAllSheets();  // ⚡ Close sheets first!
-                    setTimeout(resetAll, 200);  // Small delay for animation
-                });
-                
+
+                resetBtn.addEventListener('click', resetAll);
                 captureBtn.addEventListener('click', captureImage);
                 recordBtn.addEventListener('click', toggleRecording);
-                
+
                 finderBtn.addEventListener('click', () => {
                     const showing = finderScope.style.display === 'block';
                     finderScope.style.display = showing ? 'none' : 'block';
                     finderBtn.classList.toggle('active', !showing);
                 });
-                
-                // PINCH ZOOM
+
                 let pinch = { active: false, dist: 0, zoom: 1 };
                 cameraView.addEventListener('touchstart', (e) => {
                     if (e.touches.length === 2) {
@@ -1446,22 +1335,20 @@
                         pinch.active = true;
                         pinch.dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                         pinch.zoom = zoom;
-                        pinchHint.classList.add('show');
-                        setTimeout(() => pinchHint.classList.remove('show'), 800);
                     }
                 }, { passive: false });
                 cameraView.addEventListener('touchmove', (e) => {
                     if (e.touches.length === 2 && pinch.active) {
                         e.preventDefault();
                         const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                        zoom = Math.max(1, Math.min(50000, pinch.zoom * Math.pow(d / pinch.dist, 1.5)));
+                        zoom = Math.max(0.3, Math.min(50000, pinch.zoom * Math.pow(d / pinch.dist, 1.5)));
                         updateZoomUI();
                     }
                 }, { passive: false });
                 cameraView.addEventListener('touchend', (e) => {
                     if (e.touches.length < 2) pinch.active = false;
                 });
-                
+
                 let lastTap = 0;
                 cameraView.addEventListener('touchend', (e) => {
                     if (e.touches.length === 0) {
@@ -1476,21 +1363,6 @@
                         lastTap = now;
                     }
                 });
-                
-                cameraView.addEventListener('wheel', (e) => {
-                    e.preventDefault();
-                    zoom = Math.max(1, Math.min(50000, zoom * (1 - e.deltaY * 0.005)));
-                    updateZoomUI();
-                }, { passive: false });
-            }
-
-            function applyLensFilter(lens) {
-                // Applied via CSS class on body - less flicker
-                document.body.dataset.lens = lens;
-            }
-
-            function clearLensFilter() {
-                document.body.dataset.lens = 'none';
             }
 
             function applyPreset(name) {
@@ -1498,7 +1370,7 @@
                 brightness = p.bright; contrast = p.cont; saturation = p.sat; focus = p.focus;
                 exposure = p.exposure; gamma = p.gamma; temperature = p.temperature;
                 tint = p.tint; sharpness = p.sharpness;
-                
+
                 brightSlider.value = brightness; brightVal.textContent = brightness + '%';
                 contSlider.value = contrast; contVal.textContent = contrast + '%';
                 focusSlider.value = focus; focusVal.textContent = focus + '%';
@@ -1508,76 +1380,73 @@
                 tempSlider.value = temperature; tempVal.textContent = temperature > 0 ? `+${temperature}` : temperature;
                 tintSlider.value = tint; tintVal.textContent = tint;
                 sharpSlider.value = sharpness; sharpVal.textContent = sharpness;
-                
+
+                markFilterDirty();
+
                 if (['moon','jupiter','saturn','mars','venus'].includes(name)) {
                     isSurfaceEnhance = true;
                     surfaceBtn.classList.add('active-btn');
+                    setQualityMode(true, `${name.toUpperCase()} Surface Enhanced`);
                 }
-                
+
                 showToast(`✨ ${name.toUpperCase()} Applied`);
             }
 
             function resetAll() {
-                // Reset all state variables
+                closeAllSheets();
+
                 zoom = 1; brightness = 100; contrast = 100; focus = 50;
                 exposure = 0; gamma = 100; temperature = 0; tint = 0;
                 sharpness = 0; highlights = 0; shadows = 0; saturation = 100;
-                hue = 0; grain = 0; colorOpacity = 25; vignetteAmount = 0; leakAmount = 0;
+                hue = 0; colorOpacity = 25; vignetteAmount = 0; leakAmount = 0;
+                surfaceStrength = 50;
                 activeColor = 'none'; activeEffect = 'none'; activeGrade = 'none'; activeLens = 'none';
-                
-                isTelescopeMode = false; isDeepStack = false; isHdr = false;
+
+                isTelescopeMode = false; isStack = false;
                 isGrid = false; isNight = false; isTransparent = false;
                 isSurfaceEnhance = false; isFalseColor = false;
-                
-                // Reset all sliders
+
                 zoomSlider.value = 1;
                 brightSlider.value = 100; contSlider.value = 100; focusSlider.value = 50;
                 exposureSlider.value = 0; gammaSlider.value = 100; tempSlider.value = 0; tintSlider.value = 0;
                 sharpSlider.value = 0; highSlider.value = 0; shadowSlider.value = 0; satSlider.value = 100;
-                hueSlider.value = 0; grainSlider.value = 0; opacitySlider.value = 25;
+                hueSlider.value = 0; grainSlider.value = 50; opacitySlider.value = 25;
                 vignetteSlider.value = 0; leakSlider.value = 0;
-                
-                // Reset all value labels
+
                 updateZoomUI();
                 brightVal.textContent = '100%'; contVal.textContent = '100%'; focusVal.textContent = '50%';
                 exposureVal.textContent = '0.0'; gammaVal.textContent = '1.00';
                 tempVal.textContent = '0'; tintVal.textContent = '0'; sharpVal.textContent = '0';
                 highVal.textContent = '0'; shadowVal.textContent = '0'; satVal.textContent = '100%';
-                hueVal.textContent = '0°'; grainVal.textContent = '0'; opacityVal.textContent = '25%';
+                hueVal.textContent = '0°'; grainVal.textContent = '50'; opacityVal.textContent = '25%';
                 vignetteVal.textContent = '0%'; leakVal.textContent = '0%';
-                
-                // Remove all active button classes
+
                 document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active-btn', 'active'));
-                
-                // Reset body classes
-                document.body.classList.remove('night-mode');
-                document.body.dataset.lens = 'none';
-                document.documentElement.style.setProperty('--ui-opacity', '1');
-                
-                // Hide all lens overlays
+                document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active'));
+
+                document.body.classList.remove('night-mode', 'ghost-mode');
                 Object.values(lensOverlays).forEach(o => o.classList.remove('show'));
-                
-                // Reset chips
+
                 colorDots.forEach((d, i) => d.classList.toggle('active', i === 0));
                 effectChips.forEach((c, i) => c.classList.toggle('active', i === 0));
                 gradeChips.forEach((c, i) => c.classList.toggle('active', i === 0));
                 presetChips.forEach((c, i) => c.classList.toggle('active', i === 0));
                 lensCards.forEach((c, i) => c.classList.toggle('active', i === 0));
-                
-                // Reset stack buffer
-                stackBuffer = null; stackCount = 0;
-                
-                // Reset object detection
+
                 objectCenter = { x: 0.5, y: 0.5 };
+                objectBounds = { x: 0.4, y: 0.4, w: 0.2, h: 0.2 };
                 detectedObject = 'none';
-                
-                showToast('✅ Everything Reset');
+                objectBadge.classList.remove('show');
+
+                setQualityMode(false);
+                markFilterDirty();
+                showToast('✅ Reset Complete');
             }
 
             async function startCamera() {
                 permModal.classList.add('hidden');
                 loadingModal.classList.remove('hidden');
-                
+
                 const timeoutId = setTimeout(() => {
                     loadingModal.classList.add('hidden');
                     alert('Camera timeout. Check permissions.');
@@ -1585,23 +1454,25 @@
 
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
-                        video: { 
-                            facingMode: 'environment', 
-                            width: { ideal: 1920 }, 
+                        video: {
+                            facingMode: 'environment',
+                            width: { ideal: 1920 },
                             height: { ideal: 1080 },
                             frameRate: { ideal: 30 }
                         },
                         audio: false
                     });
-                    
+
                     video.srcObject = stream;
                     finderVideo.srcObject = stream;
-                    
+
                     video.onloadedmetadata = () => {
                         clearTimeout(timeoutId);
                         video.play();
                         canvas.width = window.innerWidth;
                         canvas.height = window.innerHeight;
+                        processCanvas.width = 480;
+                        processCanvas.height = Math.round(480 * (canvas.height / canvas.width));
                         loadingModal.classList.add('hidden');
                         requestAnimationFrame(renderLoop);
                         showToast('✅ 4K Sensor Ready');
@@ -1627,10 +1498,10 @@
                 const totalZoom = zoom * baseCrop;
                 const srcW = vw / totalZoom;
                 const srcH = vh / totalZoom;
-                
+
                 frameCounter++;
-                if (frameCounter % 20 === 0) detectObject();
-                
+                if (frameCounter % 60 === 0) detectObject();
+
                 let srcX, srcY;
                 if (isTelescopeMode && objectCenter.x !== 0.5) {
                     srcX = Math.max(0, Math.min((vw * objectCenter.x) - (srcW / 2), vw - srcW));
@@ -1643,30 +1514,33 @@
                 const destW = canvas.width;
                 const destH = canvas.height;
 
-                let cssFilter = buildCSSFilter();
+                if (filterDirty) {
+                    cachedFilter = buildCSSFilter();
+                    filterDirty = false;
+                }
 
                 ctx.clearRect(0, 0, destW, destH);
-                ctx.filter = cssFilter;
+                ctx.filter = cachedFilter;
                 ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, destW, destH);
                 ctx.filter = 'none';
 
-                if (isFalseColor) applyFalseColor();
-                if (isSurfaceEnhance) applySurfaceEnhancement();
-                if (isDeepStack && stackBuffer) applyDeepStack();
-                if (isTelescopeMode && zoom > 1.5) applyAutoDarkSurround();
-                if (isHdr) applyHdrBoost();
-                if (activeColor !== 'none') applyColorOverlay();
+                if (isQualityMode && isSurfaceEnhance && detectedObject !== 'none') {
+                    applySurfaceEnhancementDownscaled();
+                }
+                if (isFalseColor) {
+                    applyFalseColorDownscaled();
+                }
+                if (isTelescopeMode && zoom > 1.2) {
+                    applySmartDarkSurround();
+                }
                 if (vignetteAmount > 0) applyVignette();
                 if (leakAmount > 0) applyLightLeak();
-                if (grain > 0) applyGrain();
                 if (isGrid) drawGrid();
-
-                updateObjectBadge();
             }
 
             function buildCSSFilter() {
                 let f = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) `;
-                
+
                 if (exposure !== 0) f += `brightness(${100 + exposure * 0.5}%) `;
                 if (gamma !== 100) {
                     const g = gamma / 100;
@@ -1678,15 +1552,15 @@
                 }
                 if (tint !== 0) f += `hue-rotate(${tint * 0.3}deg) `;
                 if (hue !== 0) f += `hue-rotate(${hue}deg) `;
-                
+
                 if (activeEffect === 'invert') f += `invert(1) `;
                 if (activeEffect === 'grayscale') f += `grayscale(1) `;
                 if (activeEffect === 'sepia') f += `sepia(1) `;
-                if (activeEffect === 'blur') f += `blur(2px) `;
+                if (activeEffect === 'dreamy') f += `blur(1.5px) brightness(105%) `;
                 if (activeEffect === 'sharpen') f += `contrast(140%) `;
-                if (activeEffect === 'contrast') f += `contrast(130%) brightness(105%) `;
+                if (activeEffect === 'punch') f += `contrast(130%) brightness(105%) `;
                 if (activeEffect === 'vivid') f += `saturate(180%) contrast(115%) `;
-                
+
                 if (activeGrade === 'warm') f += `sepia(0.3) saturate(140%) `;
                 if (activeGrade === 'cool') f += `hue-rotate(20deg) saturate(110%) `;
                 if (activeGrade === 'sunset') f += `sepia(0.5) saturate(150%) hue-rotate(-15deg) `;
@@ -1694,99 +1568,170 @@
                 if (activeGrade === 'forest') f += `hue-rotate(80deg) saturate(130%) `;
                 if (activeGrade === 'noir') f += `grayscale(1) contrast(140%) `;
                 if (activeGrade === 'vintage') f += `sepia(0.6) saturate(80%) contrast(110%) `;
-                
+
                 if (focus < 50) f += `blur(${((50 - focus) / 50) * 10}px) `;
                 else f += `contrast(${100 + ((focus - 50) / 50) * 40}%) `;
-                
+
                 if (sharpness > 0) f += `contrast(${100 + sharpness * 0.4}%) `;
                 if (highlights !== 0 || shadows !== 0) f += `brightness(${100 + (highlights - shadows) * 0.2}%) `;
-                
+
+                if (isSurfaceEnhance) f += `contrast(112%) saturate(105%) `;
+
                 return f.trim();
             }
 
             function detectObject() {
-                const w = 120;
-                const h = Math.floor(120 * (canvas.height / canvas.width));
-                detectionCanvas.width = w; detectionCanvas.height = h;
-                detectionCtx.drawImage(canvas, 0, 0, w, h);
                 try {
+                    const w = 100, h = 75;
+                    detectionCanvas.width = w; detectionCanvas.height = h;
+                    detectionCtx.drawImage(canvas, 0, 0, w, h);
                     const d = detectionCtx.getImageData(0, 0, w, h).data;
-                    let maxB = 0, bx = 0, by = 0, totalB = 0, bright = 0;
+
+                    let maxB = 0, bx = 0, by = 0, bright = 0, totalB = 0;
+                    let minX = w, maxX = 0, minY = h, maxY = 0;
+
                     for (let y = 0; y < h; y++) {
                         for (let x = 0; x < w; x++) {
                             const i = (y * w + x) * 4;
-                            const l = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+                            const l = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
                             totalB += l;
-                            if (l > 100) bright++;
+                            if (l > 140) {
+                                bright++;
+                                if (x < minX) minX = x;
+                                if (x > maxX) maxX = x;
+                                if (y < minY) minY = y;
+                                if (y > maxY) maxY = y;
+                            }
                             if (l > maxB) { maxB = l; bx = x; by = y; }
                         }
                     }
-                    if (maxB > 180) {
+
+                    if (maxB > 170 && bright > 10) {
                         objectCenter.x = bx / w;
                         objectCenter.y = by / h;
+
+                        const pad = 4;
+                        const bboxW = Math.max(10, (maxX - minX) + pad * 2);
+                        const bboxH = Math.max(10, (maxY - minY) + pad * 2);
+                        objectBounds = {
+                            x: Math.max(0, (minX - pad) / w),
+                            y: Math.max(0, (minY - pad) / h),
+                            w: Math.min(1, bboxW / w),
+                            h: Math.min(1, bboxH / h)
+                        };
+
                         const ratio = bright / (w * h);
                         const avg = totalB / (w * h);
-                        if (ratio > 0.1 && avg > 120) detectedObject = 'moon';
-                        else if (ratio > 0.02 && avg > 80) detectedObject = 'planet';
-                        else if (maxB > 200) detectedObject = 'star';
-                        else detectedObject = 'object';
+
+                        if (ratio > 0.08 && avg > 110 && Math.abs(bboxW - bboxH) < 30) {
+                            detectedObject = 'moon';
+                        } else if (ratio > 0.015 && avg > 70) {
+                            detectedObject = 'planet';
+                        } else if (maxB > 200 && ratio < 0.015) {
+                            detectedObject = 'star';
+                        } else {
+                            detectedObject = 'object';
+                        }
                     } else {
                         objectCenter = { x: 0.5, y: 0.5 };
+                        objectBounds = { x: 0.4, y: 0.4, w: 0.2, h: 0.2 };
                         detectedObject = 'none';
                     }
                 } catch (e) {}
             }
 
-            function updateObjectBadge() {
-                if (detectedObject === 'none' || !isTelescopeMode) {
+            function applySmartDarkSurround() {
+                const cx = canvas.width * objectCenter.x;
+                const cy = canvas.height * objectCenter.y;
+
+                const objW = canvas.width * objectBounds.w;
+                const objH = canvas.height * objectBounds.h;
+                const objSize = Math.max(objW, objH);
+
+                const innerRadius = Math.max(60, objSize * 0.75);
+                const outerRadius = Math.max(180, objSize * 2.8);
+
+                const gradient = ctx.createRadialGradient(cx, cy, innerRadius, cx, cy, outerRadius);
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(0.3, 'rgba(0,0,0,0.2)');
+                gradient.addColorStop(0.6, 'rgba(0,0,0,0.78)');
+                gradient.addColorStop(1, 'rgba(0,0,0,0.99)');
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (detectedObject !== 'none') {
+                    const names = {
+                        moon: '🌕 MOON DETECTED',
+                        planet: '🪐 PLANET DETECTED',
+                        star: '⭐ STAR DETECTED',
+                        object: '🔭 OBJECT LOCKED'
+                    };
+                    objectName.textContent = names[detectedObject];
+                    objectBadge.classList.add('show');
+                } else {
                     objectBadge.classList.remove('show');
-                    return;
                 }
-                const names = {
-                    moon: '🌕 Moon Detected',
-                    planet: '🪐 Planet Detected',
-                    star: '⭐ Star Detected',
-                    object: '🔭 Object Locked'
-                };
-                objectName.textContent = names[detectedObject] || 'Locked';
-                objectBadge.classList.add('show');
             }
 
-            function applySurfaceEnhancement() {
-                const strength = 0.4;
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            function applySurfaceEnhancementDownscaled() {
+                const w = processCanvas.width;
+                const h = processCanvas.height;
+
+                processCtx.drawImage(canvas, 0, 0, w, h);
+                const imgData = processCtx.getImageData(0, 0, w, h);
                 const data = imgData.data;
-                const w = canvas.width, h = canvas.height;
+                const copy = new Uint8ClampedArray(data);
+                const strength = surfaceStrength / 100;
+
                 for (let y = 1; y < h - 1; y++) {
                     for (let x = 1; x < w - 1; x++) {
                         const idx = (y * w + x) * 4;
                         const rIdx = (y * w + (x+1)) * 4;
                         const dIdx = ((y+1) * w + x) * 4;
-                        const edgeX = Math.abs(data[idx] - data[rIdx]);
-                        const edgeY = Math.abs(data[idx] - data[dIdx]);
-                        if (edgeX > 15 || edgeY > 15) {
-                            for (let c = 0; c < 3; c++) {
-                                const cur = data[idx + c];
-                                const nr = data[rIdx + c];
-                                const nb = data[dIdx + c];
-                                data[idx + c] = Math.min(255, Math.max(0, cur + (cur - (nr + nb) / 2) * strength));
+
+                        for (let c = 0; c < 3; c++) {
+                            const cur = copy[idx + c];
+                            const nr = copy[rIdx + c];
+                            const nb = copy[dIdx + c];
+                            const edge = Math.abs(cur - nr) + Math.abs(cur - nb);
+
+                            if (edge > 12) {
+                                const sharpened = cur + (cur - (nr + nb) / 2) * strength;
+                                data[idx + c] = Math.min(255, Math.max(0, sharpened));
                             }
                         }
                     }
                 }
-                ctx.putImageData(imgData, 0, 0);
+
+                processCtx.putImageData(imgData, 0, 0);
+                ctx.save();
+                ctx.globalAlpha = 0.85;
+                ctx.globalCompositeOperation = 'overlay';
+                ctx.drawImage(processCanvas, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
             }
 
-            function applyFalseColor() {
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            function applyFalseColorDownscaled() {
+                const w = processCanvas.width;
+                const h = processCanvas.height;
+
+                processCtx.drawImage(canvas, 0, 0, w, h);
+                const imgData = processCtx.getImageData(0, 0, w, h);
                 const data = imgData.data;
+
                 for (let i = 0; i < data.length; i += 4) {
                     const lum = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-                    const h = (1 - lum / 255) * 240;
-                    const [r, g, b] = hslToRgb(h / 360, 0.9, 0.5);
+                    const hue = (1 - lum / 255) * 240;
+                    const [r, g, b] = hslToRgb(hue / 360, 0.9, 0.5);
                     data[i] = r; data[i+1] = g; data[i+2] = b;
                 }
-                ctx.putImageData(imgData, 0, 0);
+
+                processCtx.putImageData(imgData, 0, 0);
+                ctx.save();
+                ctx.globalAlpha = 0.9;
+                ctx.drawImage(processCanvas, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
             }
 
             function hslToRgb(h, s, l) {
@@ -1794,7 +1739,8 @@
                 if (s === 0) { r = g = b = l; }
                 else {
                     const hue2rgb = (p, q, t) => {
-                        if (t < 0) t += 1; if (t > 1) t -= 1;
+                        if (t < 0) t += 1;
+                        if (t > 1) t -= 1;
                         if (t < 1/6) return p + (q - p) * 6 * t;
                         if (t < 1/2) return q;
                         if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
@@ -1807,59 +1753,6 @@
                     b = hue2rgb(p, q, h - 1/3);
                 }
                 return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-            }
-
-            function applyDeepStack() {
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imgData.data;
-                const len = data.length;
-                if (stackCount === 0) {
-                    for (let i = 0; i < len; i++) stackBuffer[i] = data[i];
-                    stackCount = 1;
-                } else {
-                    const alpha = 1 / Math.min(stackCount + 1, 12);
-                    for (let i = 0; i < len; i++) {
-                        stackBuffer[i] = stackBuffer[i] * (1 - alpha) + data[i] * alpha;
-                        data[i] = stackBuffer[i];
-                    }
-                    stackCount++;
-                }
-                ctx.putImageData(imgData, 0, 0);
-            }
-
-            function applyAutoDarkSurround() {
-                const cx = canvas.width * objectCenter.x;
-                const cy = canvas.height * objectCenter.y;
-                const maxR = Math.min(canvas.width, canvas.height);
-                const r = maxR * (0.5 / Math.sqrt(Math.min(zoom, 50)));
-                const gradient = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 2.0);
-                gradient.addColorStop(0, 'rgba(0,0,0,0)');
-                gradient.addColorStop(0.3, 'rgba(0,0,0,0.15)');
-                gradient.addColorStop(0.6, 'rgba(0,0,0,0.75)');
-                gradient.addColorStop(1, 'rgba(0,0,0,0.99)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            function applyHdrBoost() {
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const d = imgData.data;
-                for (let i = 0; i < d.length; i += 4) {
-                    const avg = (d[i] + d[i+1] + d[i+2]) / 3;
-                    if (avg < 50) { d[i] = Math.min(255, d[i] * 1.5); d[i+1] = Math.min(255, d[i+1] * 1.5); d[i+2] = Math.min(255, d[i+2] * 1.5); }
-                    else if (avg > 200) { d[i] *= 0.85; d[i+1] *= 0.85; d[i+2] *= 0.85; }
-                }
-                ctx.putImageData(imgData, 0, 0);
-            }
-
-            function applyColorOverlay() {
-                const m = activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
-                if (!m) return;
-                ctx.save();
-                ctx.globalCompositeOperation = 'overlay';
-                ctx.fillStyle = `rgba(${m[1]}, ${m[2]}, ${m[3]}, ${colorOpacity / 100})`;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.restore();
             }
 
             function applyVignette() {
@@ -1876,8 +1769,8 @@
             function applyLightLeak() {
                 const o = leakAmount / 100;
                 const g = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
-                g.addColorStop(0, `rgba(255, 180, 100, ${o * 0.6})`);
-                g.addColorStop(0.5, `rgba(255, 100, 200, ${o * 0.3})`);
+                g.addColorStop(0, `rgba(255, 180, 100, ${o * 0.5})`);
+                g.addColorStop(0.5, `rgba(255, 100, 200, ${o * 0.25})`);
                 g.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.save();
                 ctx.globalCompositeOperation = 'screen';
@@ -1886,37 +1779,24 @@
                 ctx.restore();
             }
 
-            function applyGrain() {
-                const intensity = grain / 100;
-                const noiseData = new ImageData(canvas.width, canvas.height);
-                const d = noiseData.data;
-                for (let i = 0; i < d.length; i += 4) {
-                    const n = (Math.random() - 0.5) * 255 * intensity;
-                    d[i] = d[i+1] = d[i+2] = Math.max(0, Math.min(255, 128 + n));
-                    d[i+3] = intensity * 30;
-                }
-                const tempC = document.createElement('canvas');
-                tempC.width = canvas.width; tempC.height = canvas.height;
-                tempC.getContext('2d').putImageData(noiseData, 0, 0);
-                ctx.save();
-                ctx.globalCompositeOperation = 'overlay';
-                ctx.globalAlpha = 0.5;
-                ctx.drawImage(tempC, 0, 0);
-                ctx.restore();
-            }
-
             function drawGrid() {
                 ctx.save();
                 ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
                 ctx.lineWidth = 1;
                 const step = 60;
-                for (let x = step; x < canvas.width; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
-                for (let y = step; y < canvas.height; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+                for (let x = step; x < canvas.width; x += step) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+                }
+                for (let y = step; y < canvas.height; y += step) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+                }
                 ctx.strokeStyle = 'rgba(255, 0, 127, 0.6)';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(canvas.width/2 - 25, canvas.height/2); ctx.lineTo(canvas.width/2 + 25, canvas.height/2);
-                ctx.moveTo(canvas.width/2, canvas.height/2 - 25); ctx.lineTo(canvas.width/2, canvas.height/2 + 25);
+                ctx.moveTo(canvas.width/2 - 25, canvas.height/2);
+                ctx.lineTo(canvas.width/2 + 25, canvas.height/2);
+                ctx.moveTo(canvas.width/2, canvas.height/2 - 25);
+                ctx.lineTo(canvas.width/2, canvas.height/2 + 25);
                 ctx.stroke();
                 ctx.restore();
             }
@@ -1939,8 +1819,8 @@
                     a.href = URL.createObjectURL(b);
                     a.click();
                     URL.revokeObjectURL(a.href);
-                    showToast('📸 Captured!');
-                }, 'image/png');
+                    showToast('📸 High Quality Captured!');
+                }, 'image/png', 1.0);
             }
 
             function toggleRecording() {
@@ -1975,7 +1855,7 @@
                 t.className = 'toast';
                 t.textContent = msg;
                 document.body.appendChild(t);
-                setTimeout(() => t.remove(), 2500);
+                setTimeout(() => t.remove(), 2200);
             }
 
             window.showToast = showToast;
@@ -1991,17 +1871,8 @@
             if (userLat === null) {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            userLat = pos.coords.latitude;
-                            userLng = pos.coords.longitude;
-                            fetchSkyData();
-                        },
-                        () => {
-                            fetch('https://ipapi.co/json/').then(r => r.json()).then(d => {
-                                userLat = d.latitude; userLng = d.longitude;
-                                fetchSkyData();
-                            }).catch(() => {});
-                        },
+                        (pos) => { userLat = pos.coords.latitude; userLng = pos.coords.longitude; fetchSkyData(); },
+                        () => { fetch('https://ipapi.co/json/').then(r => r.json()).then(d => { userLat = d.latitude; userLng = d.longitude; fetchSkyData(); }).catch(() => {}); },
                         { timeout: 8000 }
                     );
                 }
@@ -2035,17 +1906,6 @@
                     document.getElementById('viewQuality').textContent = q;
                 }
             } catch (e) {}
-            try {
-                const r = await fetch('http://api.open-notify.org/iss-now.json');
-                const d = await r.json();
-                if (d.iss_position) {
-                    document.getElementById('issLat').textContent = parseFloat(d.iss_position.latitude).toFixed(4);
-                    document.getElementById('issLng').textContent = parseFloat(d.iss_position.longitude).toFixed(4);
-                }
-            } catch (e) {
-                document.getElementById('issLat').textContent = 'N/A';
-                document.getElementById('issLng').textContent = 'N/A';
-            }
         }
 
         function updateMoonPhase() {
@@ -2088,18 +1948,21 @@
                 const v = p.months.includes(mi);
                 const r = document.createElement('div');
                 r.className = 'data-row';
-                r.innerHTML = `<span>${p.name} <small style="opacity:0.5">(Mag: ${p.mag})</small></span><span style="color:${v ? '#00ff64' : '#ff6464'}">${v ? '● VISIBLE' : '○ HIDDEN'}</span>`;
+                r.innerHTML = `<span>${p.name} (${p.mag})</span><span style="color:${v ? '#00ff64' : '#ff6464'}">${v ? '● VISIBLE' : '○ HIDDEN'}</span>`;
                 c.appendChild(r);
             });
         }
 
         function updateStars() {
             const stars = [
-                { name: 'Sirius', mag: '-1.46' }, { name: 'Canopus', mag: '-0.74' },
-                { name: 'Arcturus', mag: '-0.05' }, { name: 'Vega', mag: '0.03' },
-                { name: 'Capella', mag: '0.08' }, { name: 'Rigel', mag: '0.13' },
-                { name: 'Procyon', mag: '0.34' }, { name: 'Betelgeuse', mag: '0.50' },
-                { name: 'Altair', mag: '0.77' }, { name: 'Aldebaran', mag: '0.85' }
+                { name: 'Sirius', mag: '-1.46' },
+                { name: 'Canopus', mag: '-0.74' },
+                { name: 'Arcturus', mag: '-0.05' },
+                { name: 'Vega', mag: '0.03' },
+                { name: 'Capella', mag: '0.08' },
+                { name: 'Rigel', mag: '0.13' },
+                { name: 'Procyon', mag: '0.34' },
+                { name: 'Betelgeuse', mag: '0.50' }
             ];
             const c = document.getElementById('starList');
             c.innerHTML = '';
