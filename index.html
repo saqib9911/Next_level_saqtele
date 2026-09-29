@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#050510">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Saqskyscoop Ultra – Hybrid 4K Telescope</title>
+    <title>Saqskyscoop Ultra – 4K Telescope</title>
     <meta property="og:title" content="Saqskyscoop Ultra – 4K Telescope">
     <meta property="og:description" content="Auto-detects Moon & Planets. Hybrid Quality Mode. Zero Lag.">
     <meta property="og:type" content="website">
@@ -239,7 +239,6 @@
             </div>
         </div>
     </div>
-    <!-- LENS SHEET -->
     <div class="sheet" id="lensSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-camera-retro"></i> HIGH QUALITY LENSES</h2><button class="close-sheet" data-sheet="lensSheet">✕</button></div>
@@ -256,7 +255,6 @@
             <div class="lens-card" data-lens="cinemabars"><i class="fas fa-film"></i><span>Cinema</span></div>
         </div>
     </div>
-    <!-- FX SHEET -->
     <div class="sheet" id="fxSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-palette"></i> COLORS & FILTERS</h2><button class="close-sheet" data-sheet="fxSheet">✕</button></div>
@@ -301,7 +299,6 @@
         <div class="fx-slider-row"><label>Vignette</label><input type="range" id="vignetteSlider" min="0" max="100" value="0"><span class="val" id="vignetteVal">0%</span></div>
         <div class="fx-slider-row"><label>Light Leak</label><input type="range" id="leakSlider" min="0" max="100" value="0"><span class="val" id="leakVal">0%</span></div>
     </div>
-    <!-- PRO SHEET -->
     <div class="sheet" id="proSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-sliders-h"></i> PRO CONTROLS</h2><button class="close-sheet" data-sheet="proSheet">✕</button></div>
@@ -318,7 +315,6 @@
             <div class="pro-item"><div class="pro-label"><span>Purple Noise Fix</span><span id="noiseVal">0</span></div><input type="range" id="noiseSlider" min="0" max="100" value="0"></div>
         </div>
     </div>
-    <!-- SKY SHEET -->
     <div class="sheet" id="skySheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-satellite-dish"></i> LIVE SKY DATA</h2><button class="close-sheet" data-sheet="skySheet">✕</button></div>
@@ -349,7 +345,7 @@
         <div class="modal-card">
             <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:25px"></i>
             <h2>SAQSKYSCOOP ULTRA</h2>
-            <p>Hybrid 4K telescope with auto-detection, surface details, HDR, Stack, and cinematic optics.</p>
+            <p>Hybrid 4K telescope with Safe Lock (auto-save settings), auto-detection, surface details, HDR, Stack, and cinematic optics.</p>
             <button class="btn-primary" id="allowCamBtn">Initialize Camera</button>
         </div>
     </div>
@@ -361,63 +357,45 @@
         </div>
     </div>
     <script>
-    // ======================== INSTALL POPUP (FIXED - ALWAYS SHOWS) ========================
+    // ======================== INSTALL POPUP ========================
     (function(){
         const popup=document.getElementById('installPopup');
         const yesBtn=document.getElementById('installYes');
         const noBtn=document.getElementById('installNo');
         let deferredPrompt=null;
         let popupShown=false;
-
-        // ⚡ FIXED: Only check installed status, NOT dismissed (session-based instead)
-        const installed = localStorage.getItem('saqskyscoop-installed') === 'true';
-        const sessionShown = sessionStorage.getItem('saqskyscoop-popup-shown') === 'true';
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
+        const installed=localStorage.getItem('saqskyscoop-installed')==='true';
+        const sessionShown=sessionStorage.getItem('saqskyscoop-popup-shown')==='true';
+        const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
         function showPopup(){
-            if(popupShown) return;
-            if(installed || isStandalone || sessionShown) return;
-            popupShown = true;
+            if(popupShown)return;
+            if(installed||isStandalone||sessionShown)return;
+            popupShown=true;
             sessionStorage.setItem('saqskyscoop-popup-shown','true');
             popup.classList.add('show');
         }
-        function hidePopup(permanent){
+        function hidePopup(p){
             popup.classList.remove('show');
-            if(permanent) localStorage.setItem('saqskyscoop-installed','true');
+            if(p)localStorage.setItem('saqskyscoop-installed','true');
         }
-
-        window.addEventListener('beforeinstallprompt', (e)=>{
-            e.preventDefault();
-            deferredPrompt = e;
-            // Show immediately on this event
-            setTimeout(showPopup, 300);
-        });
-
-        // ⚡ FIXED: Show popup after 800ms even if beforeinstallprompt doesn't fire
-        setTimeout(showPopup, 800);
-
-        yesBtn.addEventListener('click', async ()=>{
+        window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;setTimeout(showPopup,300)});
+        setTimeout(showPopup,800);
+        yesBtn.addEventListener('click',async()=>{
             if(deferredPrompt){
                 try{
                     deferredPrompt.prompt();
-                    const choice = await deferredPrompt.userChoice;
-                    if(choice.outcome === 'accepted') hidePopup(true);
-                    else hidePopup(false);
-                    deferredPrompt = null;
-                }catch(e){ hidePopup(false); }
-            } else {
-                const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-                const isFF = /firefox/i.test(navigator.userAgent);
-                let msg = '';
-                if(isIOS) msg = '📱 iOS Instructions:\n\n1. Tap the Share button (□↑)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"';
-                else if(isFF) msg = '📱 Firefox:\n\n1. Tap menu (⋮)\n2. Tap "Install"';
-                else msg = '📱 Browser Menu:\n\n1. Tap the menu (⋮)\n2. Tap "Install app" or "Add to Home Screen"';
-                alert(msg);
+                    const c=await deferredPrompt.userChoice;
+                    if(c.outcome==='accepted')hidePopup(true);else hidePopup(false);
+                    deferredPrompt=null;
+                }catch(e){hidePopup(false)}
+            }else{
+                const isIOS=/iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+                alert(isIOS?'📱 iOS: Tap Share button (□↑) → "Add to Home Screen"':'📱 Browser Menu (⋮) → "Install app"');
                 hidePopup(false);
             }
         });
-        noBtn.addEventListener('click', ()=> hidePopup(false));
-        window.addEventListener('appinstalled', ()=> hidePopup(true));
+        noBtn.addEventListener('click',()=>hidePopup(false));
+        window.addEventListener('appinstalled',()=>hidePopup(true));
     })();
 
     // ======================== PARTICLES ========================
@@ -434,7 +412,7 @@
         el.addEventListener('pointerdown',function(e){const rect=this.getBoundingClientRect();const ripple=document.createElement('span');ripple.className='ripple';const size=Math.max(rect.width,rect.height);ripple.style.width=ripple.style.height=`${size}px`;ripple.style.left=`${e.clientX-rect.left-size/2}px`;ripple.style.top=`${e.clientY-rect.top-size/2}px`;this.style.position='relative';this.style.overflow='hidden';this.appendChild(ripple);setTimeout(()=>ripple.remove(),500);triggerShower(e.clientX,e.clientY)})
     });
 
-    // ======================== TELESCOPE ENGINE PRO ========================
+    // ======================== TELESCOPE ENGINE ========================
     (()=>{
         const video=document.getElementById('video');const finderVideo=document.getElementById('finderVideo');
         const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d',{alpha:false});
@@ -486,11 +464,14 @@
         let exposure=0,gamma=100,temperature=0,tint=0,sharpness=0,highlights=0,shadows=0,saturation=100;
         let surfaceStrength=50,highlightRecovery=0,purpleNoiseFix=0;
         let isTelescopeMode=false,isGrid=false,isNight=false,isRecording=false,isTransparent=false;
-        let isSurfaceEnhance=false,isFalseColor=false,isQualityMode=false,isZebra=false,isExposureLocked=false,isHistogram=false;
+        let isSurfaceEnhance=false,isFalseColor=false,isQualityMode=false,isZebra=false,isHistogram=false;
         let isStack=false,isHdr=false,isCinema=false;
+        // ✅ SAFE LOCK state
+        let isExposureLocked=false;
+        let savedExposureSettings=null;
+        
         let mediaRecorder=null;let recordedChunks=[];
         let stackBuffer=null;let stackCount=0;
-        let hdrBuffer=null;
         let objectCenter={x:.5,y:.5};let objectBounds={x:.4,y:.4,w:.2,h:.2};
         let frameCounter=0;let detectedObject='none';let objectSizePct=0;
         const detectionCanvas=document.createElement('canvas');const detectionCtx=detectionCanvas.getContext('2d',{willReadFrequently:true});
@@ -516,6 +497,7 @@
         function init(){bindEvents();permModal.classList.remove('hidden');loadSkyData();setInterval(loadSkyData,120000);updateZoomUI()}
         function closeAllSheets(){lensSheet.classList.remove('open');fxSheet.classList.remove('open');proSheet.classList.remove('open');skySheet.classList.remove('open')}
         function openSheet(s){closeAllSheets();s.classList.add('open')}
+        
         function bindEvents(){
             allowCamBtn.addEventListener('click',startCamera);
             closeSheetBtns.forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.sheet).classList.remove('open')));
@@ -556,10 +538,88 @@
             noiseSlider.addEventListener('input',()=>{purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=purpleNoiseFix;markFilterDirty()});
             
             telescopeBtn.addEventListener('click',()=>{isTelescopeMode=!isTelescopeMode;telescopeBtn.classList.toggle('active-btn',isTelescopeMode);showToast(isTelescopeMode?'🔭 Telescope: ON':'Telescope: OFF')});
+            
+            // ✅ SAFE LOCK — Auto-save + Auto-revert + No conflict
             lockBtn.addEventListener('click',async()=>{
-                isExposureLocked=!isExposureLocked;lockBtn.classList.toggle('locked',isExposureLocked);
-                try{const track=stream&&stream.getVideoTracks()[0];if(track){const caps=track.getCapabilities?track.getCapabilities():{};if(caps.exposureMode){await track.applyConstraints({advanced:[{exposureMode:isExposureLocked?'manual':'continuous'}]})}}}catch(e){}
-                showToast(isExposureLocked?'🔒 Exposure Locked':'🔓 Auto Exposure')});
+                const track=stream&&stream.getVideoTracks()[0];
+                
+                if(!isExposureLocked){
+                    // ⚡ LOCKING - Save current settings and apply manual with same values
+                    try{
+                        if(track){
+                            const caps=track.getCapabilities?track.getCapabilities():{};
+                            const cur=track.getSettings?track.getSettings():{};
+                            
+                            // Save current exposure settings
+                            savedExposureSettings={
+                                exposureTime:cur.exposureTime,
+                                iso:cur.iso,
+                                exposureCompensation:cur.exposureCompensation,
+                                colorTemperature:cur.colorTemperature
+                            };
+                            
+                            if(caps.exposureMode&&caps.exposureMode.includes('manual')){
+                                const adv={exposureMode:'manual'};
+                                // Apply SAME exposureTime (not default)
+                                if(caps.exposureTime&&cur.exposureTime!==undefined){
+                                    const min=caps.exposureTime.min||100;
+                                    const max=caps.exposureTime.max||10000;
+                                    adv.exposureTime=Math.max(min,Math.min(max,cur.exposureTime));
+                                }
+                                // Apply SAME ISO
+                                if(caps.iso&&cur.iso!==undefined){
+                                    const min=caps.iso.min||100;
+                                    const max=caps.iso.max||3200;
+                                    adv.iso=Math.max(min,Math.min(max,cur.iso));
+                                }
+                                // Apply SAME exposureCompensation
+                                if(caps.exposureCompensation&&cur.exposureCompensation!==undefined){
+                                    adv.exposureCompensation=cur.exposureCompensation;
+                                }
+                                await track.applyConstraints({advanced:[adv]});
+                            }
+                        }
+                    }catch(e){console.log('Safe Lock apply error:',e)}
+                    
+                    isExposureLocked=true;
+                    lockBtn.classList.add('locked');
+                    showToast('🔒 Safe Lock: ON — Settings Saved');
+                    
+                    // ⚡ Auto-revert if video goes dark within 1 second
+                    setTimeout(async()=>{
+                        if(!isExposureLocked)return;
+                        if(!track)return;
+                        try{
+                            const bw=40,bh=30;
+                            detectionCanvas.width=bw;detectionCanvas.height=bh;
+                            detectionCtx.drawImage(video,0,0,bw,bh);
+                            const sd=detectionCtx.getImageData(0,0,bw,bh).data;
+                            let sum=0;
+                            for(let i=0;i<sd.length;i+=4)sum+=(sd[i]+sd[i+1]+sd[i+2])/3;
+                            const avg=sum/(bw*bh);
+                            if(avg<15){
+                                // Video went dark — auto revert
+                                try{await track.applyConstraints({advanced:[{exposureMode:'continuous'}]})}catch(e){}
+                                isExposureLocked=false;
+                                lockBtn.classList.remove('locked');
+                                showToast('⚠️ Auto-unlock: Exposure safe');
+                            }
+                        }catch(e){}
+                    },1000);
+                }else{
+                    // ⚡ UNLOCKING — Restore
+                    try{
+                        if(track){
+                            await track.applyConstraints({advanced:[{exposureMode:'continuous'}]});
+                        }
+                    }catch(e){console.log('Unlock error:',e)}
+                    savedExposureSettings=null;
+                    isExposureLocked=false;
+                    lockBtn.classList.remove('locked');
+                    showToast('🔓 Auto Exposure Restored');
+                }
+            });
+            
             surfaceBtn.addEventListener('click',()=>{isSurfaceEnhance=!isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',isSurfaceEnhance);setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'Surface Enhancement');showToast(isSurfaceEnhance?'🏔️ Surface: ON':'Surface: OFF')});
             falseColorBtn.addEventListener('click',()=>{isFalseColor=!isFalseColor;falseColorBtn.classList.toggle('active-btn',isFalseColor);setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'False Color');showToast(isFalseColor?'🌈 False Color: ON':'False Color: OFF')});
             gridBtn.addEventListener('click',()=>{isGrid=!isGrid;gridBtn.classList.toggle('active-btn',isGrid)});
@@ -567,7 +627,6 @@
             transparentBtn.addEventListener('click',()=>{isTransparent=!isTransparent;transparentBtn.classList.toggle('active',isTransparent);document.body.classList.toggle('ghost-mode',isTransparent);showToast(isTransparent?'👻 Ghost UI: ON':'Ghost: OFF')});
             zebraBtn.addEventListener('click',()=>{isZebra=!isZebra;zebraBtn.classList.toggle('active-btn',isZebra);zebraCanvas.style.display=isZebra?'block':'none';showToast(isZebra?'⚡ Zebra: ON':'Zebra: OFF')});
             
-            // ✅ STACK BUTTON (DEEP STACK - frame averaging)
             stackBtn.addEventListener('click',()=>{
                 isStack=!isStack;stackBtn.classList.toggle('active-btn',isStack);
                 if(isStack){
@@ -581,14 +640,12 @@
                 setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'Deep Stack');
             });
             
-            // ✅ HDR BUTTON
             hdrBtn.addEventListener('click',()=>{
                 isHdr=!isHdr;hdrBtn.classList.toggle('active-btn',isHdr);
                 showToast(isHdr?'✨ HDR: ON':'HDR: OFF');
                 setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'HDR Enhanced');
             });
             
-            // ✅ CINEMA BUTTON (Cinema bars + lens flare quick toggle)
             cinemaBtn.addEventListener('click',()=>{
                 isCinema=!isCinema;cinemaBtn.classList.toggle('active-btn',isCinema);
                 const bars=document.getElementById('cinemaBars');
@@ -611,6 +668,7 @@
             let lastTap=0;
             cameraView.addEventListener('touchend',(e)=>{if(e.touches.length===0){const now=Date.now();if(now-lastTap<300){if(zoom<5)zoom=10;else if(zoom<20)zoom=50;else if(zoom<100)zoom=500;else zoom=1;updateZoomUI()}lastTap=now}});
         }
+        
         function applyPreset(name){
             const p=PRESETS[name]||PRESETS.normal;
             brightness=p.bright;contrast=p.cont;saturation=p.sat;focus=p.focus;
@@ -631,15 +689,23 @@
             }
             showToast(`✨ ${name.toUpperCase()} Applied`);
         }
+        
         function resetAll(){
             closeAllSheets();
+            // Reset Safe Lock first
+            if(isExposureLocked&&stream){
+                const track=stream.getVideoTracks()[0];
+                if(track)track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});
+            }
+            isExposureLocked=false;savedExposureSettings=null;
+            
             zoom=1;brightness=100;contrast=100;focus=50;
             exposure=0;gamma=100;temperature=0;tint=0;sharpness=0;highlights=0;shadows=0;saturation=100;
             colorOpacity=25;vignetteAmount=0;leakAmount=0;
             surfaceStrength=50;highlightRecovery=0;purpleNoiseFix=0;
             activeColor='none';activeEffect='none';activeGrade='none';activeLens='none';
             isTelescopeMode=false;isGrid=false;isNight=false;isTransparent=false;
-            isSurfaceEnhance=false;isFalseColor=false;isZebra=false;isExposureLocked=false;isHistogram=false;
+            isSurfaceEnhance=false;isFalseColor=false;isZebra=false;isHistogram=false;
             isStack=false;isHdr=false;isCinema=false;
             stackBuffer=null;stackCount=0;
             zoomSlider.value=1;brightSlider.value=100;contSlider.value=100;focusSlider.value=50;
@@ -665,6 +731,7 @@
             objectBadge.classList.remove('show');
             setQualityMode(false);markFilterDirty();showToast('✅ Reset Complete');
         }
+        
         async function startCamera(){
             permModal.classList.add('hidden');loadingModal.classList.remove('hidden');
             const timeoutId=setTimeout(()=>{loadingModal.classList.add('hidden');alert('Camera timeout. Check permissions.')},10000);
@@ -679,7 +746,9 @@
                     loadingModal.classList.add('hidden');requestAnimationFrame(renderLoop);showToast('✅ 4K Sensor Ready')};
             }catch(err){clearTimeout(timeoutId);loadingModal.classList.add('hidden');alert('Camera Error: '+err.message)}
         }
+        
         function renderLoop(){if(video.readyState>=video.HAVE_ENOUGH_DATA)renderFrame();requestAnimationFrame(renderLoop)}
+        
         function renderFrame(){
             const vw=video.videoWidth;const vh=video.videoHeight;if(!vw||!vh)return;
             const baseCrop=4.0;const totalZoom=zoom*baseCrop;
@@ -696,19 +765,12 @@
             ctx.filter=cachedFilter;
             ctx.drawImage(video,srcX,srcY,srcW,srcH,0,0,destW,destH);
             ctx.filter='none';
-            
-            // ✅ DEEP STACK (downscaled frame averaging)
             if(isStack&&stackBuffer){applyDeepStack()}
-            // ✅ HDR (highlight + shadow boost)
             if(isHdr){applyHdrBoost()}
-            // Highlight Recovery
             if(highlightRecovery>0){applyHighlightRecovery()}
-            // Purple noise fix
             if(purpleNoiseFix>0){applyPurpleNoiseFix()}
-            // Quality mode surface
             if(isQualityMode&&isSurfaceEnhance&&detectedObject!=='none'){applySurfaceEnhancementDownscaled()}
             if(isFalseColor){applyFalseColorDownscaled()}
-            // Smart dark surround
             if(isTelescopeMode&&zoom>1.2){applySmartDarkSurround()}
             if(vignetteAmount>0)applyVignette();
             if(leakAmount>0)applyLightLeak();
@@ -716,6 +778,7 @@
             if(isZebra)drawZebra();
             if(isHistogram)drawHistogram();
         }
+        
         function buildCSSFilter(){
             let f=`brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) `;
             if(exposure!==0)f+=`brightness(${100+exposure*0.5}%) `;
@@ -743,7 +806,7 @@
             if(isSurfaceEnhance)f+=`contrast(112%) saturate(105%) `;
             return f.trim();
         }
-        // ✅ DEEP STACK - frame averaging on downscaled canvas
+        
         function applyDeepStack(){
             try{
                 const w=processCanvas.width;const h=processCanvas.height;
@@ -763,7 +826,7 @@
                 ctx.save();ctx.globalAlpha=0.9;ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
             }catch(e){}
         }
-        // ✅ HDR - boost shadows, compress highlights
+        
         function applyHdrBoost(){
             const w=processCanvas.width;const h=processCanvas.height;
             processCtx.drawImage(canvas,0,0,w,h);
@@ -777,6 +840,7 @@
             processCtx.putImageData(imgData,0,0);
             ctx.save();ctx.globalAlpha=0.7;ctx.globalCompositeOperation='overlay';ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
         }
+        
         function applyHighlightRecovery(){
             const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
             const data=imgData.data;const strength=highlightRecovery/100;
@@ -789,6 +853,7 @@
             }
             ctx.putImageData(imgData,0,0);
         }
+        
         function applyPurpleNoiseFix(){
             const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
             const data=imgData.data;const strength=purpleNoiseFix/100;
@@ -801,6 +866,7 @@
             }
             ctx.putImageData(imgData,0,0);
         }
+        
         function detectObject(){
             try{
                 const w=100,h=75;
@@ -828,6 +894,7 @@
                 } else {objectCenter={x:.5,y:.5};objectBounds={x:.4,y:.4,w:.2,h:.2};objectSizePct=0;detectedObject='none'}
             }catch(e){}
         }
+        
         function applySmartDarkSurround(){
             if(objectSizePct>40){objectBadge.classList.remove('show');statusText.textContent='OBJECT TOO BIG';setTimeout(()=>{statusText.textContent=isQualityMode?'QUALITY MODE':'4K FAST'},1500);return}
             const cx=canvas.width*objectCenter.x;const cy=canvas.height*objectCenter.y;
@@ -845,6 +912,7 @@
                 objectName.textContent=names[detectedObject];objectBadge.classList.add('show');
             } else objectBadge.classList.remove('show');
         }
+        
         function applySurfaceEnhancementDownscaled(){
             const w=processCanvas.width;const h=processCanvas.height;
             processCtx.drawImage(canvas,0,0,w,h);
@@ -861,6 +929,7 @@
             processCtx.putImageData(imgData,0,0);
             ctx.save();ctx.globalAlpha=0.85;ctx.globalCompositeOperation='overlay';ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
         }
+        
         function applyFalseColorDownscaled(){
             const w=processCanvas.width;const h=processCanvas.height;
             processCtx.drawImage(canvas,0,0,w,h);
@@ -873,7 +942,9 @@
             processCtx.putImageData(imgData,0,0);
             ctx.save();ctx.globalAlpha=0.9;ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
         }
+        
         function hslToRgb(h,s,l){let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return[Math.round(r*255),Math.round(g*255),Math.round(b*255)]}
+        
         function applyVignette(){
             const cx=canvas.width/2,cy=canvas.height/2;
             const r=Math.min(canvas.width,canvas.height)*0.7;
@@ -881,6 +952,7 @@
             g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${vignetteAmount/100})`);
             ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
         }
+        
         function applyLightLeak(){
             const o=leakAmount/100;
             const g=ctx.createLinearGradient(0,canvas.height,canvas.width,0);
@@ -889,12 +961,14 @@
             g.addColorStop(1,'rgba(0,0,0,0)');
             ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.restore();
         }
+        
         function drawGrid(){
             ctx.save();ctx.strokeStyle='rgba(0,240,255,0.2)';ctx.lineWidth=1;const step=60;
             for(let x=step;x<canvas.width;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}
             for(let y=step;y<canvas.height;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}
             ctx.restore();
         }
+        
         function drawZebra(){
             const w=160;const h=Math.floor(160*(canvas.height/canvas.width));
             detectionCanvas.width=w;detectionCanvas.height=h;
@@ -919,6 +993,7 @@
             if(blownPct>5){statusBadge.classList.add('warning-mode');statusText.textContent=`⚠ BLOWN ${blownPct.toFixed(0)}%`}
             else{statusBadge.classList.remove('warning-mode');statusText.textContent=isQualityMode?'QUALITY MODE':'4K FAST'}
         }
+        
         function drawHistogram(){
             const w=160;const h=120;
             detectionCanvas.width=w;detectionCanvas.height=h;
@@ -938,6 +1013,7 @@
                 hctx.fillRect(i*barW,histogramCanvas.height-barH,barW-0.5,barH);
             }
         }
+        
         function updateZoomUI(){
             zoomSlider.value=zoom;let d;
             if(zoom<10)d=zoom.toFixed(2);else if(zoom<100)d=zoom.toFixed(1);
@@ -945,11 +1021,13 @@
             else if(zoom<10000)d=(zoom/1000).toFixed(2)+'K';else d=(zoom/1000).toFixed(1)+'K';
             zoomValue.innerHTML=d+'<span class="zoom-unit">x</span>';
         }
+        
         function captureImage(){
             const a=document.createElement('a');
             a.download='saqskyscoop-'+Date.now()+'.png';
             canvas.toBlob(b=>{a.href=URL.createObjectURL(b);a.click();URL.revokeObjectURL(a.href);showToast('📸 High Quality Captured!')},'image/png',1.0);
         }
+        
         function toggleRecording(){
             if(!isRecording){
                 recordedChunks=[];
@@ -970,6 +1048,7 @@
             }
             isRecording=!isRecording;
         }
+        
         function showToast(msg){
             document.querySelectorAll('.toast').forEach(t=>t.remove());
             const t=document.createElement('div');t.className='toast';t.textContent=msg;
