@@ -7,13 +7,23 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Saqskyscoop Ultra – Hybrid 4K Telescope</title>
+
+    <!-- ✅ Open Graph – Telescope Image show hogi -->
     <meta property="og:title" content="Saqskyscoop Ultra – Hybrid 4K Telescope">
     <meta property="og:description" content="Auto-detects Moon & Planets. Hybrid Quality Mode. Zero Lag.">
-    <meta property="og:image" content="https://saqib9911.github.io/Final-optimiEd-telescoop/og-preview.png">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://saqib9911.github.io/Next_level_saqtele/">
+    <meta property="og:image" content="https://placehold.co/1200x630/0c1445/00f0ff?text=Saqskyscoop+Telescope">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:site_name" content="Saqskyscoop">
+
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://saqib9911.github.io/Final-optimiEd-telescoop/og-preview.png">
+    <meta name="twitter:title" content="Saqskyscoop Ultra – Hybrid 4K Telescope">
+    <meta name="twitter:description" content="Auto-detects Moon & Planets. Hybrid Quality Mode. Zero Lag.">
+    <meta name="twitter:image" content="https://placehold.co/1200x630/0c1445/00f0ff?text=Saqskyscoop+Telescope">
+
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -418,7 +428,7 @@
             font-size: 0.72rem; z-index: 2000;
             text-align: center; max-width: 90vw;
         }
-        /* ====================== INSTALL POPUP ====================== */
+        /* ✅ INSTALL POPUP */
         .install-popup {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: linear-gradient(135deg, rgba(0, 240, 255, 0.95), rgba(138, 43, 226, 0.95));
@@ -721,7 +731,7 @@
         </div>
     </div>
 
-    <!-- 📲 INSTALL POPUP -->
+    <!-- ✅ INSTALL POPUP -->
     <div class="install-popup" id="installPopup">
         <div class="install-icon">
             <i class="fas fa-satellite-dish"></i>
@@ -755,7 +765,7 @@
 
     <script>
         // ========================
-        // 📲 INSTALL POPUP LOGIC
+        // ✅ INSTALL POPUP (FIXED – Shows Immediately)
         // ========================
         (function() {
             const popup = document.getElementById('installPopup');
@@ -783,12 +793,14 @@
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                setTimeout(showPopup, 2000);
+                // ✅ Show popup immediately (0.5 sec delay for smooth UI)
+                setTimeout(showPopup, 500);
             });
 
+            // ✅ Fallback: Show popup after 1.5 seconds even if beforeinstallprompt doesn't fire
             setTimeout(() => {
                 if (!popupShown && !dismissed && !isStandalone) showPopup();
-            }, 4000);
+            }, 1500);
 
             yesBtn.addEventListener('click', async () => {
                 if (deferredPrompt) {

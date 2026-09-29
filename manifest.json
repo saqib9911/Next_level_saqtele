@@ -1,7 +1,7 @@
 {
-  "name": "Saqskyscoop – Advanced 4K Digital Telescope",
+  "name": "Saqskyscoop Ultra – Hybrid 4K Telescope",
   "short_name": "Saqskyscoop",
-  "description": "Industrial-grade digital telescope with auto dark surround, real-time surface enhancement, transparent color overlays, Deep Stack astrophotography, and live sky data.",
+  "description": "Hybrid 4K telescope with auto-detection, surface details, and cinematic optics.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -26,33 +26,18 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "Moon Mode",
       "short_name": "Moon",
       "description": "Instantly open telescope in Moon preset",
-      "url": "./index.html?preset=moon",
-      "icons": [
-        {
-          "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNTYiIHI9IjI0MCIgZmlsbD0iIzA1MDUxMCIgc3Ryb2tlPSIjMDBmMGZmIiBzdHJva2Utd2lkdGg9IjgiLz48Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNTYiIHI9IjEwMCIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC45Ii8+PC9zdmc+",
-          "sizes": "512x512",
-          "type": "image/svg+xml"
-        }
-      ]
+      "url": "./index.html?preset=moon"
     },
     {
       "name": "Sky Data",
       "short_name": "Sky",
       "description": "View live sky data",
-      "url": "./index.html?panel=sky",
-      "icons": [
-        {
-          "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNTYiIHI9IjI0MCIgZmlsbD0iIzA1MDUxMCIgc3Ryb2tlPSIjMDBmMGZmIiBzdHJva2Utd2lkdGg9IjgiLz48cGF0aCBkPSJNMjU2IDE1NkExMDAgMTAwIDAgMSAxIDI1NiAzNTZBMTAwIDEwMCAwIDAgMSAyNTYgMTU2WiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBmMGZmIiBzdHJva2Utd2lkdGg9IjEwIi8+PC9zdmc+",
-          "sizes": "512x512",
-          "type": "image/svg+xml"
-        }
-      ]
+      "url": "./index.html?panel=sky"
     }
   ],
   "prefer_related_applications": false

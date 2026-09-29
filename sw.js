@@ -1,19 +1,19 @@
 /* =========================================================
-   Saqskyscoop – Service Worker (v4 – Latest)
-   Handles offline caching, versioning and asset updates
+   Saqskyscoop Ultra – Service Worker (v6)
+   URL: Next_level_saqtele
    ========================================================= */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v6';
 const CACHE_NAME = `saqskyscoop-${CACHE_VERSION}`;
 
-// Assets to cache on install (only local files – no external CDN)
+// Local assets to cache on install
 const PRE_CACHE_ASSETS = [
     './',
     './index.html',
     './manifest.json'
 ];
 
-// External assets (cached at runtime, network-first)
+// External hosts (cached at runtime, network-first)
 const RUNTIME_CACHE_HOSTS = [
     'cdnjs.cloudflare.com',
     'fonts.googleapis.com',
@@ -21,11 +21,12 @@ const RUNTIME_CACHE_HOSTS = [
     'api.sunrise-sunset.org',
     'api.open-meteo.com',
     'api.open-notify.org',
-    'ipapi.co'
+    'ipapi.co',
+    'placehold.co'
 ];
 
 // =========================================================
-// INSTALL: Pre-cache essential local assets
+// INSTALL
 // =========================================================
 self.addEventListener('install', (event) => {
     console.log('[SW] Installing version:', CACHE_VERSION);
@@ -40,7 +41,7 @@ self.addEventListener('install', (event) => {
 });
 
 // =========================================================
-// ACTIVATE: Delete old caches
+// ACTIVATE
 // =========================================================
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activating version:', CACHE_VERSION);
@@ -60,38 +61,33 @@ self.addEventListener('activate', (event) => {
 });
 
 // =========================================================
-// FETCH: Smart caching strategy
-//  - Local assets  → Cache-first (fast)
-//  - External APIs → Network-first (always fresh)
+// FETCH
 // =========================================================
 self.addEventListener('fetch', (event) => {
     const request = event.request;
     const url = new URL(request.url);
 
-    // Skip non-GET requests
     if (request.method !== 'GET') return;
-
-    // Skip browser extension / chrome requests
     if (!url.protocol.startsWith('http')) return;
 
-    // External APIs → Network-first, fallback to cache
+    // External APIs → Network-first
     if (RUNTIME_CACHE_HOSTS.includes(url.hostname)) {
         event.respondWith(networkFirstWithCache(request));
         return;
     }
 
-    // Local assets → Cache-first, fallback to network
+    // Local assets → Cache-first
     if (url.origin === self.location.origin) {
         event.respondWith(cacheFirstWithNetwork(request));
         return;
     }
 
-    // Everything else → Network only
+    // Everything else → Network with cache fallback
     event.respondWith(fetch(request).catch(() => caches.match(request)));
 });
 
 // =========================================================
-// STRATEGY: Cache-first (best for local HTML/CSS/JS)
+// STRATEGY: Cache-first
 // =========================================================
 async function cacheFirstWithNetwork(request) {
     const cache = await caches.open(CACHE_NAME);
@@ -105,7 +101,6 @@ async function cacheFirstWithNetwork(request) {
         }
         return response;
     } catch (err) {
-        // If offline and not cached → show fallback (index.html)
         const fallback = await cache.match('./index.html');
         if (fallback) return fallback;
         throw err;
@@ -113,7 +108,7 @@ async function cacheFirstWithNetwork(request) {
 }
 
 // =========================================================
-// STRATEGY: Network-first (best for live API data)
+// STRATEGY: Network-first
 // =========================================================
 async function networkFirstWithCache(request) {
     const cache = await caches.open(CACHE_NAME);
@@ -126,7 +121,6 @@ async function networkFirstWithCache(request) {
     } catch (err) {
         const cached = await cache.match(request);
         if (cached) return cached;
-        // Return empty JSON for API failures so app doesn't break
         return new Response(JSON.stringify({ error: 'offline' }), {
             status: 503,
             headers: { 'Content-Type': 'application/json' }
@@ -135,7 +129,7 @@ async function networkFirstWithCache(request) {
 }
 
 // =========================================================
-// MESSAGE: Allow app to trigger skipWaiting
+// MESSAGES
 // =========================================================
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
