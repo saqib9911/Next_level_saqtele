@@ -60,70 +60,86 @@
         #video { display: none; }
         #canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* 🎬 Cinematic Bars Overlay */
-        .cinematic-bars {
+        /* === LENS EFFECTS === */
+        .lens-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 5; pointer-events: none; display: none;
         }
-        .cinematic-bars.show { display: block; }
-        .cinematic-bars::before, .cinematic-bars::after {
-            content: ''; position: absolute; left: 0; width: 100%;
-            background: #000; height: 8%;
-        }
-        .cinematic-bars::before { top: 0; }
-        .cinematic-bars::after { bottom: 0; }
+        .lens-overlay.show { display: block; }
 
-        /* 🎬 Anamorphic Lens Flare */
-        .lens-flare {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 4; pointer-events: none; display: none;
+        /* Anamorphic */
+        .lens-anamorphic {
             background: 
-                radial-gradient(ellipse 60% 3% at 50% 45%, rgba(0, 180, 255, 0.5) 0%, transparent 70%),
-                radial-gradient(ellipse 30% 2% at 50% 45%, rgba(0, 240, 255, 0.7) 0%, transparent 60%),
-                radial-gradient(circle 15% at 60% 40%, rgba(0, 100, 255, 0.15) 0%, transparent 70%);
+                radial-gradient(ellipse 70% 2% at 50% 45%, rgba(0, 180, 255, 0.7) 0%, transparent 70%),
+                radial-gradient(ellipse 30% 1.5% at 50% 45%, rgba(0, 240, 255, 0.9) 0%, transparent 60%);
             mix-blend-mode: screen;
             animation: flare-flicker 3s infinite;
         }
-        .lens-flare.show { display: block; }
-        @keyframes flare-flicker {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
+        @keyframes flare-flicker { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+
+        /* Vintage */
+        .lens-vintage {
+            background: radial-gradient(circle, transparent 40%, rgba(120, 60, 0, 0.5) 100%);
+            box-shadow: inset 0 0 120px rgba(80, 30, 0, 0.8);
         }
 
-        /* 🎬 Chromatic Aberration edges */
-        .chroma-overlay {
+        /* Fisheye */
+        .lens-fisheye {
+            background: radial-gradient(circle at 50% 50%, transparent 50%, rgba(0,0,0,0.9) 100%);
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+        }
+
+        /* Telephoto */
+        .lens-telephoto {
+            background: linear-gradient(180deg, rgba(0, 30, 80, 0.3) 0%, transparent 30%, transparent 70%, rgba(0, 30, 80, 0.3) 100%);
+        }
+
+        /* Macro */
+        .lens-macro {
+            background: 
+                radial-gradient(circle at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%),
+                radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.15) 30%, transparent 50%);
+        }
+
+        /* Portrait Bokeh */
+        .lens-portrait {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 200, 100, 0.15), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(100, 200, 255, 0.15), transparent 40%),
+                radial-gradient(circle at 70% 20%, rgba(255, 100, 200, 0.1), transparent 35%);
+        }
+
+        /* Night Vision */
+        .lens-nightvision {
+            background: linear-gradient(rgba(0, 255, 0, 0.15), rgba(0, 255, 0, 0.15));
+            mix-blend-mode: multiply;
+            box-shadow: inset 0 0 100px rgba(0, 100, 0, 0.4);
+        }
+
+        /* Infrared */
+        .lens-infrared {
+            background: linear-gradient(rgba(255, 0, 0, 0.15), rgba(255, 0, 0, 0.15));
+            mix-blend-mode: multiply;
+        }
+
+        /* Cinema Bars */
+        .cinema-bars {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 3; pointer-events: none; display: none;
-            box-shadow: inset 0 0 80px rgba(0,0,0,0.9);
+            z-index: 5; pointer-events: none; display: none;
         }
-        .chroma-overlay.show { display: block; }
-
-        /* ⭐ Star Burst */
-        .star-burst {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 400px; height: 400px; z-index: 4; pointer-events: none;
-            background: conic-gradient(
-                from 0deg,
-                transparent 0deg, rgba(0, 240, 255, 0.4) 5deg, transparent 10deg,
-                transparent 80deg, rgba(0, 240, 255, 0.3) 85deg, transparent 90deg,
-                transparent 170deg, rgba(0, 240, 255, 0.4) 175deg, transparent 180deg,
-                transparent 260deg, rgba(0, 240, 255, 0.3) 265deg, transparent 270deg,
-                transparent 350deg, rgba(0, 240, 255, 0.4) 355deg, transparent 360deg
-            );
-            opacity: 0; transition: opacity 0.3s;
-            mix-blend-mode: screen;
+        .cinema-bars.show { display: block; }
+        .cinema-bars::before, .cinema-bars::after {
+            content: ''; position: absolute; left: 0; width: 100%;
+            background: #000; height: 8%;
         }
-        .star-burst.show { opacity: 0.6; animation: burst-pulse 2s infinite; }
-        @keyframes burst-pulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.8; }
-        }
+        .cinema-bars::before { top: 0; }
+        .cinema-bars::after { bottom: 0; }
 
         body.night-mode #canvas {
             filter: sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.7) contrast(1.2);
         }
 
-        /* ====================== FINDER SCOPE ====================== */
+        /* === FINDER SCOPE === */
         .finder-scope {
             position: absolute; top: 20px; right: 20px;
             width: 100px; height: 100px; border-radius: 50%;
@@ -139,7 +155,7 @@
             box-shadow: 0 0 8px var(--neon-pink);
         }
 
-        /* ====================== UI OVERLAY ====================== */
+        /* === UI OVERLAY === */
         .ui-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 100; pointer-events: none;
@@ -192,7 +208,7 @@
             50% { box-shadow: 0 0 30px rgba(0,240,255,0.7); } 
         }
 
-        /* ====================== CONTROL PANEL ====================== */
+        /* === CONTROL PANEL === */
         .control-panel {
             background: linear-gradient(0deg, rgba(5,5,16,0.98) 0%, rgba(5,5,16,0.75) 70%, transparent 100%);
             padding: 12px 12px 22px; pointer-events: auto;
@@ -297,7 +313,7 @@
         .action-btn:active { transform: scale(0.94); }
         .action-btn.fx-btn i { color: var(--neon-pink); }
         .action-btn.pro-btn i { color: var(--neon-gold); }
-        .action-btn.cinema-btn i { color: #ffb700; }
+        .action-btn.lens-btn i { color: #ffb700; }
 
         .ripple {
             position: absolute; border-radius: 50%;
@@ -307,7 +323,7 @@
         }
         @keyframes ripple-anim { to { transform: scale(5); opacity: 0; } }
 
-        /* ====================== BOTTOM SHEETS ====================== */
+        /* === BOTTOM SHEETS === */
         .sheet {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: linear-gradient(180deg, rgba(10, 20, 40, 0.98), rgba(5, 5, 16, 0.99));
@@ -379,6 +395,31 @@
             background: rgba(0, 240, 255, 0.2); border-color: var(--neon-cyan);
             color: var(--neon-cyan); box-shadow: 0 0 12px rgba(0,240,255,0.3);
         }
+
+        /* LENS GRID */
+        .lens-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            margin-bottom: 15px;
+        }
+        .lens-card {
+            background: rgba(0, 10, 30, 0.5); border: 1px solid var(--glass-border);
+            border-radius: 14px; padding: 12px 8px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .lens-card i { font-size: 1.5rem; color: var(--text-main); transition: 0.3s; }
+        .lens-card span { 
+            font-size: 0.6rem; font-weight: 700; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .lens-card.active {
+            background: linear-gradient(135deg, rgba(255, 183, 0, 0.25), rgba(255, 0, 127, 0.25));
+            border-color: var(--neon-gold); color: var(--neon-gold);
+            box-shadow: 0 0 20px rgba(255, 183, 0, 0.4);
+        }
+        .lens-card.active i { color: var(--neon-gold); text-shadow: 0 0 15px var(--neon-gold); transform: scale(1.15); }
+        .lens-card.active span { color: var(--neon-gold); }
+        .lens-card:active { transform: scale(0.95); }
 
         .fx-slider-row {
             display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
@@ -470,7 +511,6 @@
         }
         .pinch-hint.show { opacity: 1; }
 
-        /* ====================== INSTALL BANNER POPUP ====================== */
         .install-popup {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: linear-gradient(135deg, rgba(0, 240, 255, 0.95), rgba(138, 43, 226, 0.95));
@@ -484,8 +524,7 @@
         .install-icon {
             width: 50px; height: 50px; border-radius: 12px;
             background: rgba(0,0,0,0.3); display: flex; align-items: center;
-            justify-content: center; font-size: 1.5rem; color: #fff;
-            flex-shrink: 0;
+            justify-content: center; font-size: 1.5rem; color: #fff; flex-shrink: 0;
         }
         .install-text { flex: 1; color: #fff; }
         .install-text h4 { font-size: 0.85rem; font-weight: 800; margin-bottom: 3px; letter-spacing: 0.5px; }
@@ -514,11 +553,16 @@
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
         
-        <!-- 🎬 Cinematic Effects Layers -->
-        <div class="lens-flare" id="lensFlare"></div>
-        <div class="chroma-overlay" id="chromaOverlay"></div>
-        <div class="cinematic-bars" id="cinematicBars"></div>
-        <div class="star-burst" id="starBurst"></div>
+        <!-- LENS EFFECT OVERLAYS -->
+        <div class="lens-overlay lens-anamorphic" id="lensAnamorphic"></div>
+        <div class="lens-overlay lens-vintage" id="lensVintage"></div>
+        <div class="lens-overlay lens-fisheye" id="lensFisheye"></div>
+        <div class="lens-overlay lens-telephoto" id="lensTelephoto"></div>
+        <div class="lens-overlay lens-macro" id="lensMacro"></div>
+        <div class="lens-overlay lens-portrait" id="lensPortrait"></div>
+        <div class="lens-overlay lens-nightvision" id="lensNightVision"></div>
+        <div class="lens-overlay lens-infrared" id="lensInfrared"></div>
+        <div class="cinema-bars" id="cinemaBars"></div>
         
         <div class="finder-scope" id="finderScope">
             <video id="finderVideo" autoplay playsinline muted></video>
@@ -589,7 +633,7 @@
             <div class="action-grid">
                 <button class="action-btn" id="telescopeBtn"><i class="fas fa-eye"></i><span>Dark</span></button>
                 <button class="action-btn" id="stackBtn"><i class="fas fa-layer-group"></i><span>Stack</span></button>
-                <button class="action-btn cinema-btn" id="cinemaBtn"><i class="fas fa-film"></i><span>Cinema</span></button>
+                <button class="action-btn lens-btn" id="lensBtn"><i class="fas fa-camera-retro"></i><span>Lens</span></button>
                 <button class="action-btn" id="gridBtn"><i class="fas fa-th"></i><span>Grid</span></button>
                 <button class="action-btn fx-btn" id="fxBtn"><i class="fas fa-palette"></i><span>FX</span></button>
                 <button class="action-btn pro-btn" id="proBtn"><i class="fas fa-sliders-h"></i><span>Pro</span></button>
@@ -603,12 +647,54 @@
         </div>
     </div>
 
+    <!-- LENS SHEET -->
+    <div class="sheet" id="lensSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">
+            <h2><i class="fas fa-camera-retro"></i> HIGH QUALITY LENSES</h2>
+            <button class="close-sheet" data-sheet="lensSheet">✕</button>
+        </div>
+
+        <div class="lens-grid">
+            <div class="lens-card active" data-lens="none">
+                <i class="fas fa-ban"></i><span>None</span>
+            </div>
+            <div class="lens-card" data-lens="anamorphic">
+                <i class="fas fa-arrows-alt-h"></i><span>Anamorphic</span>
+            </div>
+            <div class="lens-card" data-lens="vintage">
+                <i class="fas fa-history"></i><span>Vintage</span>
+            </div>
+            <div class="lens-card" data-lens="fisheye">
+                <i class="fas fa-circle-notch"></i><span>Fisheye</span>
+            </div>
+            <div class="lens-card" data-lens="telephoto">
+                <i class="fas fa-search"></i><span>Telephoto</span>
+            </div>
+            <div class="lens-card" data-lens="macro">
+                <i class="fas fa-search-plus"></i><span>Macro</span>
+            </div>
+            <div class="lens-card" data-lens="portrait">
+                <i class="fas fa-user-circle"></i><span>Portrait</span>
+            </div>
+            <div class="lens-card" data-lens="nightvision">
+                <i class="fas fa-eye"></i><span>Night Vision</span>
+            </div>
+            <div class="lens-card" data-lens="infrared">
+                <i class="fas fa-fire"></i><span>Infrared</span>
+            </div>
+            <div class="lens-card" data-lens="cinemabars">
+                <i class="fas fa-film"></i><span>Cinema Bars</span>
+            </div>
+        </div>
+    </div>
+
     <!-- FX SHEET -->
     <div class="sheet" id="fxSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title">
             <h2><i class="fas fa-palette"></i> COLORS & FILTERS</h2>
-            <button id="closeFxSheet">✕</button>
+            <button class="close-sheet" data-sheet="fxSheet">✕</button>
         </div>
 
         <div class="fx-section-title"><i class="fas fa-fill-drip"></i> Transparent Color Overlay</div>
@@ -673,7 +759,7 @@
         <div class="sheet-handle"></div>
         <div class="sheet-title">
             <h2><i class="fas fa-sliders-h"></i> PRO CONTROLS</h2>
-            <button id="closeProSheet">✕</button>
+            <button class="close-sheet" data-sheet="proSheet">✕</button>
         </div>
 
         <div class="pro-grid">
@@ -720,12 +806,12 @@
         </div>
     </div>
 
-    <!-- SKY DATA SHEET -->
+    <!-- SKY SHEET -->
     <div class="sheet" id="skySheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title">
             <h2><i class="fas fa-satellite-dish"></i> LIVE SKY DATA</h2>
-            <button id="closeSkySheet">✕</button>
+            <button class="close-sheet" data-sheet="skySheet">✕</button>
         </div>
         
         <div class="data-section">
@@ -759,15 +845,8 @@
             <h3><i class="fas fa-star"></i> Bright Stars</h3>
             <div id="starList"></div>
         </div>
-
-        <div class="data-section">
-            <h3><i class="fas fa-map-marker-alt"></i> Your Location</h3>
-            <div class="data-row"><span>Latitude</span><div id="userLat">--</div></div>
-            <div class="data-row"><span>Longitude</span><div id="userLng">--</div></div>
-        </div>
     </div>
 
-    <!-- 📲 INSTALL POPUP BANNER -->
     <div class="install-popup" id="installPopup">
         <div class="install-icon">
             <i class="fas fa-satellite-dish"></i>
@@ -786,7 +865,7 @@
         <div class="modal-card">
             <i class="fas fa-satellite-dish" style="font-size: 3.5rem; color: var(--neon-cyan); margin-bottom: 25px;"></i>
             <h2>SAQSKYSCOOP PRO</h2>
-            <p>Cinematic 4K telescope with real-time surface enhancement, transparent color overlays, and pro controls.</p>
+            <p>Cinematic 4K telescope with real-time surface enhancement, high-quality lenses, and pro controls.</p>
             <button class="btn-primary" id="allowCamBtn">Initialize Camera</button>
         </div>
     </div>
@@ -801,7 +880,7 @@
 
     <script>
         // ========================
-        // 📲 INSTALL BANNER LOGIC
+        // 📲 INSTALL BANNER
         // ========================
         (function() {
             const popup = document.getElementById('installPopup');
@@ -809,44 +888,35 @@
             const noBtn = document.getElementById('installNo');
             let deferredPrompt = null;
 
-            // Check if already dismissed or already installed
             const dismissed = localStorage.getItem('saqskyscoop-install-dismissed');
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
             
-            // Listen for the beforeinstallprompt event (Android Chrome)
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                // Show popup after 2 seconds if not dismissed
                 if (!dismissed && !isStandalone) {
                     setTimeout(() => popup.classList.add('show'), 2000);
                 }
             });
 
-            // If already installed or dismissed, don't show
             if (dismissed || isStandalone) {
                 popup.style.display = 'none';
             } else {
-                // Fallback: Show popup even if beforeinstallprompt doesn't fire (iOS, Firefox)
                 setTimeout(() => {
-                    if (!dismissed && !isStandalone) {
-                        popup.classList.add('show');
-                    }
+                    if (!dismissed && !isStandalone) popup.classList.add('show');
                 }, 3000);
             }
 
             yesBtn.addEventListener('click', async () => {
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
-                    const result = await deferredPrompt.userChoice;
-                    console.log('Install:', result.outcome);
+                    await deferredPrompt.userChoice;
                     deferredPrompt = null;
                 } else {
-                    // iOS / Firefox manual instructions
                     const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
                     alert(isIOS 
-                        ? '📱 iOS: Tap the Share button → "Add to Home Screen"' 
-                        : '📱 Open browser menu (⋮) → "Install app" or "Add to Home screen"');
+                        ? '📱 iOS: Tap Share button → "Add to Home Screen"' 
+                        : '📱 Open browser menu (⋮) → "Install app"');
                 }
                 popup.classList.remove('show');
                 localStorage.setItem('saqskyscoop-install-dismissed', 'true');
@@ -918,7 +988,7 @@
         // ========================
         // 🎮 RIPPLE
         // ========================
-        document.querySelectorAll('button, .preset-chip, .effect-chip, .color-dot').forEach(el => {
+        document.querySelectorAll('button, .preset-chip, .effect-chip, .color-dot, .lens-card').forEach(el => {
             el.addEventListener('pointerdown', function(e) {
                 const rect = this.getBoundingClientRect();
                 const ripple = document.createElement('span');
@@ -948,10 +1018,17 @@
             const objectBadge = document.getElementById('objectBadge');
             const objectName = document.getElementById('objectName');
             
-            const lensFlare = document.getElementById('lensFlare');
-            const chromaOverlay = document.getElementById('chromaOverlay');
-            const cinematicBars = document.getElementById('cinematicBars');
-            const starBurst = document.getElementById('starBurst');
+            const lensOverlays = {
+                anamorphic: document.getElementById('lensAnamorphic'),
+                vintage: document.getElementById('lensVintage'),
+                fisheye: document.getElementById('lensFisheye'),
+                telephoto: document.getElementById('lensTelephoto'),
+                macro: document.getElementById('lensMacro'),
+                portrait: document.getElementById('lensPortrait'),
+                nightvision: document.getElementById('lensNightVision'),
+                infrared: document.getElementById('lensInfrared'),
+                cinemabars: document.getElementById('cinemaBars')
+            };
             
             const zoomSlider = document.getElementById('zoomSlider');
             const zoomValue = document.getElementById('zoomValue');
@@ -969,7 +1046,7 @@
             const stackBtn = document.getElementById('stackBtn');
             const hdrBtn = document.getElementById('hdrBtn');
             const gridBtn = document.getElementById('gridBtn');
-            const cinemaBtn = document.getElementById('cinemaBtn');
+            const lensBtn = document.getElementById('lensBtn');
             const nightBtn = document.getElementById('nightBtn');
             const resetBtn = document.getElementById('resetBtn');
             const captureBtn = document.getElementById('captureBtn');
@@ -982,18 +1059,18 @@
             const surfaceBtn = document.getElementById('surfaceBtn');
             const falseColorBtn = document.getElementById('falseColorBtn');
             
+            const lensSheet = document.getElementById('lensSheet');
             const fxSheet = document.getElementById('fxSheet');
             const proSheet = document.getElementById('proSheet');
             const skySheet = document.getElementById('skySheet');
-            const closeFxSheet = document.getElementById('closeFxSheet');
-            const closeProSheet = document.getElementById('closeProSheet');
-            const closeSkySheet = document.getElementById('closeSkySheet');
             
             const finderScope = document.getElementById('finderScope');
             const presetChips = document.querySelectorAll('.preset-chip');
             const colorDots = document.querySelectorAll('.color-dot');
             const effectChips = document.querySelectorAll('.effect-chip[data-effect]');
             const gradeChips = document.querySelectorAll('.effect-chip[data-grade]');
+            const lensCards = document.querySelectorAll('.lens-card');
+            const closeSheetBtns = document.querySelectorAll('.close-sheet');
             
             const opacitySlider = document.getElementById('opacitySlider');
             const opacityVal = document.getElementById('opacityVal');
@@ -1027,7 +1104,7 @@
             const loadingModal = document.getElementById('loadingModal');
             const allowCamBtn = document.getElementById('allowCamBtn');
 
-            // STATE
+            // ===== STATE =====
             let stream = null;
             let zoom = 1;
             let brightness = 100, contrast = 100, focus = 50;
@@ -1035,6 +1112,7 @@
             let colorOpacity = 25;
             let activeEffect = 'none';
             let activeGrade = 'none';
+            let activeLens = 'none';
             let vignetteAmount = 0;
             let leakAmount = 0;
             let exposure = 0, gamma = 100, temperature = 0, tint = 0;
@@ -1050,7 +1128,6 @@
             let isTransparent = false;
             let isSurfaceEnhance = false;
             let isFalseColor = false;
-            let isCinema = false;
             
             let mediaRecorder = null;
             let recordedChunks = [];
@@ -1066,7 +1143,6 @@
             let zoomHoldTimer = null;
             let zoomHoldDir = 0;
 
-            // PRESETS
             const PRESETS = {
                 normal: { bright: 100, cont: 100, sat: 100, focus: 50, exposure: 0, gamma: 100, temperature: 0, tint: 0, sharpness: 0 },
                 moon:   { bright: 118, cont: 155, sat: 80, focus: 82, exposure: 5, gamma: 105, temperature: -15, tint: 0, sharpness: 60 },
@@ -1086,9 +1162,30 @@
                 updateZoomUI();
             }
 
+            function closeAllSheets() {
+                lensSheet.classList.remove('open');
+                fxSheet.classList.remove('open');
+                proSheet.classList.remove('open');
+                skySheet.classList.remove('open');
+            }
+
+            function openSheet(sheet) {
+                closeAllSheets();
+                sheet.classList.add('open');
+            }
+
             function bindEvents() {
                 allowCamBtn.addEventListener('click', startCamera);
                 
+                // Close sheet buttons
+                closeSheetBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const sheetId = btn.dataset.sheet;
+                        document.getElementById(sheetId).classList.remove('open');
+                    });
+                });
+                
+                // ZOOM
                 zoomSlider.addEventListener('input', (e) => {
                     e.stopPropagation();
                     zoom = parseFloat(zoomSlider.value);
@@ -1132,6 +1229,7 @@
                     b.addEventListener('pointercancel', stopZoomHold);
                 });
                 
+                // Sliders
                 brightSlider.addEventListener('input', () => {
                     brightness = parseInt(brightSlider.value);
                     brightVal.textContent = brightness + '%';
@@ -1145,6 +1243,7 @@
                     focusVal.textContent = focus + '%';
                 });
                 
+                // Presets
                 presetChips.forEach(chip => {
                     chip.addEventListener('click', () => {
                         presetChips.forEach(c => c.classList.remove('active'));
@@ -1153,34 +1252,48 @@
                     });
                 });
                 
-                fxBtn.addEventListener('click', () => {
-                    fxSheet.classList.add('open');
-                    proSheet.classList.remove('open');
-                    skySheet.classList.remove('open');
-                });
-                closeFxSheet.addEventListener('click', () => fxSheet.classList.remove('open'));
-                
-                proBtn.addEventListener('click', () => {
-                    proSheet.classList.add('open');
-                    fxSheet.classList.remove('open');
-                    skySheet.classList.remove('open');
-                });
-                closeProSheet.addEventListener('click', () => proSheet.classList.remove('open'));
+                // Sheet buttons
+                fxBtn.addEventListener('click', () => openSheet(fxSheet));
+                proBtn.addEventListener('click', () => openSheet(proSheet));
+                lensBtn.addEventListener('click', () => openSheet(lensSheet));
                 
                 skyDataBtn.addEventListener('click', () => {
                     skySheet.classList.toggle('open');
+                    lensSheet.classList.remove('open');
                     fxSheet.classList.remove('open');
                     proSheet.classList.remove('open');
                     if (skySheet.classList.contains('open')) loadSkyData();
                 });
-                closeSkySheet.addEventListener('click', () => skySheet.classList.remove('open'));
                 
+                // Lens cards
+                lensCards.forEach(card => {
+                    card.addEventListener('click', () => {
+                        lensCards.forEach(c => c.classList.remove('active'));
+                        card.classList.add('active');
+                        const lens = card.dataset.lens;
+                        
+                        // Remove all active overlays
+                        Object.values(lensOverlays).forEach(o => o.classList.remove('show'));
+                        
+                        // Add new active
+                        if (lens !== 'none' && lensOverlays[lens]) {
+                            lensOverlays[lens].classList.add('show');
+                            // Apply lens-specific CSS filter
+                            applyLensFilter(lens);
+                        } else {
+                            clearLensFilter();
+                        }
+                        activeLens = lens;
+                        showToast(`📷 Lens: ${lens.toUpperCase()}`);
+                    });
+                });
+                
+                // Colors
                 colorDots.forEach(dot => {
                     dot.addEventListener('click', () => {
                         colorDots.forEach(d => d.classList.remove('active'));
                         dot.classList.add('active');
                         activeColor = dot.dataset.color;
-                        showToast(activeColor === 'none' ? '🎨 Color OFF' : '🎨 Color ON');
                     });
                 });
                 
@@ -1202,7 +1315,6 @@
                         effectChips.forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
                         activeEffect = chip.dataset.effect;
-                        showToast(`🎬 ${activeEffect.toUpperCase()}`);
                     });
                 });
                 
@@ -1211,7 +1323,6 @@
                         gradeChips.forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
                         activeGrade = chip.dataset.grade;
-                        showToast(`🌡️ ${activeGrade.toUpperCase()}`);
                     });
                 });
                 
@@ -1256,6 +1367,7 @@
                     grainVal.textContent = grain;
                 });
                 
+                // Action buttons
                 telescopeBtn.addEventListener('click', () => {
                     isTelescopeMode = !isTelescopeMode;
                     telescopeBtn.classList.toggle('active-btn', isTelescopeMode);
@@ -1272,16 +1384,6 @@
                     isFalseColor = !isFalseColor;
                     falseColorBtn.classList.toggle('active-btn', isFalseColor);
                     showToast(isFalseColor ? '🌈 False Color: ON' : 'False Color: OFF');
-                });
-                
-                cinemaBtn.addEventListener('click', () => {
-                    isCinema = !isCinema;
-                    cinemaBtn.classList.toggle('active-btn', isCinema);
-                    lensFlare.classList.toggle('show', isCinema);
-                    chromaOverlay.classList.toggle('show', isCinema);
-                    cinematicBars.classList.toggle('show', isCinema);
-                    starBurst.classList.toggle('show', isCinema);
-                    showToast(isCinema ? '🎬 Cinema Mode: ON' : 'Cinema Mode: OFF');
                 });
                 
                 stackBtn.addEventListener('click', () => {
@@ -1322,7 +1424,11 @@
                     showToast(isTransparent ? '👻 Ghost UI: ON' : 'Ghost UI: OFF');
                 });
                 
-                resetBtn.addEventListener('click', resetAll);
+                resetBtn.addEventListener('click', () => {
+                    closeAllSheets();  // ⚡ Close sheets first!
+                    setTimeout(resetAll, 200);  // Small delay for animation
+                });
+                
                 captureBtn.addEventListener('click', captureImage);
                 recordBtn.addEventListener('click', toggleRecording);
                 
@@ -1366,7 +1472,6 @@
                             else if (zoom < 100) zoom = 500;
                             else zoom = 1;
                             updateZoomUI();
-                            showToast(`Zoom: ${zoom.toFixed(2)}x`);
                         }
                         lastTap = now;
                     }
@@ -1377,6 +1482,15 @@
                     zoom = Math.max(1, Math.min(50000, zoom * (1 - e.deltaY * 0.005)));
                     updateZoomUI();
                 }, { passive: false });
+            }
+
+            function applyLensFilter(lens) {
+                // Applied via CSS class on body - less flicker
+                document.body.dataset.lens = lens;
+            }
+
+            function clearLensFilter() {
+                document.body.dataset.lens = 'none';
             }
 
             function applyPreset(name) {
@@ -1404,22 +1518,26 @@
             }
 
             function resetAll() {
+                // Reset all state variables
                 zoom = 1; brightness = 100; contrast = 100; focus = 50;
                 exposure = 0; gamma = 100; temperature = 0; tint = 0;
                 sharpness = 0; highlights = 0; shadows = 0; saturation = 100;
                 hue = 0; grain = 0; colorOpacity = 25; vignetteAmount = 0; leakAmount = 0;
-                activeColor = 'none'; activeEffect = 'none'; activeGrade = 'none';
+                activeColor = 'none'; activeEffect = 'none'; activeGrade = 'none'; activeLens = 'none';
                 
                 isTelescopeMode = false; isDeepStack = false; isHdr = false;
                 isGrid = false; isNight = false; isTransparent = false;
-                isSurfaceEnhance = false; isFalseColor = false; isCinema = false;
+                isSurfaceEnhance = false; isFalseColor = false;
                 
-                zoomSlider.value = 1; brightSlider.value = 100; contSlider.value = 100; focusSlider.value = 50;
+                // Reset all sliders
+                zoomSlider.value = 1;
+                brightSlider.value = 100; contSlider.value = 100; focusSlider.value = 50;
                 exposureSlider.value = 0; gammaSlider.value = 100; tempSlider.value = 0; tintSlider.value = 0;
                 sharpSlider.value = 0; highSlider.value = 0; shadowSlider.value = 0; satSlider.value = 100;
                 hueSlider.value = 0; grainSlider.value = 0; opacitySlider.value = 25;
                 vignetteSlider.value = 0; leakSlider.value = 0;
                 
+                // Reset all value labels
                 updateZoomUI();
                 brightVal.textContent = '100%'; contVal.textContent = '100%'; focusVal.textContent = '50%';
                 exposureVal.textContent = '0.0'; gammaVal.textContent = '1.00';
@@ -1428,21 +1546,32 @@
                 hueVal.textContent = '0°'; grainVal.textContent = '0'; opacityVal.textContent = '25%';
                 vignetteVal.textContent = '0%'; leakVal.textContent = '0%';
                 
-                [telescopeBtn, stackBtn, hdrBtn, gridBtn, nightBtn, transparentBtn, surfaceBtn, falseColorBtn, cinemaBtn]
-                    .forEach(b => b.classList.remove('active-btn', 'active'));
-                document.body.classList.remove('night-mode');
-                document.documentElement.style.setProperty('--ui-opacity', '1');
-                lensFlare.classList.remove('show');
-                chromaOverlay.classList.remove('show');
-                cinematicBars.classList.remove('show');
-                starBurst.classList.remove('show');
+                // Remove all active button classes
+                document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active-btn', 'active'));
                 
+                // Reset body classes
+                document.body.classList.remove('night-mode');
+                document.body.dataset.lens = 'none';
+                document.documentElement.style.setProperty('--ui-opacity', '1');
+                
+                // Hide all lens overlays
+                Object.values(lensOverlays).forEach(o => o.classList.remove('show'));
+                
+                // Reset chips
                 colorDots.forEach((d, i) => d.classList.toggle('active', i === 0));
                 effectChips.forEach((c, i) => c.classList.toggle('active', i === 0));
                 gradeChips.forEach((c, i) => c.classList.toggle('active', i === 0));
                 presetChips.forEach((c, i) => c.classList.toggle('active', i === 0));
+                lensCards.forEach((c, i) => c.classList.toggle('active', i === 0));
                 
-                showToast('✅ Reset');
+                // Reset stack buffer
+                stackBuffer = null; stackCount = 0;
+                
+                // Reset object detection
+                objectCenter = { x: 0.5, y: 0.5 };
+                detectedObject = 'none';
+                
+                showToast('✅ Everything Reset');
             }
 
             async function startCamera() {
@@ -1494,7 +1623,6 @@
                 const vh = video.videoHeight;
                 if (!vw || !vh) return;
 
-                // 🎯 baseCrop = 4.0 → 1x = aapki aankh ka view (4x pehle jaisa)
                 const baseCrop = 4.0;
                 const totalZoom = zoom * baseCrop;
                 const srcW = vw / totalZoom;
@@ -1531,7 +1659,6 @@
                 if (vignetteAmount > 0) applyVignette();
                 if (leakAmount > 0) applyLightLeak();
                 if (grain > 0) applyGrain();
-                if (isCinema) applyChromaticAberration();
                 if (isGrid) drawGrid();
 
                 updateObjectBadge();
@@ -1778,20 +1905,6 @@
                 ctx.restore();
             }
 
-            function applyChromaticAberration() {
-                // Simulated through edge tinting - subtle effect
-                ctx.save();
-                ctx.globalCompositeOperation = 'screen';
-                ctx.globalAlpha = 0.08;
-                // Red tint edges
-                const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.width*0.3, canvas.width/2, canvas.height/2, canvas.width*0.7);
-                grad.addColorStop(0, 'rgba(255,0,0,0)');
-                grad.addColorStop(1, 'rgba(255,0,0,0.4)');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.restore();
-            }
-
             function drawGrid() {
                 ctx.save();
                 ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
@@ -1881,15 +1994,11 @@
                         (pos) => {
                             userLat = pos.coords.latitude;
                             userLng = pos.coords.longitude;
-                            document.getElementById('userLat').textContent = userLat.toFixed(4);
-                            document.getElementById('userLng').textContent = userLng.toFixed(4);
                             fetchSkyData();
                         },
                         () => {
                             fetch('https://ipapi.co/json/').then(r => r.json()).then(d => {
                                 userLat = d.latitude; userLng = d.longitude;
-                                document.getElementById('userLat').textContent = userLat.toFixed(4);
-                                document.getElementById('userLng').textContent = userLng.toFixed(4);
                                 fetchSkyData();
                             }).catch(() => {});
                         },
