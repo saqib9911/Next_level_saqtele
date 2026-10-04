@@ -6,20 +6,13 @@
     <meta name="theme-color" content="#050510">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Saqskyscoop Ultra – 4K Telescope</title>
-    <meta property="og:title" content="Saqskyscoop Ultra – 4K Telescope">
-    <meta property="og:description" content="Auto-detects Moon & Planets. Hybrid Quality Mode. Zero Lag.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://saqib9911.github.io/Next_level_saqtele/">
+    <title>Saqskyscoop Pro Max – 1000x Hybrid Telescope</title>
+    <meta property="og:title" content="Saqskyscoop Pro Max – 1000x Telescope">
+    <meta property="og:description" content="Hardware + Digital Hybrid Zoom up to 1000x with all features.">
     <meta property="og:image" content="https://placehold.co/1200x630/0c1445/00f0ff/png?text=Saqskyscoop+Telescope">
-    <meta property="og:image:secure_url" content="https://placehold.co/1200x630/0c1445/00f0ff/png?text=Saqskyscoop+Telescope">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:site_name" content="Saqskyscoop">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Saqskyscoop Ultra – 4K Telescope">
-    <meta name="twitter:description" content="Auto-detects Moon & Planets.">
     <meta name="twitter:image" content="https://placehold.co/1200x630/0c1445/00f0ff/png?text=Saqskyscoop+Telescope">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,12 +24,12 @@
         body.ghost-mode .ui-overlay:active{opacity:.85!important}
         #particleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.5}
         .camera-view{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;overflow:hidden;background:#000;touch-action:none}
-        #video{display:none}
-        #canvas{width:100%;height:100%;object-fit:cover;display:block;will-change:filter;transform:translateZ(0);backface-visibility:hidden}
+        #video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;background:#000}
+        #canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none}
         #zebraCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;display:none;opacity:.6}
-        #histogramCanvas{position:absolute;top:55px;left:15px;width:100px;height:40px;z-index:15;pointer-events:none;background:rgba(0,0,0,.5);border:1px solid var(--neon-cyan);border-radius:6px;display:none}
+        #histogramCanvas{position:absolute;top:120px;left:15px;width:100px;height:40px;z-index:15;pointer-events:none;background:rgba(0,0,0,.5);border:1px solid var(--neon-cyan);border-radius:6px;display:none}
         #histogramCanvas.show{display:block}
-        body.night-mode #canvas{filter:sepia(1) hue-rotate(-30deg) saturate(5) brightness(.7)!important}
+        body.night-mode #video{filter:sepia(1) hue-rotate(-30deg) saturate(5) brightness(.7)!important}
         .lens-overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none;display:none}
         .lens-overlay.show{display:block}
         .lens-anamorphic{background:radial-gradient(ellipse 70% 2% at 50% 45%,rgba(0,180,255,.6) 0%,transparent 70%),radial-gradient(ellipse 30% 1.5% at 50% 45%,rgba(0,240,255,.8) 0%,transparent 60%);mix-blend-mode:screen}
@@ -57,8 +50,12 @@
         .finder-scope::after{content:'';position:absolute;top:50%;left:50%;width:12px;height:12px;border:1.5px solid var(--neon-pink);transform:translate(-50%,-50%);border-radius:50%}
         .ui-overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;transition:opacity .3s}
         .top-hud{display:flex;justify-content:space-between;align-items:flex-start;padding:15px 20px;pointer-events:auto;gap:10px}
-        .hud-badge{background:var(--glass-bg);backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:12px;padding:8px 15px;font-size:.7rem;font-weight:700;letter-spacing:1px;color:var(--neon-cyan);display:flex;align-items:center;gap:8px;transition:all .3s}
+        .hud-badge{background:var(--glass-bg);backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:12px;padding:8px 15px;font-size:.7rem;font-weight:700;letter-spacing:1px;color:var(--neon-cyan);display:flex;align-items:center;gap:8px}
         .hud-badge i{color:var(--neon-pink)}
+        .hud-badge.hw-mode{background:linear-gradient(135deg,rgba(0,255,136,.3),rgba(0,240,255,.3));border-color:var(--neon-green);color:var(--neon-green)}
+        .hud-badge.hw-mode i{color:var(--neon-green)}
+        .hud-badge.digital-mode{background:linear-gradient(135deg,rgba(255,183,0,.3),rgba(255,140,0,.3));border-color:var(--neon-gold);color:var(--neon-gold)}
+        .hud-badge.digital-mode i{color:var(--neon-gold)}
         .hud-badge.quality-mode{background:linear-gradient(135deg,rgba(255,183,0,.3),rgba(255,0,127,.3));border-color:var(--neon-gold);color:var(--neon-gold)}
         .hud-badge.quality-mode i{color:var(--neon-gold)}
         .hud-badge.warning-mode{background:linear-gradient(135deg,rgba(255,50,50,.35),rgba(255,0,127,.3));border-color:var(--neon-red);color:var(--neon-red);animation:warn-pulse .8s infinite}
@@ -68,25 +65,34 @@
         .icon-btn{width:42px;height:42px;border-radius:50%;background:var(--glass-bg);backdrop-filter:blur(15px);border:1px solid var(--glass-border);color:var(--text-main);display:flex;justify-content:center;align-items:center;font-size:1rem;cursor:pointer;transition:.2s}
         .icon-btn:active{transform:scale(.9)}
         .icon-btn.active{background:rgba(0,240,255,.3);border-color:var(--neon-cyan);color:var(--neon-cyan)}
+        .icon-btn.torch-on{background:linear-gradient(135deg,#ffb700,#ff8c00);border-color:#ffb700;color:#000}
         .object-badge{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,rgba(0,255,136,.25),rgba(0,240,255,.25));backdrop-filter:blur(15px);border:1.5px solid var(--neon-green);border-radius:20px;padding:8px 18px;font-size:.75rem;font-weight:800;color:var(--neon-green);display:none;align-items:center;gap:8px;z-index:50;text-transform:uppercase;letter-spacing:1.5px;box-shadow:0 0 30px rgba(0,255,136,.5);animation:badge-pulse 1.2s infinite}
         .object-badge.show{display:flex}
         @keyframes badge-pulse{0%,100%{box-shadow:0 0 20px rgba(0,255,136,.4)}50%{box-shadow:0 0 40px rgba(0,255,136,.9)}}
         .quality-badge{position:absolute;top:120px;left:50%;transform:translateX(-50%);background:rgba(255,183,0,.2);border:1px solid var(--neon-gold);border-radius:15px;padding:4px 12px;font-size:.6rem;font-weight:700;color:var(--neon-gold);display:none;align-items:center;gap:6px;z-index:50;text-transform:uppercase;letter-spacing:1px}
         .quality-badge.show{display:flex}
+        .hw-badge{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,rgba(0,255,136,.25),rgba(0,240,255,.25));border:1.5px solid var(--neon-green);border-radius:20px;padding:6px 16px;font-size:.65rem;font-weight:800;color:var(--neon-green);display:none;align-items:center;gap:6px;z-index:50;letter-spacing:1px}
+        .hw-badge.show{display:flex}
         .control-panel{background:linear-gradient(0deg,rgba(5,5,16,.98) 0%,rgba(5,5,16,.75) 70%,transparent 100%);padding:12px 12px 22px;pointer-events:auto;border-top:1px solid rgba(0,240,255,.15);backdrop-filter:blur(12px);max-height:62vh;overflow-y:auto}
         .control-panel::-webkit-scrollbar{width:3px}
         .control-panel::-webkit-scrollbar-thumb{background:var(--neon-cyan);border-radius:2px}
-        .zoom-container{display:flex;align-items:center;justify-content:space-between;background:rgba(0,10,30,.8);border-radius:30px;padding:5px 8px;margin-bottom:10px;border:1px solid rgba(0,240,255,.25)}
+        .zoom-container{display:flex;align-items:center;justify-content:space-between;background:rgba(0,10,30,.8);border-radius:30px;padding:5px 8px;margin-bottom:6px;border:1px solid rgba(0,240,255,.25)}
         .zoom-btn{width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,240,255,.12);color:var(--neon-cyan);font-size:1.3rem;display:flex;justify-content:center;align-items:center;cursor:pointer;font-weight:bold;touch-action:none;flex-shrink:0}
         .zoom-btn:active,.zoom-btn.pressing{background:var(--neon-cyan);color:#000}
         .zoom-slider-wrap{flex:1;margin:0 10px}
-        input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));border-radius:2px;outline:none;touch-action:none}
+        input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple),var(--neon-pink));border-radius:2px;outline:none;touch-action:none}
         input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;background:#fff;border:2px solid var(--neon-cyan);border-radius:50%;cursor:pointer}
-        .zoom-value{font-family:'Courier New',monospace;font-size:.95rem;font-weight:900;color:var(--neon-cyan);min-width:65px;text-align:right}
+        .zoom-value{font-family:'Courier New',monospace;font-size:.95rem;font-weight:900;color:var(--neon-cyan);min-width:70px;text-align:right}
         .zoom-value .zoom-unit{font-size:.65rem;opacity:.8}
-        .preset-row{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+        .zoom-mode{margin-bottom:8px;font-size:.6rem;color:var(--neon-green);text-align:center;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px;background:rgba(0,255,136,.08);border-radius:8px}
+        .quick-zoom-row{display:flex;gap:5px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+        .quick-zoom-row::-webkit-scrollbar{display:none}
+        .quick-zoom-btn{flex:0 0 auto;padding:6px 12px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:15px;color:var(--text-dim);font-size:.65rem;font-weight:800;cursor:pointer;transition:.2s;font-family:monospace}
+        .quick-zoom-btn:active{background:rgba(0,240,255,.3);color:#000}
+        .quick-zoom-btn.active{background:var(--neon-cyan);color:#000}
+        .preset-row{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
         .preset-row::-webkit-scrollbar{display:none}
-        .preset-chip{flex:0 0 auto;min-width:60px;padding:8px 6px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;color:var(--text-dim);font-size:.52rem;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .2s;text-transform:uppercase;position:relative;overflow:hidden}
+        .preset-chip{flex:0 0 auto;min-width:60px;padding:8px 6px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;color:var(--text-dim);font-size:.52rem;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .2s;text-transform:uppercase}
         .preset-chip i{font-size:1.05rem;color:var(--text-main)}
         .preset-chip.active{background:linear-gradient(135deg,rgba(0,240,255,.25),rgba(138,43,226,.25));border-color:var(--neon-cyan);color:var(--neon-cyan)}
         .preset-chip.active i{color:var(--neon-cyan)}
@@ -105,9 +111,11 @@
         .action-btn.lens-btn i{color:#ffb700}
         .action-btn.lock-btn i{color:var(--neon-gold)}
         .action-btn.lock-btn.locked{background:rgba(255,183,0,.25);border-color:var(--neon-gold);color:var(--neon-gold)}
-        .action-btn.lock-btn.locked i{color:var(--neon-gold);animation:warn-pulse 1s infinite}
+        .action-btn.lock-btn.locked i{color:var(--neon-gold)}
         .action-btn.hdr-btn i{color:var(--neon-green)}
         .action-btn.stack-btn i{color:#4cc9f0}
+        .action-btn.torch-btn i{color:#ffb700}
+        .action-btn.torch-btn.torch-on{background:linear-gradient(135deg,rgba(255,183,0,.3),rgba(255,140,0,.3));border-color:#ffb700;color:#ffb700}
         .ripple{position:absolute;border-radius:50%;background:rgba(0,240,255,.5);transform:scale(0);animation:ripple-anim .5s ease-out;pointer-events:none}
         @keyframes ripple-anim{to{transform:scale(5);opacity:0}}
         .sheet{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(180deg,rgba(10,20,40,.98),rgba(5,5,16,.99));border-top:2px solid var(--neon-cyan);border-radius:24px 24px 0 0;padding:18px 18px 30px;z-index:500;transform:translateY(100%);transition:transform .3s ease;max-height:85vh;overflow-y:auto}
@@ -127,7 +135,7 @@
         .effect-chip{padding:8px 6px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:10px;color:var(--text-dim);font-size:.55rem;font-weight:700;cursor:pointer;text-align:center;text-transform:uppercase}
         .effect-chip.active{background:rgba(0,240,255,.2);border-color:var(--neon-cyan);color:var(--neon-cyan)}
         .lens-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
-        .lens-card{background:rgba(0,10,30,.5);border:1px solid var(--glass-border);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s}
+        .lens-card{background:rgba(0,10,30,.5);border:1px solid var(--glass-border);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
         .lens-card i{font-size:1.5rem;color:var(--text-main)}
         .lens-card span{font-size:.6rem;font-weight:700;color:var(--text-dim);text-transform:uppercase}
         .lens-card.active{background:linear-gradient(135deg,rgba(255,183,0,.25),rgba(255,0,127,.25));border-color:var(--neon-gold)}
@@ -161,15 +169,15 @@
         .install-text h4{font-size:.85rem;font-weight:800;margin-bottom:3px}
         .install-text p{font-size:.65rem;opacity:.9;line-height:1.3}
         .install-actions{display:flex;flex-direction:column;gap:5px}
-        .install-btn-yes{background:#fff;color:#050510;border:none;padding:6px 14px;border-radius:15px;font-weight:800;font-size:.65rem;cursor:pointer;white-space:nowrap;text-transform:uppercase}
-        .install-btn-no{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:15px;font-weight:600;font-size:.6rem;cursor:pointer;white-space:nowrap}
+        .install-btn-yes{background:#fff;color:#050510;border:none;padding:6px 14px;border-radius:15px;font-weight:800;font-size:.65rem;cursor:pointer;text-transform:uppercase}
+        .install-btn-no{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:15px;font-weight:600;font-size:.6rem;cursor:pointer}
         .hidden{display:none!important}
     </style>
 </head>
 <body>
     <canvas id="particleCanvas"></canvas>
     <div class="camera-view" id="cameraView">
-        <video id="video" autoplay playsinline></video>
+        <video id="video" autoplay playsinline muted></video>
         <canvas id="canvas"></canvas>
         <canvas id="zebraCanvas"></canvas>
         <canvas id="histogramCanvas"></canvas>
@@ -184,13 +192,15 @@
         <div class="cinema-bars" id="cinemaBars"></div>
         <div class="finder-scope" id="finderScope"><video id="finderVideo" autoplay playsinline muted></video></div>
         <div class="object-badge" id="objectBadge"><i class="fas fa-crosshairs"></i><span id="objectName">Scanning...</span></div>
+        <div class="hw-badge" id="hwBadge"><i class="fas fa-microchip"></i><span id="hwText">HW ZOOM</span></div>
         <div class="quality-badge" id="qualityBadge"><i class="fas fa-gem"></i><span>QUALITY MODE</span></div>
     </div>
     <div class="ui-overlay" id="uiOverlay">
         <div>
             <div class="top-hud">
-                <div class="hud-badge" id="statusBadge"><i class="fas fa-satellite"></i><span id="statusText">4K READY</span></div>
+                <div class="hud-badge" id="statusBadge"><i class="fas fa-satellite"></i><span id="statusText">4K HW ZOOM</span></div>
                 <div class="top-buttons">
+                    <button class="icon-btn" id="torchBtn" title="Torch"><i class="fas fa-lightbulb"></i></button>
                     <button class="icon-btn" id="skyDataBtn" title="Sky"><i class="fas fa-globe"></i></button>
                     <button class="icon-btn" id="finderBtn" title="Finder"><i class="fas fa-search-plus"></i></button>
                     <button class="icon-btn" id="transparentBtn" title="Ghost"><i class="fas fa-ghost"></i></button>
@@ -200,9 +210,21 @@
         <div class="control-panel">
             <div class="zoom-container">
                 <button class="zoom-btn" id="zoomOutBtn">−</button>
-                <div class="zoom-slider-wrap"><input type="range" id="zoomSlider" min="0.3" max="50000" value="1" step="0.01"></div>
+                <div class="zoom-slider-wrap"><input type="range" id="zoomSlider" min="0" max="100" value="0" step="0.01"></div>
                 <button class="zoom-btn" id="zoomInBtn">+</button>
-                <div class="zoom-value" id="zoomValue">1.00<span class="zoom-unit">x</span></div>
+                <div class="zoom-value" id="zoomValue">1.0<span class="zoom-unit">x</span></div>
+            </div>
+            <div class="zoom-mode" id="zoomMode">🔧 HARDWARE ZOOM</div>
+            <div class="quick-zoom-row">
+                <button class="quick-zoom-btn" onclick="quickZoom(1)">1x</button>
+                <button class="quick-zoom-btn" onclick="quickZoom(5)">5x</button>
+                <button class="quick-zoom-btn" onclick="quickZoom(10)">10x</button>
+                <button class="quick-zoom-btn" onclick="quickZoom(25)">25x</button>
+                <button class="quick-zoom-btn" onclick="quickZoom(50)">50x</button>
+                <button class="quick-zoom-btn" onclick="quickZoom(100)">100x</button>
+                <button class="quick-zoom-btn" onclick="quickZoom(250)">250x</button>
+                <button class="quick-zoom-btn" onclick="quickZoom(500)">500x</button>
+                <button class="quick-zoom-btn" onclick="quickZoom(1000)">1000x</button>
             </div>
             <div class="preset-row">
                 <button class="preset-chip active" data-preset="normal"><i class="fas fa-eye"></i><span>Normal</span></button>
@@ -215,30 +237,37 @@
                 <button class="preset-chip" data-preset="deepsky"><i class="fas fa-galaxy"></i><span>Deep</span></button>
             </div>
             <div class="sliders-grid">
-                <div class="slider-item"><div class="slider-label"><span>Bright</span><span id="brightVal">100%</span></div><input type="range" id="brightSlider" min="0" max="250" value="100"></div>
-                <div class="slider-item"><div class="slider-label"><span>Contrast</span><span id="contVal">100%</span></div><input type="range" id="contSlider" min="0" max="300" value="100"></div>
-                <div class="slider-item"><div class="slider-label"><span>Focus</span><span id="focusVal">50%</span></div><input type="range" id="focusSlider" min="0" max="100" value="50"></div>
+                <div class="slider-item"><div class="slider-label"><span>ISO</span><span id="isoVal">Auto</span></div><input type="range" id="isoSlider" min="50" max="6400" value="400" step="50"></div>
+                <div class="slider-item"><div class="slider-label"><span>Exposure</span><span id="expVal">Auto</span></div><input type="range" id="expSlider" min="0" max="100" value="50"></div>
+                <div class="slider-item"><div class="slider-label"><span>Focus</span><span id="focusVal">Auto</span></div><input type="range" id="focusSlider" min="0" max="100" value="50"></div>
+            </div>
+            <div class="sliders-grid">
+                <div class="slider-item"><div class="slider-label"><span>Bright</span><span id="brightVal">100%</span></div><input type="range" id="brightSlider" min="0" max="200" value="100"></div>
+                <div class="slider-item"><div class="slider-label"><span>Contrast</span><span id="contVal">100%</span></div><input type="range" id="contSlider" min="0" max="200" value="100"></div>
+                <div class="slider-item"><div class="slider-label"><span>Saturation</span><span id="satVal">100%</span></div><input type="range" id="satSlider" min="0" max="200" value="100"></div>
             </div>
             <div class="action-grid">
                 <button class="action-btn" id="telescopeBtn"><i class="fas fa-eye"></i><span>Telescope</span></button>
                 <button class="action-btn lock-btn" id="lockBtn"><i class="fas fa-lock"></i><span>Lock</span></button>
+                <button class="action-btn torch-btn" id="torchBtnMain"><i class="fas fa-lightbulb"></i><span>Torch</span></button>
                 <button class="action-btn lens-btn" id="lensBtn"><i class="fas fa-camera-retro"></i><span>Lens</span></button>
                 <button class="action-btn" id="surfaceBtn"><i class="fas fa-mountain"></i><span>Surface</span></button>
                 <button class="action-btn fx-btn" id="fxBtn"><i class="fas fa-palette"></i><span>FX</span></button>
                 <button class="action-btn pro-btn" id="proBtn"><i class="fas fa-sliders-h"></i><span>Pro</span></button>
                 <button class="action-btn" id="nightBtn"><i class="fas fa-moon"></i><span>Night</span></button>
-                <button class="action-btn" id="gridBtn"><i class="fas fa-th"></i><span>Grid</span></button>
                 <button class="action-btn" id="captureBtn"><i class="fas fa-camera"></i><span>Shot</span></button>
                 <button class="action-btn" id="recordBtn"><i class="fas fa-video"></i><span>Rec</span></button>
                 <button class="action-btn" id="zebraBtn"><i class="fas fa-barcode"></i><span>Zebra</span></button>
-                <button class="action-btn" id="falseColorBtn"><i class="fas fa-rainbow"></i><span>False</span></button>
+                <button class="action-btn" id="gridBtn"><i class="fas fa-th"></i><span>Grid</span></button>
                 <button class="action-btn stack-btn" id="stackBtn"><i class="fas fa-layer-group"></i><span>Stack</span></button>
                 <button class="action-btn hdr-btn" id="hdrBtn"><i class="fas fa-magic"></i><span>HDR</span></button>
+                <button class="action-btn" id="falseColorBtn"><i class="fas fa-rainbow"></i><span>False</span></button>
                 <button class="action-btn" id="cinemaBtn"><i class="fas fa-film"></i><span>Cinema</span></button>
                 <button class="action-btn" id="resetBtn"><i class="fas fa-undo"></i><span>Reset</span></button>
             </div>
         </div>
     </div>
+    <!-- LENS SHEET -->
     <div class="sheet" id="lensSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-camera-retro"></i> HIGH QUALITY LENSES</h2><button class="close-sheet" data-sheet="lensSheet">✕</button></div>
@@ -250,11 +279,12 @@
             <div class="lens-card" data-lens="telephoto"><i class="fas fa-search"></i><span>Telephoto</span></div>
             <div class="lens-card" data-lens="macro"><i class="fas fa-search-plus"></i><span>Macro</span></div>
             <div class="lens-card" data-lens="portrait"><i class="fas fa-user-circle"></i><span>Portrait</span></div>
-            <div class="lens-card" data-lens="nightvision"><i class="fas fa-eye"></i><span>Night Vision</span></div>
+            <div class="lens-card" data-lens="nightvision"><i class="fas fa-eye"></i><span>Night V.</span></div>
             <div class="lens-card" data-lens="infrared"><i class="fas fa-fire"></i><span>Infrared</span></div>
             <div class="lens-card" data-lens="cinemabars"><i class="fas fa-film"></i><span>Cinema</span></div>
         </div>
     </div>
+    <!-- FX SHEET -->
     <div class="sheet" id="fxSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-palette"></i> COLORS & FILTERS</h2><button class="close-sheet" data-sheet="fxSheet">✕</button></div>
@@ -299,22 +329,22 @@
         <div class="fx-slider-row"><label>Vignette</label><input type="range" id="vignetteSlider" min="0" max="100" value="0"><span class="val" id="vignetteVal">0%</span></div>
         <div class="fx-slider-row"><label>Light Leak</label><input type="range" id="leakSlider" min="0" max="100" value="0"><span class="val" id="leakVal">0%</span></div>
     </div>
+    <!-- PRO SHEET -->
     <div class="sheet" id="proSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-sliders-h"></i> PRO CONTROLS</h2><button class="close-sheet" data-sheet="proSheet">✕</button></div>
         <div class="pro-grid">
-            <div class="pro-item"><div class="pro-label"><span>Exposure</span><span id="exposureVal">0.0</span></div><input type="range" id="exposureSlider" min="-100" max="100" value="0"></div>
+            <div class="pro-item"><div class="pro-label"><span>ISO</span><span id="proIsoVal">Auto</span></div><input type="range" id="proIsoSlider" min="50" max="6400" value="400" step="50"></div>
+            <div class="pro-item"><div class="pro-label"><span>Exposure Time</span><span id="proExpVal">Auto</span></div><input type="range" id="proExpSlider" min="0" max="100" value="50"></div>
+            <div class="pro-item"><div class="pro-label"><span>Focus Manual</span><span id="proFocusVal">Auto</span></div><input type="range" id="proFocusSlider" min="0" max="100" value="50"></div>
             <div class="pro-item"><div class="pro-label"><span>Highlight Recovery</span><span id="highRecVal">0</span></div><input type="range" id="highRecSlider" min="0" max="100" value="0"></div>
             <div class="pro-item"><div class="pro-label"><span>Gamma</span><span id="gammaVal">1.0</span></div><input type="range" id="gammaSlider" min="50" max="200" value="100"></div>
             <div class="pro-item"><div class="pro-label"><span>Temperature</span><span id="tempVal">0</span></div><input type="range" id="tempSlider" min="-100" max="100" value="0"></div>
-            <div class="pro-item"><div class="pro-label"><span>Tint</span><span id="tintVal">0</span></div><input type="range" id="tintSlider" min="-100" max="100" value="0"></div>
             <div class="pro-item"><div class="pro-label"><span>Sharpness</span><span id="sharpVal">0</span></div><input type="range" id="sharpSlider" min="0" max="100" value="0"></div>
-            <div class="pro-item"><div class="pro-label"><span>Highlights</span><span id="highVal">0</span></div><input type="range" id="highSlider" min="-100" max="100" value="0"></div>
-            <div class="pro-item"><div class="pro-label"><span>Shadows</span><span id="shadowVal">0</span></div><input type="range" id="shadowSlider" min="-100" max="100" value="0"></div>
-            <div class="pro-item"><div class="pro-label"><span>Saturation</span><span id="satVal">100%</span></div><input type="range" id="satSlider" min="0" max="250" value="100"></div>
             <div class="pro-item"><div class="pro-label"><span>Purple Noise Fix</span><span id="noiseVal">0</span></div><input type="range" id="noiseSlider" min="0" max="100" value="0"></div>
         </div>
     </div>
+    <!-- SKY SHEET -->
     <div class="sheet" id="skySheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-satellite-dish"></i> LIVE SKY DATA</h2><button class="close-sheet" data-sheet="skySheet">✕</button></div>
@@ -330,12 +360,12 @@
             <div class="data-row"><span>Humidity</span><span id="humidity">--%</span></div>
             <div class="data-row"><span>Quality</span><span id="viewQuality">--</span></div>
         </div>
-        <div class="data-section"><h3><i class="fas fa-globe"></i> Planet Visibility</h3><div id="planetList"></div></div>
-        <div class="data-section"><h3><i class="fas fa-star"></i> Bright Stars</h3><div id="starList"></div></div>
+        <div class="data-section"><h3><i class="fas fa-globe"></i> Planets</h3><div id="planetList"></div></div>
+        <div class="data-section"><h3><i class="fas fa-star"></i> Stars</h3><div id="starList"></div></div>
     </div>
     <div class="install-popup" id="installPopup">
         <div class="install-icon"><i class="fas fa-satellite-dish"></i></div>
-        <div class="install-text"><h4>Install Saqskyscoop</h4><p>Add to home screen for full-screen experience</p></div>
+        <div class="install-text"><h4>Install Saqskyscoop</h4><p>Add to home screen</p></div>
         <div class="install-actions">
             <button class="install-btn-yes" id="installYes">Install</button>
             <button class="install-btn-no" id="installNo">Later</button>
@@ -344,16 +374,16 @@
     <div class="modal-overlay" id="permModal">
         <div class="modal-card">
             <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:25px"></i>
-            <h2>SAQSKYSCOOP ULTRA</h2>
-            <p>Hybrid 4K telescope with auto-detection, surface details, HDR, Stack, and cinematic optics.</p>
-            <button class="btn-primary" id="allowCamBtn">Initialize Camera</button>
+            <h2>SAQSKYSCOOP PRO MAX</h2>
+            <p>1000x Hybrid Zoom + Full Features: Stack, HDR, Surface, Zebra, Lens, Lock, and more.</p>
+            <button class="btn-primary" id="allowCamBtn">Start Telescope</button>
         </div>
     </div>
     <div class="modal-overlay hidden" id="loadingModal">
         <div class="modal-card">
             <i class="fas fa-circle-notch fa-spin" style="font-size:2.5rem;color:var(--neon-cyan);margin-bottom:20px"></i>
-            <h2>CALIBRATING OPTICS</h2>
-            <p>Connecting to 4K sensor...</p>
+            <h2>CALIBRATING</h2>
+            <p>Connecting to hardware sensor...</p>
         </div>
     </div>
     <script>
@@ -362,37 +392,17 @@
         const popup=document.getElementById('installPopup');
         const yesBtn=document.getElementById('installYes');
         const noBtn=document.getElementById('installNo');
-        let deferredPrompt=null;
-        let popupShown=false;
+        let deferredPrompt=null,popupShown=false;
         const installed=localStorage.getItem('saqskyscoop-installed')==='true';
         const sessionShown=sessionStorage.getItem('saqskyscoop-popup-shown')==='true';
         const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-        function showPopup(){
-            if(popupShown)return;
-            if(installed||isStandalone||sessionShown)return;
-            popupShown=true;
-            sessionStorage.setItem('saqskyscoop-popup-shown','true');
-            popup.classList.add('show');
-        }
-        function hidePopup(p){
-            popup.classList.remove('show');
-            if(p)localStorage.setItem('saqskyscoop-installed','true');
-        }
+        function showPopup(){if(popupShown||installed||isStandalone||sessionShown)return;popupShown=true;sessionStorage.setItem('saqskyscoop-popup-shown','true');popup.classList.add('show')}
+        function hidePopup(p){popup.classList.remove('show');if(p)localStorage.setItem('saqskyscoop-installed','true')}
         window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;setTimeout(showPopup,300)});
         setTimeout(showPopup,800);
         yesBtn.addEventListener('click',async()=>{
-            if(deferredPrompt){
-                try{
-                    deferredPrompt.prompt();
-                    const c=await deferredPrompt.userChoice;
-                    if(c.outcome==='accepted')hidePopup(true);else hidePopup(false);
-                    deferredPrompt=null;
-                }catch(e){hidePopup(false)}
-            }else{
-                const isIOS=/iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-                alert(isIOS?'📱 iOS: Tap Share button (□↑) → "Add to Home Screen"':'📱 Browser Menu (⋮) → "Install app"');
-                hidePopup(false);
-            }
+            if(deferredPrompt){try{deferredPrompt.prompt();const c=await deferredPrompt.userChoice;if(c.outcome==='accepted')hidePopup(true);else hidePopup(false);deferredPrompt=null}catch(e){hidePopup(false)}}
+            else{alert(/iphone|ipad|ipod/i.test(navigator.userAgent)?'📱 iOS: Tap Share (□↑) → "Add to Home Screen"':'📱 Browser Menu (⋮) → "Install app"');hidePopup(false)}
         });
         noBtn.addEventListener('click',()=>hidePopup(false));
         window.addEventListener('appinstalled',()=>hidePopup(true));
@@ -415,27 +425,34 @@
     // ======================== TELESCOPE ENGINE ========================
     (()=>{
         const video=document.getElementById('video');const finderVideo=document.getElementById('finderVideo');
-        const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d',{alpha:false});
+        const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d',{alpha:true,willReadFrequently:true});
         const zebraCanvas=document.getElementById('zebraCanvas');const zctx=zebraCanvas.getContext('2d',{willReadFrequently:true});
         const histogramCanvas=document.getElementById('histogramCanvas');const hctx=histogramCanvas.getContext('2d');
         const cameraView=document.getElementById('cameraView');
         const objectBadge=document.getElementById('objectBadge');const objectName=document.getElementById('objectName');
-        const qualityBadge=document.getElementById('qualityBadge');
         const statusBadge=document.getElementById('statusBadge');const statusText=document.getElementById('statusText');
+        const hwBadge=document.getElementById('hwBadge');const hwText=document.getElementById('hwText');
+        const qualityBadge=document.getElementById('qualityBadge');
+        const zoomModeEl=document.getElementById('zoomMode');
         const lensOverlays={anamorphic:document.getElementById('lensAnamorphic'),vintage:document.getElementById('lensVintage'),fisheye:document.getElementById('lensFisheye'),telephoto:document.getElementById('lensTelephoto'),macro:document.getElementById('lensMacro'),portrait:document.getElementById('lensPortrait'),nightvision:document.getElementById('lensNightVision'),infrared:document.getElementById('lensInfrared'),cinemabars:document.getElementById('cinemaBars')};
         const zoomSlider=document.getElementById('zoomSlider');const zoomValue=document.getElementById('zoomValue');
         const zoomInBtn=document.getElementById('zoomInBtn');const zoomOutBtn=document.getElementById('zoomOutBtn');
+        const isoSlider=document.getElementById('isoSlider');const isoVal=document.getElementById('isoVal');
+        const expSlider=document.getElementById('expSlider');const expVal=document.getElementById('expVal');
+        const focusSlider=document.getElementById('focusSlider');const focusVal=document.getElementById('focusVal');
         const brightSlider=document.getElementById('brightSlider');const brightVal=document.getElementById('brightVal');
         const contSlider=document.getElementById('contSlider');const contVal=document.getElementById('contVal');
-        const focusSlider=document.getElementById('focusSlider');const focusVal=document.getElementById('focusVal');
+        const satSlider=document.getElementById('satSlider');const satVal=document.getElementById('satVal');
         const telescopeBtn=document.getElementById('telescopeBtn');const surfaceBtn=document.getElementById('surfaceBtn');
         const gridBtn=document.getElementById('gridBtn');const lensBtn=document.getElementById('lensBtn');
         const nightBtn=document.getElementById('nightBtn');const resetBtn=document.getElementById('resetBtn');
         const captureBtn=document.getElementById('captureBtn');const recordBtn=document.getElementById('recordBtn');
         const finderBtn=document.getElementById('finderBtn');const transparentBtn=document.getElementById('transparentBtn');
         const skyDataBtn=document.getElementById('skyDataBtn');const fxBtn=document.getElementById('fxBtn');const proBtn=document.getElementById('proBtn');
-        const falseColorBtn=document.getElementById('falseColorBtn');const zebraBtn=document.getElementById('zebraBtn');const lockBtn=document.getElementById('lockBtn');
-        const stackBtn=document.getElementById('stackBtn');const hdrBtn=document.getElementById('hdrBtn');const cinemaBtn=document.getElementById('cinemaBtn');
+        const lockBtn=document.getElementById('lockBtn');const cinemaBtn=document.getElementById('cinemaBtn');
+        const zebraBtn=document.getElementById('zebraBtn');const falseColorBtn=document.getElementById('falseColorBtn');
+        const stackBtn=document.getElementById('stackBtn');const hdrBtn=document.getElementById('hdrBtn');
+        const torchBtnTop=document.getElementById('torchBtn');const torchBtnMain=document.getElementById('torchBtnMain');
         const lensSheet=document.getElementById('lensSheet');const fxSheet=document.getElementById('fxSheet');
         const proSheet=document.getElementById('proSheet');const skySheet=document.getElementById('skySheet');
         const finderScope=document.getElementById('finderScope');
@@ -445,120 +462,152 @@
         const opacitySlider=document.getElementById('opacitySlider');const opacityVal=document.getElementById('opacityVal');
         const vignetteSlider=document.getElementById('vignetteSlider');const vignetteVal=document.getElementById('vignetteVal');
         const leakSlider=document.getElementById('leakSlider');const leakVal=document.getElementById('leakVal');
-        const exposureSlider=document.getElementById('exposureSlider');const exposureVal=document.getElementById('exposureVal');
+        const proIsoSlider=document.getElementById('proIsoSlider');const proIsoVal=document.getElementById('proIsoVal');
+        const proExpSlider=document.getElementById('proExpSlider');const proExpVal=document.getElementById('proExpVal');
+        const proFocusSlider=document.getElementById('proFocusSlider');const proFocusVal=document.getElementById('proFocusVal');
         const highRecSlider=document.getElementById('highRecSlider');const highRecVal=document.getElementById('highRecVal');
         const gammaSlider=document.getElementById('gammaSlider');const gammaVal=document.getElementById('gammaVal');
         const tempSlider=document.getElementById('tempSlider');const tempVal=document.getElementById('tempVal');
-        const tintSlider=document.getElementById('tintSlider');const tintVal=document.getElementById('tintVal');
         const sharpSlider=document.getElementById('sharpSlider');const sharpVal=document.getElementById('sharpVal');
-        const highSlider=document.getElementById('highSlider');const highVal=document.getElementById('highVal');
-        const shadowSlider=document.getElementById('shadowSlider');const shadowVal=document.getElementById('shadowVal');
-        const satSlider=document.getElementById('satSlider');const satVal=document.getElementById('satVal');
         const noiseSlider=document.getElementById('noiseSlider');const noiseVal=document.getElementById('noiseVal');
         const permModal=document.getElementById('permModal');const loadingModal=document.getElementById('loadingModal');
         const allowCamBtn=document.getElementById('allowCamBtn');
 
-        let stream=null;let zoom=1;let brightness=100,contrast=100,focus=50;
-        let activeColor='none';let colorOpacity=25;let activeEffect='none';let activeGrade='none';let activeLens='none';
+        let stream=null,track=null,caps={},videoSettings={};
+        let hwZoomAvail=false,hwZoomMin=1,hwZoomMax=10;
+        const MAX_ZOOM=1000;
+        let zoom=1,brightness=100,contrast=100,saturation=100;
+        let isoAuto=true,exposureAuto=true,focusAuto=true;
+        let currentISO=400,currentExposure=50,currentFocus=50;
+        let gamma=100,temperature=0,sharpness=0,highlightRecovery=0,purpleNoiseFix=0;
+        let activeColor='none',colorOpacity=25,activeEffect='none',activeGrade='none',activeLens='none';
         let vignetteAmount=0,leakAmount=0;
-        let exposure=0,gamma=100,temperature=0,tint=0,sharpness=0,highlights=0,shadows=0,saturation=100;
-        let surfaceStrength=50,highlightRecovery=0,purpleNoiseFix=0;
         let isTelescopeMode=false,isGrid=false,isNight=false,isRecording=false,isTransparent=false;
-        let isSurfaceEnhance=false,isFalseColor=false,isQualityMode=false,isZebra=false,isExposureLocked=false,isHistogram=false;
-        let isStack=false,isHdr=false,isCinema=false;
-        
-        let mediaRecorder=null;let recordedChunks=[];
-        let stackBuffer=null;let stackCount=0;
+        let isExposureLocked=false,isCinema=false,isTorchOn=false,isZebra=false,isHistogram=false;
+        let isSurfaceEnhance=false,isFalseColor=false,isStack=false,isHdr=false;
+        let mediaRecorder=null,recordedChunks=[];
+        let stackBuffer=null,stackCount=0;
         let objectCenter={x:.5,y:.5};let objectBounds={x:.4,y:.4,w:.2,h:.2};
         let frameCounter=0;let detectedObject='none';let objectSizePct=0;
         const detectionCanvas=document.createElement('canvas');const detectionCtx=detectionCanvas.getContext('2d',{willReadFrequently:true});
         const processCanvas=document.createElement('canvas');const processCtx=processCanvas.getContext('2d',{willReadFrequently:true});
-        let zoomHoldTimer=null;let zoomHoldDir=0;
-        let cachedFilter='';let filterDirty=true;
+        let zoomHoldTimer=null,zoomHoldDir=0;
+        let cachedFilter='',filterDirty=true;
+        let currentSliderVal=0;
+
         const PRESETS={
-            normal:{bright:100,cont:100,sat:100,focus:50,exposure:0,gamma:100,temperature:0,tint:0,sharpness:0},
-            moon:{bright:100,cont:140,sat:80,focus:82,exposure:-10,gamma:105,temperature:-15,tint:0,sharpness:60},
-            jupiter:{bright:100,cont:155,sat:135,focus:85,exposure:-5,gamma:110,temperature:10,tint:-10,sharpness:70},
-            saturn:{bright:100,cont:150,sat:140,focus:85,exposure:-5,gamma:105,temperature:15,tint:0,sharpness:65},
-            mars:{bright:100,cont:145,sat:155,focus:80,exposure:-5,gamma:100,temperature:25,tint:5,sharpness:55},
-            venus:{bright:100,cont:140,sat:105,focus:80,exposure:-15,gamma:110,temperature:-20,tint:0,sharpness:60},
-            nebula:{bright:100,cont:130,sat:180,focus:55,exposure:0,gamma:115,temperature:20,tint:10,sharpness:30},
-            deepsky:{bright:100,cont:160,sat:150,focus:50,exposure:0,gamma:120,temperature:0,tint:0,sharpness:20}
+            normal:{bright:100,cont:100,sat:100,gamma:100,temp:0,sharp:0},
+            moon:{bright:100,cont:130,sat:75,gamma:105,temp:-15,sharp:20},
+            jupiter:{bright:100,cont:140,sat:130,gamma:110,temp:10,sharp:30},
+            saturn:{bright:100,cont:135,sat:130,gamma:105,temp:15,sharp:25},
+            mars:{bright:100,cont:130,sat:150,gamma:100,temp:25,sharp:20},
+            venus:{bright:105,cont:130,sat:100,gamma:110,temp:-20,sharp:25},
+            nebula:{bright:100,cont:120,sat:170,gamma:115,temp:20,sharp:15},
+            deepsky:{bright:100,cont:140,sat:145,gamma:120,temp:0,sharp:10}
         };
+
         function markFilterDirty(){filterDirty=true}
-        function setQualityMode(on,reason){
-            if(isQualityMode===on)return;isQualityMode=on;
-            qualityBadge.classList.toggle('show',on);statusBadge.classList.toggle('quality-mode',on);
-            if(on){statusText.textContent='QUALITY MODE';if(reason)showToast(`💎 ${reason}`)}else{statusText.textContent='4K FAST'}
-        }
         function init(){bindEvents();permModal.classList.remove('hidden');loadSkyData();setInterval(loadSkyData,120000);updateZoomUI()}
         function closeAllSheets(){lensSheet.classList.remove('open');fxSheet.classList.remove('open');proSheet.classList.remove('open');skySheet.classList.remove('open')}
         function openSheet(s){closeAllSheets();s.classList.add('open')}
-        
+
         function bindEvents(){
             allowCamBtn.addEventListener('click',startCamera);
             closeSheetBtns.forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.sheet).classList.remove('open')));
-            zoomSlider.addEventListener('input',(e)=>{e.stopPropagation();zoom=parseFloat(zoomSlider.value);updateZoomUI()});
+
+            // ZOOM SLIDER — Log scale 0-100 → 1x-1000x
+            zoomSlider.addEventListener('input',async(e)=>{
+                e.stopPropagation();
+                currentSliderVal=parseFloat(zoomSlider.value);
+                zoom=Math.pow(1000,currentSliderVal/100);
+                await applyHybridZoom(zoom);
+                updateZoomDisplay();
+            });
             ['touchstart','touchmove','touchend'].forEach(ev=>zoomSlider.addEventListener(ev,e=>e.stopPropagation()));
-            function startZoomHold(dir){if(zoomHoldTimer)return;zoomHoldDir=dir;zoomInBtn.classList.toggle('pressing',dir===1);zoomOutBtn.classList.toggle('pressing',dir===-1);applyZoomStep();zoomHoldTimer=setInterval(applyZoomStep,30)}
+
+            function startZoomHold(dir){if(zoomHoldTimer)return;zoomHoldDir=dir;zoomInBtn.classList.toggle('pressing',dir===1);zoomOutBtn.classList.toggle('pressing',dir===-1);applyZoomStep();zoomHoldTimer=setInterval(applyZoomStep,80)}
             function stopZoomHold(){if(zoomHoldTimer){clearInterval(zoomHoldTimer);zoomHoldTimer=null}zoomHoldDir=0;zoomInBtn.classList.remove('pressing');zoomOutBtn.classList.remove('pressing')}
-            function applyZoomStep(){if(zoomHoldDir===0)return;let step;
-                if(zoom<1)step=.01;else if(zoom<2)step=.02;else if(zoom<10)step=.1;else if(zoom<100)step=1;else if(zoom<1000)step=10;else if(zoom<10000)step=100;else step=500;
-                zoom=Math.max(.3,Math.min(50000,zoom+(zoomHoldDir*step)));updateZoomUI()}
+            function applyZoomStep(){
+                if(zoomHoldDir===0)return;
+                let factor;
+                if(zoom<10)factor=1.05;
+                else if(zoom<100)factor=1.08;
+                else factor=1.12;
+                if(zoomHoldDir===1)zoom=Math.min(MAX_ZOOM, zoom*factor);
+                else zoom=Math.max(hwZoomMin, zoom/factor);
+                applyHybridZoom(zoom);
+                updateZoomUI();
+            }
             zoomInBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(1)});
             zoomOutBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(-1)});
             [zoomInBtn,zoomOutBtn].forEach(b=>{b.addEventListener('pointerup',e=>{e.stopPropagation();stopZoomHold()});b.addEventListener('pointerleave',stopZoomHold);b.addEventListener('pointercancel',stopZoomHold)});
+
+            // ISO / Exposure / Focus
+            isoSlider.addEventListener('input',()=>{isoAuto=false;currentISO=parseInt(isoSlider.value);isoVal.textContent=currentISO;applyISO()});
+            expSlider.addEventListener('input',()=>{exposureAuto=false;currentExposure=parseInt(expSlider.value);expVal.textContent=currentExposure+'%';applyExposure()});
+            focusSlider.addEventListener('input',()=>{focusAuto=false;currentFocus=parseInt(focusSlider.value);focusVal.textContent=currentFocus+'%';applyFocus()});
+            proIsoSlider.addEventListener('input',()=>{isoAuto=false;currentISO=parseInt(proIsoSlider.value);proIsoVal.textContent=currentISO;isoSlider.value=currentISO;isoVal.textContent=currentISO;applyISO()});
+            proExpSlider.addEventListener('input',()=>{exposureAuto=false;currentExposure=parseInt(proExpSlider.value);proExpVal.textContent=currentExposure+'%';expSlider.value=currentExposure;expVal.textContent=currentExposure+'%';applyExposure()});
+            proFocusSlider.addEventListener('input',()=>{focusAuto=false;currentFocus=parseInt(proFocusSlider.value);proFocusVal.textContent=currentFocus+'%';focusSlider.value=currentFocus;focusVal.textContent=currentFocus+'%';applyFocus()});
+
+            // Image adjustments
             brightSlider.addEventListener('input',()=>{brightness=parseInt(brightSlider.value);brightVal.textContent=brightness+'%';markFilterDirty()});
             contSlider.addEventListener('input',()=>{contrast=parseInt(contSlider.value);contVal.textContent=contrast+'%';markFilterDirty()});
-            focusSlider.addEventListener('input',()=>{focus=parseInt(focusSlider.value);focusVal.textContent=focus+'%';markFilterDirty()});
+            satSlider.addEventListener('input',()=>{saturation=parseInt(satSlider.value);satVal.textContent=saturation+'%';markFilterDirty()});
+            gammaSlider.addEventListener('input',()=>{gamma=parseInt(gammaSlider.value);gammaVal.textContent=(gamma/100).toFixed(2);markFilterDirty()});
+            tempSlider.addEventListener('input',()=>{temperature=parseInt(tempSlider.value);tempVal.textContent=temperature;markFilterDirty()});
+            sharpSlider.addEventListener('input',()=>{sharpness=parseInt(sharpSlider.value);sharpVal.textContent=sharpness;markFilterDirty()});
+            highRecSlider.addEventListener('input',()=>{highlightRecovery=parseInt(highRecSlider.value);highRecVal.textContent=highlightRecovery});
+            noiseSlider.addEventListener('input',()=>{purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=purpleNoiseFix});
+
+            // Torch
+            function toggleTorch(){
+                if(!caps.torch){showToast('⚠️ Torch not supported');return}
+                isTorchOn=!isTorchOn;
+                track.applyConstraints({advanced:[{torch:isTorchOn}]}).then(()=>{
+                    torchBtnTop.classList.toggle('torch-on',isTorchOn);
+                    torchBtnMain.classList.toggle('torch-on',isTorchOn);
+                    showToast(isTorchOn?'🔦 Torch ON':'🔦 Torch OFF');
+                }).catch(e=>{showToast('⚠️ Torch failed');isTorchOn=false});
+            }
+            torchBtnTop.addEventListener('click',toggleTorch);
+            torchBtnMain.addEventListener('click',toggleTorch);
+
             presetChips.forEach(chip=>chip.addEventListener('click',()=>{presetChips.forEach(c=>c.classList.remove('active'));chip.classList.add('active');applyPreset(chip.dataset.preset)}));
+
             fxBtn.addEventListener('click',()=>openSheet(fxSheet));
             proBtn.addEventListener('click',()=>openSheet(proSheet));
             lensBtn.addEventListener('click',()=>openSheet(lensSheet));
             skyDataBtn.addEventListener('click',()=>{if(skySheet.classList.contains('open'))skySheet.classList.remove('open');else{openSheet(skySheet);loadSkyData()}});
+
             lensCards.forEach(card=>card.addEventListener('click',()=>{lensCards.forEach(c=>c.classList.remove('active'));card.classList.add('active');const lens=card.dataset.lens;Object.values(lensOverlays).forEach(o=>o.classList.remove('show'));if(lens!=='none'&&lensOverlays[lens])lensOverlays[lens].classList.add('show');activeLens=lens;showToast(`📷 ${lens.toUpperCase()}`)}));
+
             colorDots.forEach(dot=>dot.addEventListener('click',()=>{colorDots.forEach(d=>d.classList.remove('active'));dot.classList.add('active');activeColor=dot.dataset.color}));
             opacitySlider.addEventListener('input',()=>{colorOpacity=parseInt(opacitySlider.value);opacityVal.textContent=colorOpacity+'%'});
             vignetteSlider.addEventListener('input',()=>{vignetteAmount=parseInt(vignetteSlider.value);vignetteVal.textContent=vignetteAmount+'%'});
             leakSlider.addEventListener('input',()=>{leakAmount=parseInt(leakSlider.value);leakVal.textContent=leakAmount+'%'});
+
             effectChips.forEach(chip=>chip.addEventListener('click',()=>{effectChips.forEach(c=>c.classList.remove('active'));chip.classList.add('active');activeEffect=chip.dataset.effect;markFilterDirty()}));
             gradeChips.forEach(chip=>chip.addEventListener('click',()=>{gradeChips.forEach(c=>c.classList.remove('active'));chip.classList.add('active');activeGrade=chip.dataset.grade;markFilterDirty()}));
-            exposureSlider.addEventListener('input',()=>{exposure=parseInt(exposureSlider.value);exposureVal.textContent=(exposure>0?'+':'')+(exposure/50).toFixed(1);markFilterDirty()});
-            highRecSlider.addEventListener('input',()=>{highlightRecovery=parseInt(highRecSlider.value);highRecVal.textContent=highlightRecovery;markFilterDirty()});
-            gammaSlider.addEventListener('input',()=>{gamma=parseInt(gammaSlider.value);gammaVal.textContent=(gamma/100).toFixed(2);markFilterDirty()});
-            tempSlider.addEventListener('input',()=>{temperature=parseInt(tempSlider.value);tempVal.textContent=temperature>0?`+${temperature}`:temperature;markFilterDirty()});
-            tintSlider.addEventListener('input',()=>{tint=parseInt(tintSlider.value);tintVal.textContent=tint;markFilterDirty()});
-            sharpSlider.addEventListener('input',()=>{sharpness=parseInt(sharpSlider.value);sharpVal.textContent=sharpness;markFilterDirty()});
-            highSlider.addEventListener('input',()=>{highlights=parseInt(highSlider.value);highVal.textContent=highlights;markFilterDirty()});
-            shadowSlider.addEventListener('input',()=>{shadows=parseInt(shadowSlider.value);shadowVal.textContent=shadows;markFilterDirty()});
-            satSlider.addEventListener('input',()=>{saturation=parseInt(satSlider.value);satVal.textContent=saturation+'%';markFilterDirty()});
-            noiseSlider.addEventListener('input',()=>{purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=purpleNoiseFix;markFilterDirty()});
-            
+
+            // Telescope
             telescopeBtn.addEventListener('click',()=>{isTelescopeMode=!isTelescopeMode;telescopeBtn.classList.toggle('active-btn',isTelescopeMode);showToast(isTelescopeMode?'🔭 Telescope: ON':'Telescope: OFF')});
             
-            // ✅ LOCK BUTTON — Simple toggle (jaisa original code mein tha)
+            // ⭐ LOCK — Simple toggle (working like original)
             lockBtn.addEventListener('click',async()=>{
                 isExposureLocked=!isExposureLocked;
                 lockBtn.classList.toggle('locked',isExposureLocked);
                 try{
-                    const track=stream&&stream.getVideoTracks()[0];
-                    if(track){
-                        const caps=track.getCapabilities?track.getCapabilities():{};
-                        if(caps.exposureMode){
-                            await track.applyConstraints({advanced:[{exposureMode:isExposureLocked?'manual':'continuous'}]});
-                        }
+                    if(track&&caps.exposureMode){
+                        await track.applyConstraints({advanced:[{exposureMode:isExposureLocked?'manual':'continuous'}]});
                     }
                 }catch(e){}
                 showToast(isExposureLocked?'🔒 Exposure Locked':'🔓 Auto Exposure');
             });
-            
-            surfaceBtn.addEventListener('click',()=>{isSurfaceEnhance=!isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',isSurfaceEnhance);setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'Surface Enhancement');showToast(isSurfaceEnhance?'🏔️ Surface: ON':'Surface: OFF')});
-            falseColorBtn.addEventListener('click',()=>{isFalseColor=!isFalseColor;falseColorBtn.classList.toggle('active-btn',isFalseColor);setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'False Color');showToast(isFalseColor?'🌈 False Color: ON':'False Color: OFF')});
-            gridBtn.addEventListener('click',()=>{isGrid=!isGrid;gridBtn.classList.toggle('active-btn',isGrid)});
-            nightBtn.addEventListener('click',()=>{isNight=!isNight;nightBtn.classList.toggle('active-btn',isNight);document.body.classList.toggle('night-mode',isNight);showToast(isNight?'🔴 Night Vision: ON':'Night: OFF')});
-            transparentBtn.addEventListener('click',()=>{isTransparent=!isTransparent;transparentBtn.classList.toggle('active',isTransparent);document.body.classList.toggle('ghost-mode',isTransparent);showToast(isTransparent?'👻 Ghost UI: ON':'Ghost: OFF')});
-            zebraBtn.addEventListener('click',()=>{isZebra=!isZebra;zebraBtn.classList.toggle('active-btn',isZebra);zebraCanvas.style.display=isZebra?'block':'none';showToast(isZebra?'⚡ Zebra: ON':'Zebra: OFF')});
-            
+
+            // Surface / False Color / Stack / HDR
+            surfaceBtn.addEventListener('click',()=>{isSurfaceEnhance=!isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',isSurfaceEnhance);showToast(isSurfaceEnhance?'🏔️ Surface: ON':'Surface: OFF')});
+            falseColorBtn.addEventListener('click',()=>{isFalseColor=!isFalseColor;falseColorBtn.classList.toggle('active-btn',isFalseColor);showToast(isFalseColor?'🌈 False Color: ON':'False Color: OFF')});
             stackBtn.addEventListener('click',()=>{
                 isStack=!isStack;stackBtn.classList.toggle('active-btn',isStack);
                 if(isStack){
@@ -569,201 +618,257 @@
                     stackBuffer=null;stackCount=0;
                     showToast('Deep Stack: OFF');
                 }
-                setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'Deep Stack');
             });
-            
-            hdrBtn.addEventListener('click',()=>{
-                isHdr=!isHdr;hdrBtn.classList.toggle('active-btn',isHdr);
-                showToast(isHdr?'✨ HDR: ON':'HDR: OFF');
-                setQualityMode(isSurfaceEnhance||isFalseColor||isStack||isHdr,'HDR Enhanced');
-            });
-            
-            cinemaBtn.addEventListener('click',()=>{
-                isCinema=!isCinema;cinemaBtn.classList.toggle('active-btn',isCinema);
-                const bars=document.getElementById('cinemaBars');
-                bars.classList.toggle('show',isCinema);
-                lensOverlays.anamorphic.classList.toggle('show',isCinema);
-                showToast(isCinema?'🎬 Cinema Mode: ON':'Cinema: OFF');
-            });
-            
+            hdrBtn.addEventListener('click',()=>{isHdr=!isHdr;hdrBtn.classList.toggle('active-btn',isHdr);showToast(isHdr?'✨ HDR: ON':'HDR: OFF')});
+
+            gridBtn.addEventListener('click',()=>{isGrid=!isGrid;gridBtn.classList.toggle('active-btn',isGrid)});
+            nightBtn.addEventListener('click',()=>{isNight=!isNight;nightBtn.classList.toggle('active-btn',isNight);document.body.classList.toggle('night-mode',isNight);showToast(isNight?'🔴 Night: ON':'Night: OFF')});
+            transparentBtn.addEventListener('click',()=>{isTransparent=!isTransparent;transparentBtn.classList.toggle('active',isTransparent);document.body.classList.toggle('ghost-mode',isTransparent);showToast(isTransparent?'👻 Ghost: ON':'Ghost: OFF')});
+            cinemaBtn.addEventListener('click',()=>{isCinema=!isCinema;cinemaBtn.classList.toggle('active-btn',isCinema);document.getElementById('cinemaBars').classList.toggle('show',isCinema);lensOverlays.anamorphic.classList.toggle('show',isCinema);showToast(isCinema?'🎬 Cinema: ON':'Cinema: OFF')});
+            zebraBtn.addEventListener('click',()=>{isZebra=!isZebra;zebraBtn.classList.toggle('active-btn',isZebra);zebraCanvas.style.display=isZebra?'block':'none';showToast(isZebra?'⚡ Zebra: ON':'Zebra: OFF')});
+
             statusBadge.style.cursor='pointer';
             statusBadge.addEventListener('click',()=>{isHistogram=!isHistogram;histogramCanvas.classList.toggle('show',isHistogram);showToast(isHistogram?'📊 Histogram: ON':'Histogram: OFF')});
+
             resetBtn.addEventListener('click',resetAll);
             captureBtn.addEventListener('click',captureImage);
             recordBtn.addEventListener('click',toggleRecording);
             finderBtn.addEventListener('click',()=>{const s=finderScope.style.display==='block';finderScope.style.display=s?'none':'block';finderBtn.classList.toggle('active',!s)});
-            
-            let pinch={active:false,dist:0,zoom:1};
-            cameraView.addEventListener('touchstart',(e)=>{if(e.touches.length===2){e.preventDefault();pinch.active=true;pinch.dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);pinch.zoom=zoom}},{passive:false});
-            cameraView.addEventListener('touchmove',(e)=>{if(e.touches.length===2&&pinch.active){e.preventDefault();const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);zoom=Math.max(.3,Math.min(50000,pinch.zoom*Math.pow(d/pinch.dist,1.5)));updateZoomUI()}},{passive:false});
-            cameraView.addEventListener('touchend',(e)=>{if(e.touches.length<2)pinch.active=false});
-            let lastTap=0;
-            cameraView.addEventListener('touchend',(e)=>{if(e.touches.length===0){const now=Date.now();if(now-lastTap<300){if(zoom<5)zoom=10;else if(zoom<20)zoom=50;else if(zoom<100)zoom=500;else zoom=1;updateZoomUI()}lastTap=now}});
         }
-        
+
+        // ⭐ HYBRID ZOOM
+        async function applyHybridZoom(val){
+            if(!track) return;
+            try{
+                if(hwZoomAvail){
+                    const hwVal=Math.min(val,hwZoomMax);
+                    await track.applyConstraints({advanced:[{zoom:hwVal}]});
+                    if(val>hwZoomMax){
+                        const digitalFactor=val/hwZoomMax;
+                        video.style.transform=`scale(${digitalFactor})`;
+                        video.style.transformOrigin='center';
+                        if(val<=50){
+                            zoomModeEl.textContent=`🔧 HW + DIGITAL ${digitalFactor.toFixed(1)}x`;
+                            zoomModeEl.style.color='#00ff88';
+                            hwText.textContent=`${hwZoomMax}x HW + ${digitalFactor.toFixed(1)}x DIG`;
+                            statusText.textContent='HYBRID ZOOM';
+                            statusBadge.className='hud-badge hw-mode';
+                        } else {
+                            zoomModeEl.textContent=`📱 DIGITAL ZOOM ${val.toFixed(0)}x`;
+                            zoomModeEl.style.color='#ffb700';
+                            hwText.textContent=`DIGITAL ${val.toFixed(0)}x`;
+                            statusText.textContent='DIGITAL ZOOM';
+                            statusBadge.className='hud-badge digital-mode';
+                        }
+                    } else {
+                        video.style.transform='scale(1)';
+                        zoomModeEl.textContent='🔧 HARDWARE ZOOM';
+                        zoomModeEl.style.color='#00ff88';
+                        hwText.textContent=`HW ${hwZoomMin}x-${hwZoomMax}x`;
+                        statusText.textContent='HW ZOOM ACTIVE';
+                        statusBadge.className='hud-badge hw-mode';
+                    }
+                } else {
+                    video.style.transform=`scale(${val})`;
+                    video.style.transformOrigin='center';
+                    zoomModeEl.textContent=`📱 DIGITAL ZOOM ${val.toFixed(0)}x`;
+                    zoomModeEl.style.color='#ffb700';
+                }
+            }catch(e){console.log('Zoom error:',e)}
+        }
+
+        async function applyISO(){if(!track||!caps.iso)return;try{await track.applyConstraints({advanced:[{iso:currentISO}]})}catch(e){}}
+        async function applyExposure(){if(!track)return;try{if(caps.exposureCompensation){const min=caps.exposureCompensation.min||-4;const max=caps.exposureCompensation.max||4;const ev=min+((currentExposure/100)*(max-min));await track.applyConstraints({advanced:[{exposureCompensation:ev}]})}}catch(e){}}
+        async function applyFocus(){if(!track||!caps.focusDistance)return;try{const min=caps.focusDistance.min||0;const max=caps.focusDistance.max||1;const dist=min+((currentFocus/100)*(max-min));await track.applyConstraints({advanced:[{focusDistance:dist,focusMode:'manual'}]})}catch(e){}}
+
         function applyPreset(name){
             const p=PRESETS[name]||PRESETS.normal;
-            brightness=p.bright;contrast=p.cont;saturation=p.sat;focus=p.focus;
-            exposure=p.exposure;gamma=p.gamma;temperature=p.temperature;tint=p.tint;sharpness=p.sharpness;
+            brightness=p.bright;contrast=p.cont;saturation=p.sat;
+            gamma=p.gamma;temperature=p.temp;sharpness=p.sharp;
             brightSlider.value=brightness;brightVal.textContent=brightness+'%';
             contSlider.value=contrast;contVal.textContent=contrast+'%';
-            focusSlider.value=focus;focusVal.textContent=focus+'%';
             satSlider.value=saturation;satVal.textContent=saturation+'%';
-            exposureSlider.value=exposure;exposureVal.textContent=(exposure>0?'+':'')+(exposure/50).toFixed(1);
             gammaSlider.value=gamma;gammaVal.textContent=(gamma/100).toFixed(2);
-            tempSlider.value=temperature;tempVal.textContent=temperature>0?`+${temperature}`:temperature;
-            tintSlider.value=tint;tintVal.textContent=tint;
+            tempSlider.value=temperature;tempVal.textContent=temperature;
             sharpSlider.value=sharpness;sharpVal.textContent=sharpness;
             markFilterDirty();
-            if(['moon','jupiter','saturn','mars','venus'].includes(name)){
-                isSurfaceEnhance=true;surfaceBtn.classList.add('active-btn');
-                setQualityMode(true,`${name.toUpperCase()} Ready`);
-            }
-            showToast(`✨ ${name.toUpperCase()} Applied`);
+            showToast(`✨ ${name.toUpperCase()}`);
         }
-        
+
         function resetAll(){
             closeAllSheets();
-            // Reset lock
-            if(isExposureLocked&&stream){
-                const track=stream.getVideoTracks()[0];
-                if(track)track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});
-            }
-            isExposureLocked=false;
-            
-            zoom=1;brightness=100;contrast=100;focus=50;
-            exposure=0;gamma=100;temperature=0;tint=0;sharpness=0;highlights=0;shadows=0;saturation=100;
+            if(track){track.applyConstraints({advanced:[{zoom:hwZoomMin,exposureMode:'continuous',focusMode:'continuous',torch:false}]}).catch(()=>{})}
+            video.style.transform='scale(1)';
+            zoom=hwZoomMin;brightness=100;contrast=100;saturation=100;
+            gamma=100;temperature=0;sharpness=0;highlightRecovery=0;purpleNoiseFix=0;
+            isoAuto=true;exposureAuto=true;focusAuto=true;
+            currentISO=400;currentExposure=50;currentFocus=50;
             colorOpacity=25;vignetteAmount=0;leakAmount=0;
-            surfaceStrength=50;highlightRecovery=0;purpleNoiseFix=0;
             activeColor='none';activeEffect='none';activeGrade='none';activeLens='none';
-            isTelescopeMode=false;isGrid=false;isNight=false;isTransparent=false;
-            isSurfaceEnhance=false;isFalseColor=false;isZebra=false;isHistogram=false;
-            isStack=false;isHdr=false;isCinema=false;
+            isTelescopeMode=false;isGrid=false;isNight=false;isTransparent=false;isCinema=false;
+            isExposureLocked=false;isTorchOn=false;isZebra=false;isHistogram=false;
+            isSurfaceEnhance=false;isFalseColor=false;isStack=false;isHdr=false;
             stackBuffer=null;stackCount=0;
-            zoomSlider.value=1;brightSlider.value=100;contSlider.value=100;focusSlider.value=50;
-            exposureSlider.value=0;gammaSlider.value=100;tempSlider.value=0;tintSlider.value=0;
-            sharpSlider.value=0;highSlider.value=0;shadowSlider.value=0;satSlider.value=100;
-            highRecSlider.value=0;noiseSlider.value=0;opacitySlider.value=25;vignetteSlider.value=0;leakSlider.value=0;
+            zoomSlider.value=0;currentSliderVal=0;
+            isoSlider.value=400;expSlider.value=50;focusSlider.value=50;
+            brightSlider.value=100;contSlider.value=100;satSlider.value=100;
+            gammaSlider.value=100;tempSlider.value=0;sharpSlider.value=0;
+            highRecSlider.value=0;noiseSlider.value=0;
+            opacitySlider.value=25;vignetteSlider.value=0;leakSlider.value=0;
+            proIsoSlider.value=400;proExpSlider.value=50;proFocusSlider.value=50;
             updateZoomUI();
-            brightVal.textContent='100%';contVal.textContent='100%';focusVal.textContent='50%';
-            exposureVal.textContent='0.0';gammaVal.textContent='1.00';tempVal.textContent='0';tintVal.textContent='0';sharpVal.textContent='0';
-            highVal.textContent='0';shadowVal.textContent='0';satVal.textContent='100%';highRecVal.textContent='0';noiseVal.textContent='0';
+            isoVal.textContent='Auto';expVal.textContent='Auto';focusVal.textContent='Auto';
+            proIsoVal.textContent='Auto';proExpVal.textContent='Auto';proFocusVal.textContent='Auto';
+            brightVal.textContent='100%';contVal.textContent='100%';satVal.textContent='100%';
+            gammaVal.textContent='1.00';tempVal.textContent='0';sharpVal.textContent='0';
+            highRecVal.textContent='0';noiseVal.textContent='0';
             opacityVal.textContent='25%';vignetteVal.textContent='0%';leakVal.textContent='0%';
-            document.querySelectorAll('.action-btn').forEach(b=>b.classList.remove('active-btn','active','locked'));
-            document.querySelectorAll('.icon-btn').forEach(b=>b.classList.remove('active'));
+            document.querySelectorAll('.action-btn').forEach(b=>b.classList.remove('active-btn','active','locked','torch-on'));
+            document.querySelectorAll('.icon-btn').forEach(b=>b.classList.remove('active','torch-on'));
             document.body.classList.remove('night-mode','ghost-mode');
             Object.values(lensOverlays).forEach(o=>o.classList.remove('show'));
+            document.getElementById('cinemaBars').classList.remove('show');
             zebraCanvas.style.display='none';histogramCanvas.classList.remove('show');
             colorDots.forEach((d,i)=>d.classList.toggle('active',i===0));
             effectChips.forEach((c,i)=>c.classList.toggle('active',i===0));
             gradeChips.forEach((c,i)=>c.classList.toggle('active',i===0));
             presetChips.forEach((c,i)=>c.classList.toggle('active',i===0));
             lensCards.forEach((c,i)=>c.classList.toggle('active',i===0));
-            objectCenter={x:.5,y:.5};objectBounds={x:.4,y:.4,w:.2,h:.2};detectedObject='none';objectSizePct=0;
             objectBadge.classList.remove('show');
-            setQualityMode(false);markFilterDirty();showToast('✅ Reset Complete');
+            markFilterDirty();showToast('✅ Reset');
         }
-        
+
         async function startCamera(){
             permModal.classList.add('hidden');loadingModal.classList.remove('hidden');
-            const timeoutId=setTimeout(()=>{loadingModal.classList.add('hidden');alert('Camera timeout. Check permissions.')},10000);
+            const timeoutId=setTimeout(()=>{loadingModal.classList.add('hidden');alert('Camera timeout')},10000);
             try{
-                stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}},audio:false});
+                stream=await navigator.mediaDevices.getUserMedia({
+                    video:{facingMode:'environment',width:{ideal:4096},height:{ideal:2160},frameRate:{ideal:30}},
+                    audio:false
+                });
                 video.srcObject=stream;finderVideo.srcObject=stream;
-                video.onloadedmetadata=()=>{clearTimeout(timeoutId);video.play();
+                track=stream.getVideoTracks()[0];
+                caps=track.getCapabilities?track.getCapabilities():{};
+                videoSettings=track.getSettings?track.getSettings():{};
+                
+                if(caps.zoom){
+                    hwZoomAvail=true;
+                    hwZoomMin=caps.zoom.min||1;
+                    hwZoomMax=caps.zoom.max||10;
+                    hwBadge.classList.add('show');
+                    hwText.textContent=`HW ${hwZoomMin}x-${hwZoomMax}x`;
+                    statusBadge.classList.add('hw-mode');
+                    statusText.textContent='HW ZOOM ACTIVE';
+                } else {
+                    hwZoomAvail=false;
+                    statusText.textContent='DIGITAL MODE';
+                }
+                
+                if(caps.iso){
+                    isoSlider.min=caps.iso.min||50;
+                    isoSlider.max=caps.iso.max||6400;
+                    isoSlider.step=caps.iso.step||50;
+                    proIsoSlider.min=isoSlider.min;proIsoSlider.max=isoSlider.max;proIsoSlider.step=isoSlider.step;
+                }
+                
+                video.onloadedmetadata=()=>{
+                    clearTimeout(timeoutId);video.play();
                     canvas.width=window.innerWidth;canvas.height=window.innerHeight;
                     zebraCanvas.width=window.innerWidth;zebraCanvas.height=window.innerHeight;
                     histogramCanvas.width=100;histogramCanvas.height=40;
                     processCanvas.width=480;processCanvas.height=Math.round(480*(canvas.height/canvas.width));
-                    loadingModal.classList.add('hidden');requestAnimationFrame(renderLoop);showToast('✅ 4K Sensor Ready')};
+                    loadingModal.classList.add('hidden');
+                    requestAnimationFrame(renderLoop);
+                    showToast('✅ '+(hwZoomAvail?'HW':'DIGITAL')+' READY — up to 1000x');
+                };
             }catch(err){clearTimeout(timeoutId);loadingModal.classList.add('hidden');alert('Camera Error: '+err.message)}
         }
-        
+
         function renderLoop(){if(video.readyState>=video.HAVE_ENOUGH_DATA)renderFrame();requestAnimationFrame(renderLoop)}
-        
+
         function renderFrame(){
-            const vw=video.videoWidth;const vh=video.videoHeight;if(!vw||!vh)return;
-            const baseCrop=4.0;const totalZoom=zoom*baseCrop;
-            const srcW=vw/totalZoom;const srcH=vh/totalZoom;
-            frameCounter++;if(frameCounter%60===0)detectObject();
-            let srcX,srcY;
-            if(isTelescopeMode&&objectCenter.x!==.5&&objectSizePct<40){
-                srcX=Math.max(0,Math.min((vw*objectCenter.x)-(srcW/2),vw-srcW));
-                srcY=Math.max(0,Math.min((vh*objectCenter.y)-(srcH/2),vh-srcH));
-            } else {srcX=(vw-srcW)/2;srcY=(vh-srcH)/2}
-            const destW=canvas.width;const destH=canvas.height;
-            if(filterDirty){cachedFilter=buildCSSFilter();filterDirty=false}
-            ctx.clearRect(0,0,destW,destH);
-            ctx.filter=cachedFilter;
-            ctx.drawImage(video,srcX,srcY,srcW,srcH,0,0,destW,destH);
-            ctx.filter='none';
-            if(isStack&&stackBuffer){applyDeepStack()}
-            if(isHdr){applyHdrBoost()}
-            if(highlightRecovery>0){applyHighlightRecovery()}
-            if(purpleNoiseFix>0){applyPurpleNoiseFix()}
-            if(isQualityMode&&isSurfaceEnhance&&detectedObject!=='none'){applySurfaceEnhancementDownscaled()}
-            if(isFalseColor){applyFalseColorDownscaled()}
-            if(isTelescopeMode&&zoom>1.2){applySmartDarkSurround()}
+            // Apply CSS filters to video
+            if(filterDirty){cachedFilter=buildCSSFilter();filterDirty=false;video.style.filter=cachedFilter}
+            
+            // Check for pixel effects
+            const needsPixelProcessing = isStack || isHdr || isSurfaceEnhance || isFalseColor || highlightRecovery>0 || purpleNoiseFix>0;
+            
+            if(needsPixelProcessing){
+                // Canvas processing mode
+                canvas.width=video.videoWidth||1080;
+                canvas.height=video.videoHeight||1920;
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.drawImage(video,0,0,canvas.width,canvas.height);
+                
+                if(isStack&&stackBuffer)applyDeepStack();
+                if(isHdr)applyHdrBoost();
+                if(isSurfaceEnhance)applySurfaceEnhancement();
+                if(isFalseColor)applyFalseColor();
+                if(highlightRecovery>0)applyHighlightRecovery();
+                if(purpleNoiseFix>0)applyPurpleNoiseFix();
+                
+                canvas.style.display='block';
+                video.style.visibility='hidden';
+            } else {
+                // CSS-only mode
+                canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+                canvas.style.display='block';
+                video.style.visibility='visible';
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+            }
+            
+            // Overlays always on canvas
+            if(isTelescopeMode&&zoom>1.2){
+                frameCounter++;if(frameCounter%60===0)detectObject();
+                applyTelescopeDark();
+            }
             if(vignetteAmount>0)applyVignette();
             if(leakAmount>0)applyLightLeak();
+            if(activeColor!=='none')applyColorOverlay();
             if(isGrid)drawGrid();
             if(isZebra)drawZebra();
             if(isHistogram)drawHistogram();
         }
-        
+
         function buildCSSFilter(){
             let f=`brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) `;
-            if(exposure!==0)f+=`brightness(${100+exposure*0.5}%) `;
             if(gamma!==100){const g=gamma/100;f+=`contrast(${Math.round(100/g)}%) brightness(${Math.round(100*g)}%) `}
             if(temperature!==0){const sepia=Math.max(0,temperature/100);f+=`sepia(${Math.abs(sepia)}) hue-rotate(${temperature>0?-10:15}deg) `}
-            if(tint!==0)f+=`hue-rotate(${tint*0.3}deg) `;
             if(activeEffect==='invert')f+=`invert(1) `;
             if(activeEffect==='grayscale')f+=`grayscale(1) `;
             if(activeEffect==='sepia')f+=`sepia(1) `;
-            if(activeEffect==='dreamy')f+=`blur(1.5px) brightness(105%) `;
-            if(activeEffect==='sharpen')f+=`contrast(140%) `;
-            if(activeEffect==='punch')f+=`contrast(130%) brightness(105%) `;
-            if(activeEffect==='vivid')f+=`saturate(180%) contrast(115%) `;
-            if(activeGrade==='warm')f+=`sepia(0.3) saturate(140%) `;
+            if(activeEffect==='dreamy')f+=`blur(1px) brightness(105%) `;
+            if(activeEffect==='sharpen')f+=`contrast(120%) `;
+            if(activeEffect==='punch')f+=`contrast(115%) brightness(103%) `;
+            if(activeEffect==='vivid')f+=`saturate(140%) contrast(108%) `;
+            if(activeGrade==='warm')f+=`sepia(0.3) saturate(130%) `;
             if(activeGrade==='cool')f+=`hue-rotate(20deg) saturate(110%) `;
-            if(activeGrade==='sunset')f+=`sepia(0.5) saturate(150%) hue-rotate(-15deg) `;
+            if(activeGrade==='sunset')f+=`sepia(0.5) saturate(140%) hue-rotate(-15deg) `;
             if(activeGrade==='ocean')f+=`hue-rotate(180deg) saturate(120%) `;
-            if(activeGrade==='forest')f+=`hue-rotate(80deg) saturate(130%) `;
-            if(activeGrade==='noir')f+=`grayscale(1) contrast(140%) `;
-            if(activeGrade==='vintage')f+=`sepia(0.6) saturate(80%) contrast(110%) `;
-            if(focus<50)f+=`blur(${((50-focus)/50)*10}px) `;
-            else f+=`contrast(${100+((focus-50)/50)*40}%) `;
-            if(sharpness>0)f+=`contrast(${100+sharpness*0.4}%) `;
-            if(highlights!==0||shadows!==0)f+=`brightness(${100+(highlights-shadows)*0.2}%) `;
-            if(isSurfaceEnhance)f+=`contrast(112%) saturate(105%) `;
+            if(activeGrade==='forest')f+=`hue-rotate(80deg) saturate(120%) `;
+            if(activeGrade==='noir')f+=`grayscale(1) contrast(130%) `;
+            if(activeGrade==='vintage')f+=`sepia(0.6) saturate(85%) contrast(105%) `;
+            if(sharpness>0)f+=`contrast(${100+sharpness*0.2}%) `;
             return f.trim();
         }
-        
+
+        // Pixel effects
         function applyDeepStack(){
             try{
-                const w=processCanvas.width;const h=processCanvas.height;
+                const w=processCanvas.width,h=processCanvas.height;
                 processCtx.drawImage(canvas,0,0,w,h);
                 const imgData=processCtx.getImageData(0,0,w,h);
-                const data=imgData.data;const len=data.length;
+                const data=imgData.data,len=data.length;
                 if(stackCount===0){for(let i=0;i<len;i++)stackBuffer[i]=data[i];stackCount=1}
-                else{
-                    const alpha=1/Math.min(stackCount+1,10);
-                    for(let i=0;i<len;i++){
-                        stackBuffer[i]=stackBuffer[i]*(1-alpha)+data[i]*alpha;
-                        data[i]=stackBuffer[i];
-                    }
-                    stackCount++;
-                }
+                else{const alpha=1/Math.min(stackCount+1,10);for(let i=0;i<len;i++){stackBuffer[i]=stackBuffer[i]*(1-alpha)+data[i]*alpha;data[i]=stackBuffer[i]}stackCount++}
                 processCtx.putImageData(imgData,0,0);
                 ctx.save();ctx.globalAlpha=0.9;ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
             }catch(e){}
         }
-        
         function applyHdrBoost(){
-            const w=processCanvas.width;const h=processCanvas.height;
+            const w=processCanvas.width,h=processCanvas.height;
             processCtx.drawImage(canvas,0,0,w,h);
-            const imgData=processCtx.getImageData(0,0,w,h);
-            const data=imgData.data;
+            const imgData=processCtx.getImageData(0,0,w,h);const data=imgData.data;
             for(let i=0;i<data.length;i+=4){
                 const avg=(data[i]+data[i+1]+data[i+2])/3;
                 if(avg<60){data[i]=Math.min(255,data[i]*1.4);data[i+1]=Math.min(255,data[i+1]*1.4);data[i+2]=Math.min(255,data[i+2]*1.4)}
@@ -772,66 +877,67 @@
             processCtx.putImageData(imgData,0,0);
             ctx.save();ctx.globalAlpha=0.7;ctx.globalCompositeOperation='overlay';ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
         }
-        
+        function applySurfaceEnhancement(){
+            const w=processCanvas.width,h=processCanvas.height;
+            processCtx.drawImage(canvas,0,0,w,h);
+            const imgData=processCtx.getImageData(0,0,w,h);
+            const data=imgData.data,copy=new Uint8ClampedArray(data),strength=0.5;
+            for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+                const idx=(y*w+x)*4,rIdx=(y*w+(x+1))*4,dIdx=((y+1)*w+x)*4;
+                for(let c=0;c<3;c++){
+                    const cur=copy[idx+c],nr=copy[rIdx+c],nb=copy[dIdx+c];
+                    const edge=Math.abs(cur-nr)+Math.abs(cur-nb);
+                    if(edge>12){const sharpened=cur+(cur-(nr+nb)/2)*strength;data[idx+c]=Math.min(255,Math.max(0,sharpened))}
+                }
+            }
+            processCtx.putImageData(imgData,0,0);
+            ctx.save();ctx.globalAlpha=0.85;ctx.globalCompositeOperation='overlay';ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
+        }
+        function applyFalseColor(){
+            const w=processCanvas.width,h=processCanvas.height;
+            processCtx.drawImage(canvas,0,0,w,h);
+            const imgData=processCtx.getImageData(0,0,w,h);const data=imgData.data;
+            for(let i=0;i<data.length;i+=4){
+                const lum=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+                const hue=(1-lum/255)*240;const[r,g,b]=hslToRgb(hue/360,0.9,0.5);
+                data[i]=r;data[i+1]=g;data[i+2]=b;
+            }
+            processCtx.putImageData(imgData,0,0);
+            ctx.save();ctx.globalAlpha=0.9;ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
+        }
+        function hslToRgb(h,s,l){let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return[Math.round(r*255),Math.round(g*255),Math.round(b*255)]}
         function applyHighlightRecovery(){
             const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-            const data=imgData.data;const strength=highlightRecovery/100;
+            const data=imgData.data,strength=highlightRecovery/100;
             for(let i=0;i<data.length;i+=4){
-                const r=data[i],g=data[i+1],b=data[i+2];const avg=(r+g+b)/3;
-                if(avg>200){
-                    const over=avg-200;const factor=1-(strength*0.5);const target=200+(over*factor);const ratio=target/avg;
-                    data[i]=Math.min(255,r*ratio);data[i+1]=Math.min(255,g*ratio);data[i+2]=Math.min(255,b*ratio);
-                }
+                const r=data[i],g=data[i+1],b=data[i+2],avg=(r+g+b)/3;
+                if(avg>200){const over=avg-200,factor=1-(strength*0.5),target=200+(over*factor),ratio=target/avg;
+                    data[i]=Math.min(255,r*ratio);data[i+1]=Math.min(255,g*ratio);data[i+2]=Math.min(255,b*ratio)}
             }
             ctx.putImageData(imgData,0,0);
         }
-        
         function applyPurpleNoiseFix(){
             const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-            const data=imgData.data;const strength=purpleNoiseFix/100;
+            const data=imgData.data,strength=purpleNoiseFix/100;
             for(let i=0;i<data.length;i+=4){
                 const r=data[i],g=data[i+1],b=data[i+2];
-                if(b>r&&b>g&&r>g){
-                    const purpleAmount=((b+r)/2)-g;
-                    if(purpleAmount>15){const reduce=purpleAmount*strength*0.5;data[i]=Math.max(0,r-reduce);data[i+2]=Math.max(0,b-reduce)}
-                }
+                if(b>r&&b>g&&r>g){const purpleAmount=((b+r)/2)-g;if(purpleAmount>15){const reduce=purpleAmount*strength*0.5;data[i]=Math.max(0,r-reduce);data[i+2]=Math.max(0,b-reduce)}}
             }
             ctx.putImageData(imgData,0,0);
         }
-        
-        function detectObject(){
-            try{
-                const w=100,h=75;
-                detectionCanvas.width=w;detectionCanvas.height=h;
-                detectionCtx.drawImage(canvas,0,0,w,h);
-                const d=detectionCtx.getImageData(0,0,w,h).data;
-                let maxB=0,bx=0,by=0,bright=0,totalB=0;
-                let minX=w,maxX=0,minY=h,maxY=0;
-                for(let y=0;y<h;y++){for(let x=0;x<w;x++){
-                    const i=(y*w+x)*4;const l=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114;
-                    totalB+=l;
-                    if(l>140){bright++;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y}
-                    if(l>maxB){maxB=l;bx=x;by=y}
-                }}
-                if(maxB>170&&bright>10){
-                    objectCenter.x=bx/w;objectCenter.y=by/h;
-                    const pad=4;const bboxW=Math.max(10,(maxX-minX)+pad*2);const bboxH=Math.max(10,(maxY-minY)+pad*2);
-                    objectBounds={x:Math.max(0,(minX-pad)/w),y:Math.max(0,(minY-pad)/h),w:Math.min(1,bboxW/w),h:Math.min(1,bboxH/h)};
-                    objectSizePct=Math.max((bboxW/w)*100,(bboxH/h)*100);
-                    const ratio=bright/(w*h);const avg=totalB/(w*h);
-                    if(ratio>0.08&&avg>110&&Math.abs(bboxW-bboxH)<30)detectedObject='moon';
-                    else if(ratio>0.015&&avg>70)detectedObject='planet';
-                    else if(maxB>200&&ratio<0.015)detectedObject='star';
-                    else detectedObject='object';
-                } else {objectCenter={x:.5,y:.5};objectBounds={x:.4,y:.4,w:.2,h:.2};objectSizePct=0;detectedObject='none'}
-            }catch(e){}
+
+        function applyColorOverlay(){
+            const m=activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
+            if(!m)return;
+            ctx.save();ctx.globalCompositeOperation='overlay';
+            ctx.fillStyle=`rgba(${m[1]},${m[2]},${m[3]},${colorOpacity/100})`;
+            ctx.fillRect(0,0,canvas.width,canvas.height);ctx.restore();
         }
-        
-        function applySmartDarkSurround(){
-            if(objectSizePct>40){objectBadge.classList.remove('show');statusText.textContent='OBJECT TOO BIG';setTimeout(()=>{statusText.textContent=isQualityMode?'QUALITY MODE':'4K FAST'},1500);return}
-            const cx=canvas.width*objectCenter.x;const cy=canvas.height*objectCenter.y;
-            const objW=canvas.width*objectBounds.w;const objH=canvas.height*objectBounds.h;
-            const objSize=Math.max(objW,objH);const screenSize=Math.max(canvas.width,canvas.height);
+        function applyTelescopeDark(){
+            if(objectSizePct>40){objectBadge.classList.remove('show');return}
+            const cx=canvas.width*objectCenter.x,cy=canvas.height*objectCenter.y;
+            const objW=canvas.width*objectBounds.w,objH=canvas.height*objectBounds.h;
+            const objSize=Math.max(objW,objH),screenSize=Math.max(canvas.width,canvas.height);
             const innerRadius=Math.max(40,objSize*0.85);
             const outerRadius=Math.min(objSize*2.0,screenSize*0.55);
             const gradient=ctx.createRadialGradient(cx,cy,innerRadius,cx,cy,outerRadius);
@@ -844,39 +950,6 @@
                 objectName.textContent=names[detectedObject];objectBadge.classList.add('show');
             } else objectBadge.classList.remove('show');
         }
-        
-        function applySurfaceEnhancementDownscaled(){
-            const w=processCanvas.width;const h=processCanvas.height;
-            processCtx.drawImage(canvas,0,0,w,h);
-            const imgData=processCtx.getImageData(0,0,w,h);
-            const data=imgData.data;const copy=new Uint8ClampedArray(data);const strength=surfaceStrength/100;
-            for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
-                const idx=(y*w+x)*4;const rIdx=(y*w+(x+1))*4;const dIdx=((y+1)*w+x)*4;
-                for(let c=0;c<3;c++){
-                    const cur=copy[idx+c];const nr=copy[rIdx+c];const nb=copy[dIdx+c];
-                    const edge=Math.abs(cur-nr)+Math.abs(cur-nb);
-                    if(edge>12){const sharpened=cur+(cur-(nr+nb)/2)*strength;data[idx+c]=Math.min(255,Math.max(0,sharpened))}
-                }
-            }
-            processCtx.putImageData(imgData,0,0);
-            ctx.save();ctx.globalAlpha=0.85;ctx.globalCompositeOperation='overlay';ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
-        }
-        
-        function applyFalseColorDownscaled(){
-            const w=processCanvas.width;const h=processCanvas.height;
-            processCtx.drawImage(canvas,0,0,w,h);
-            const imgData=processCtx.getImageData(0,0,w,h);const data=imgData.data;
-            for(let i=0;i<data.length;i+=4){
-                const lum=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
-                const hue=(1-lum/255)*240;const [r,g,b]=hslToRgb(hue/360,0.9,0.5);
-                data[i]=r;data[i+1]=g;data[i+2]=b;
-            }
-            processCtx.putImageData(imgData,0,0);
-            ctx.save();ctx.globalAlpha=0.9;ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
-        }
-        
-        function hslToRgb(h,s,l){let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return[Math.round(r*255),Math.round(g*255),Math.round(b*255)]}
-        
         function applyVignette(){
             const cx=canvas.width/2,cy=canvas.height/2;
             const r=Math.min(canvas.width,canvas.height)*0.7;
@@ -884,7 +957,6 @@
             g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${vignetteAmount/100})`);
             ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
         }
-        
         function applyLightLeak(){
             const o=leakAmount/100;
             const g=ctx.createLinearGradient(0,canvas.height,canvas.width,0);
@@ -893,100 +965,131 @@
             g.addColorStop(1,'rgba(0,0,0,0)');
             ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.restore();
         }
-        
         function drawGrid(){
             ctx.save();ctx.strokeStyle='rgba(0,240,255,0.2)';ctx.lineWidth=1;const step=60;
             for(let x=step;x<canvas.width;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}
             for(let y=step;y<canvas.height;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}
             ctx.restore();
         }
-        
+        function detectObject(){
+            try{
+                const w=80,h=60;
+                detectionCanvas.width=w;detectionCanvas.height=h;
+                detectionCtx.drawImage(video,0,0,w,h);
+                const d=detectionCtx.getImageData(0,0,w,h).data;
+                let maxB=0,bx=0,by=0,bright=0,minX=w,maxX=0,minY=h,maxY=0;
+                for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+                    const i=(y*w+x)*4;const l=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114;
+                    if(l>150){bright++;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y}
+                    if(l>maxB){maxB=l;bx=x;by=y}
+                }
+                if(maxB>180&&bright>10){
+                    objectCenter.x=bx/w;objectCenter.y=by/h;
+                    const bboxW=Math.max(10,(maxX-minX)),bboxH=Math.max(10,(maxY-minY));
+                    objectBounds={x:minX/w,y:minY/h,w:bboxW/w,h:bboxH/h};
+                    objectSizePct=Math.max((bboxW/w)*100,(bboxH/h)*100);
+                    if(objectSizePct<25)detectedObject='planet';else detectedObject='moon';
+                } else {objectCenter={x:.5,y:.5};objectSizePct=0;detectedObject='none'}
+            }catch(e){}
+        }
         function drawZebra(){
-            const w=160;const h=Math.floor(160*(canvas.height/canvas.width));
+            const w=160,h=Math.floor(160*(canvas.height/canvas.width));
             detectionCanvas.width=w;detectionCanvas.height=h;
-            detectionCtx.drawImage(canvas,0,0,w,h);
+            detectionCtx.drawImage(video,0,0,w,h);
             const d=detectionCtx.getImageData(0,0,w,h).data;
             const zData=zctx.createImageData(w,h);const zd=zData.data;
             let blownCount=0;
             for(let i=0;i<d.length;i+=4){
                 const avg=(d[i]+d[i+1]+d[i+2])/3;
-                if(avg>235){
-                    blownCount++;
-                    const px=(i/4)%w;const py=Math.floor((i/4)/w);
-                    if(((px+py)%8)<4){zd[i]=255;zd[i+1]=0;zd[i+2]=0;zd[i+3]=180}
-                }
+                if(avg>235){blownCount++;const px=(i/4)%w,py=Math.floor((i/4)/w);if(((px+py)%8)<4){zd[i]=255;zd[i+1]=0;zd[i+2]=0;zd[i+3]=180}}
             }
             zctx.putImageData(zData,0,0);
             zctx.save();zctx.imageSmoothingEnabled=false;
             zctx.clearRect(0,0,zebraCanvas.width,zebraCanvas.height);
-            zctx.drawImage(detectionCanvas,0,0,w,h,0,0,zebraCanvas.width,zebraCanvas.height);
-            zctx.restore();
+            zctx.drawImage(detectionCanvas,0,0,w,h,0,0,zebraCanvas.width,zebraCanvas.height);zctx.restore();
             const blownPct=(blownCount/(w*h))*100;
             if(blownPct>5){statusBadge.classList.add('warning-mode');statusText.textContent=`⚠ BLOWN ${blownPct.toFixed(0)}%`}
-            else{statusBadge.classList.remove('warning-mode');statusText.textContent=isQualityMode?'QUALITY MODE':'4K FAST'}
+            else{statusBadge.classList.remove('warning-mode');statusText.textContent='4K FAST'}
         }
-        
         function drawHistogram(){
-            const w=160;const h=120;
+            const w=160,h=120;
             detectionCanvas.width=w;detectionCanvas.height=h;
-            detectionCtx.drawImage(canvas,0,0,w,h);
+            detectionCtx.drawImage(video,0,0,w,h);
             const d=detectionCtx.getImageData(0,0,w,h).data;
             const bins=new Array(64).fill(0);
-            for(let i=0;i<d.length;i+=4){
-                const lum=Math.floor((d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114)/4);
-                bins[lum]++;
-            }
+            for(let i=0;i<d.length;i+=4){const lum=Math.floor((d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114)/4);bins[lum]++}
             const maxBin=Math.max(...bins);
             hctx.clearRect(0,0,histogramCanvas.width,histogramCanvas.height);
             const barW=histogramCanvas.width/64;
-            for(let i=0;i<64;i++){
-                const barH=(bins[i]/maxBin)*histogramCanvas.height;
+            for(let i=0;i<64;i++){const barH=(bins[i]/maxBin)*histogramCanvas.height;
                 hctx.fillStyle=i>55?'rgba(255,50,50,0.8)':i<5?'rgba(50,100,255,0.8)':'rgba(0,240,255,0.7)';
-                hctx.fillRect(i*barW,histogramCanvas.height-barH,barW-0.5,barH);
-            }
+                hctx.fillRect(i*barW,histogramCanvas.height-barH,barW-0.5,barH)}
         }
-        
+
         function updateZoomUI(){
-            zoomSlider.value=zoom;let d;
-            if(zoom<10)d=zoom.toFixed(2);else if(zoom<100)d=zoom.toFixed(1);
-            else if(zoom<1000)d=Math.round(zoom).toString();
-            else if(zoom<10000)d=(zoom/1000).toFixed(2)+'K';else d=(zoom/1000).toFixed(1)+'K';
+            const sliderPos=100*Math.log(zoom)/Math.log(1000);
+            zoomSlider.value=sliderPos;currentSliderVal=sliderPos;
+            updateZoomDisplay();
+        }
+        function updateZoomDisplay(){
+            let d;
+            if(zoom<10)d=zoom.toFixed(1);
+            else if(zoom<100)d=zoom.toFixed(0);
+            else d=zoom.toFixed(0);
             zoomValue.innerHTML=d+'<span class="zoom-unit">x</span>';
         }
-        
+
         function captureImage(){
+            const tempCanvas=document.createElement('canvas');
+            tempCanvas.width=video.videoWidth||1080;
+            tempCanvas.height=video.videoHeight||1920;
+            const tctx=tempCanvas.getContext('2d');
+            tctx.filter=video.style.filter||'none';
+            tctx.drawImage(video,0,0);
             const a=document.createElement('a');
             a.download='saqskyscoop-'+Date.now()+'.png';
-            canvas.toBlob(b=>{a.href=URL.createObjectURL(b);a.click();URL.revokeObjectURL(a.href);showToast('📸 High Quality Captured!')},'image/png',1.0);
+            tempCanvas.toBlob(b=>{a.href=URL.createObjectURL(b);a.click();URL.revokeObjectURL(a.href);showToast('📸 Captured!')},'image/png',1.0);
         }
-        
+
         function toggleRecording(){
             if(!isRecording){
                 recordedChunks=[];
-                const cStream=canvas.captureStream(30);
+                const tempCanvas=document.createElement('canvas');
+                tempCanvas.width=video.videoWidth||1080;
+                tempCanvas.height=video.videoHeight||1920;
+                const tctx=tempCanvas.getContext('2d');
+                const cStream=tempCanvas.captureStream(30);
                 mediaRecorder=new MediaRecorder(cStream,{mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:5000000});
                 mediaRecorder.ondataavailable=e=>{if(e.data.size)recordedChunks.push(e.data)};
-                mediaRecorder.onstop=()=>{
-                    const blob=new Blob(recordedChunks,{type:'video/webm'});
-                    const url=URL.createObjectURL(blob);
-                    const a=document.createElement('a');a.href=url;
-                    a.download='saqskyscoop-vid-'+Date.now()+'.webm';
-                    a.click();URL.revokeObjectURL(url);
-                };
-                mediaRecorder.start(1000);recordBtn.classList.add('active-btn');showToast('🔴 Recording');
+                mediaRecorder.onstop=()=>{const blob=new Blob(recordedChunks,{type:'video/webm'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='saqskyscoop-vid-'+Date.now()+'.webm';a.click();URL.revokeObjectURL(url)};
+                const drawInterval=setInterval(()=>{
+                    if(!isRecording){clearInterval(drawInterval);return}
+                    tctx.filter=video.style.filter||'none';
+                    tctx.drawImage(video,0,0);
+                },33);
+                mediaRecorder.start(1000);
+                recordBtn.classList.add('active-btn');showToast('🔴 Recording');
             }else{
                 if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();
                 recordBtn.classList.remove('active-btn');showToast('✅ Saved');
             }
             isRecording=!isRecording;
         }
-        
+
         function showToast(msg){
             document.querySelectorAll('.toast').forEach(t=>t.remove());
             const t=document.createElement('div');t.className='toast';t.textContent=msg;
             document.body.appendChild(t);setTimeout(()=>t.remove(),2200);
         }
         window.showToast=showToast;
+        window.quickZoom=function(val){
+            zoom=val;
+            applyHybridZoom(val);
+            updateZoomUI();
+            document.querySelectorAll('.quick-zoom-btn').forEach(b=>{
+                b.classList.toggle('active',b.textContent===val+'x');
+            });
+        };
         init();
     })();
 
@@ -1006,33 +1109,19 @@
     }
     async function fetchSkyData(){
         if(userLat===null)return;
-        try{
-            const r=await fetch(`https://api.sunrise-sunset.org/json?lat=${userLat}&lng=${userLng}&formatted=0`);
-            const d=await r.json();
-            if(d.results){
-                document.getElementById('sunrise').textContent=new Date(d.results.sunrise).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-                document.getElementById('sunset').textContent=new Date(d.results.sunset).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-            }
-        }catch(e){}
-        try{
-            const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLng}&current=temperature_2m,cloud_cover,relative_humidity_2m`);
-            const d=await r.json();
-            if(d.current){
-                document.getElementById('temperature').textContent=`${d.current.temperature_2m}°C`;
-                document.getElementById('cloudCover').textContent=`${d.current.cloud_cover}%`;
-                document.getElementById('humidity').textContent=`${d.current.relative_humidity_2m}%`;
-                let q='Excellent';
-                if(d.current.cloud_cover>70)q='Poor';else if(d.current.cloud_cover>40)q='Fair';else if(d.current.cloud_cover>15)q='Good';
-                document.getElementById('viewQuality').textContent=q;
-            }
-        }catch(e){}
+        try{const r=await fetch(`https://api.sunrise-sunset.org/json?lat=${userLat}&lng=${userLng}&formatted=0`);const d=await r.json();
+            if(d.results){document.getElementById('sunrise').textContent=new Date(d.results.sunrise).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('sunset').textContent=new Date(d.results.sunset).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}}catch(e){}
+        try{const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLng}&current=temperature_2m,cloud_cover,relative_humidity_2m`);const d=await r.json();
+            if(d.current){document.getElementById('temperature').textContent=`${d.current.temperature_2m}°C`;document.getElementById('cloudCover').textContent=`${d.current.cloud_cover}%`;document.getElementById('humidity').textContent=`${d.current.relative_humidity_2m}%`;
+                let q='Excellent';if(d.current.cloud_cover>70)q='Poor';else if(d.current.cloud_cover>40)q='Fair';else if(d.current.cloud_cover>15)q='Good';
+                document.getElementById('viewQuality').textContent=q}}catch(e){}
     }
     function updateMoonPhase(){
-        const now=new Date();const y=now.getFullYear(),m=now.getMonth()+1,day=now.getDate();
+        const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1,day=now.getDate();
         let jd;
         if(m<=2){const yy=y-1,mm=m+12;jd=Math.floor(365.25*(yy+4716))+Math.floor(30.6001*(mm+1))+day-1524.5}
         else{jd=Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+day-1524.5}
-        const ds=jd-2451549.5;const nm=ds/29.53058867;const phase=nm-Math.floor(nm);
+        const ds=jd-2451549.5,nm=ds/29.53058867,phase=nm-Math.floor(nm);
         const illum=Math.round((1-Math.cos(phase*2*Math.PI))*50);
         let pn='';
         if(phase<0.0625||phase>=0.9375)pn='New Moon';
@@ -1053,31 +1142,17 @@
             {name:'Venus',months:[0,1,2,3,4,5,6,7,8,9,10,11],mag:'-4.6'},
             {name:'Mars',months:[3,4,5,6,7,8],mag:'-1.2'},
             {name:'Jupiter',months:[0,1,2,3,4,5,6,7,8,9,10,11],mag:'-2.5'},
-            {name:'Saturn',months:[5,6,7,8,9,10],mag:'0.5'},
-            {name:'Uranus',months:[8,9,10,11,0,1],mag:'5.7'},
-            {name:'Neptune',months:[6,7,8,9,10,11],mag:'7.8'}
+            {name:'Saturn',months:[5,6,7,8,9,10],mag:'0.5'}
         ];
         const c=document.getElementById('planetList');c.innerHTML='';
-        planets.forEach(p=>{
-            const v=p.months.includes(mi);
-            const r=document.createElement('div');r.className='data-row';
-            r.innerHTML=`<span>${p.name} (${p.mag})</span><span style="color:${v?'#00ff64':'#ff6464'}">${v?'● VISIBLE':'○ HIDDEN'}</span>`;
-            c.appendChild(r);
-        });
+        planets.forEach(p=>{const v=p.months.includes(mi);const r=document.createElement('div');r.className='data-row';
+            r.innerHTML=`<span>${p.name} (${p.mag})</span><span style="color:${v?'#00ff64':'#ff6464'}">${v?'● VISIBLE':'○ HIDDEN'}</span>`;c.appendChild(r)});
     }
     function updateStars(){
-        const stars=[
-            {name:'Sirius',mag:'-1.46'},{name:'Canopus',mag:'-0.74'},
-            {name:'Arcturus',mag:'-0.05'},{name:'Vega',mag:'0.03'},
-            {name:'Capella',mag:'0.08'},{name:'Rigel',mag:'0.13'},
-            {name:'Procyon',mag:'0.34'},{name:'Betelgeuse',mag:'0.50'}
-        ];
+        const stars=[{name:'Sirius',mag:'-1.46'},{name:'Canopus',mag:'-0.74'},{name:'Arcturus',mag:'-0.05'},{name:'Vega',mag:'0.03'},{name:'Capella',mag:'0.08'},{name:'Rigel',mag:'0.13'}];
         const c=document.getElementById('starList');c.innerHTML='';
-        stars.forEach(s=>{
-            const r=document.createElement('div');r.className='data-row';
-            r.innerHTML=`<span>${s.name}</span><span>${s.mag}</span>`;
-            c.appendChild(r);
-        });
+        stars.forEach(s=>{const r=document.createElement('div');r.className='data-row';
+            r.innerHTML=`<span>${s.name}</span><span>${s.mag}</span>`;c.appendChild(r)});
     }
     </script>
 </body>
