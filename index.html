@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#050510">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Saqskyscoop Ultra – Fast 1000x Hybrid Telescope</title>
+    <title>Saqskyscoop Ultra – Fast 1000x Telescope</title>
     <meta property="og:title" content="Saqskyscoop Ultra – 1000x Telescope">
     <meta property="og:description" content="Hardware + Digital Hybrid Zoom up to 1000x with all features.">
     <meta property="og:image" content="https://placehold.co/1200x630/0c1445/00f0ff/png?text=Saqskyscoop+Telescope">
@@ -24,7 +24,7 @@
         body.ghost-mode .ui-overlay:active{opacity:.85!important}
         #particleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.5}
         .camera-view{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;overflow:hidden;background:#000;touch-action:none}
-        #video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;background:#000;will-change:transform,filter}
+        #video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;background:#000;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(0);will-change:transform,filter}
         #canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none}
         #zebraCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;display:none;opacity:.6}
         #histogramCanvas{position:absolute;top:120px;left:15px;width:100px;height:40px;z-index:15;pointer-events:none;background:rgba(0,0,0,.5);border:1px solid var(--neon-cyan);border-radius:6px;display:none}
@@ -204,7 +204,7 @@
         <div class="control-panel">
             <div class="zoom-container">
                 <button class="zoom-btn" id="zoomOutBtn">−</button>
-                <div class="zoom-slider-wrap"><input type="range" id="zoomSlider" min="0" max="100" value="0" step="0.01"></div>
+                <div class="zoom-slider-wrap"><input type="range" id="zoomSlider" min="0" max="100" value="0" step="0.1"></div>
                 <button class="zoom-btn" id="zoomInBtn">+</button>
                 <div class="zoom-value" id="zoomValue">1.0<span class="zoom-unit">x</span></div>
             </div>
@@ -261,7 +261,6 @@
             </div>
         </div>
     </div>
-    <!-- LENS SHEET -->
     <div class="sheet" id="lensSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-camera-retro"></i> HIGH QUALITY LENSES</h2><button class="close-sheet" data-sheet="lensSheet">✕</button></div>
@@ -278,7 +277,6 @@
             <div class="lens-card" data-lens="cinemabars"><i class="fas fa-film"></i><span>Cinema</span></div>
         </div>
     </div>
-    <!-- FX SHEET -->
     <div class="sheet" id="fxSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-palette"></i> COLORS & FILTERS</h2><button class="close-sheet" data-sheet="fxSheet">✕</button></div>
@@ -323,7 +321,6 @@
         <div class="fx-slider-row"><label>Vignette</label><input type="range" id="vignetteSlider" min="0" max="100" value="0"><span class="val" id="vignetteVal">0%</span></div>
         <div class="fx-slider-row"><label>Light Leak</label><input type="range" id="leakSlider" min="0" max="100" value="0"><span class="val" id="leakVal">0%</span></div>
     </div>
-    <!-- PRO SHEET -->
     <div class="sheet" id="proSheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-sliders-h"></i> PRO CONTROLS</h2><button class="close-sheet" data-sheet="proSheet">✕</button></div>
@@ -338,7 +335,6 @@
             <div class="pro-item"><div class="pro-label"><span>Purple Noise Fix</span><span id="noiseVal">0</span></div><input type="range" id="noiseSlider" min="0" max="100" value="0"></div>
         </div>
     </div>
-    <!-- SKY SHEET -->
     <div class="sheet" id="skySheet">
         <div class="sheet-handle"></div>
         <div class="sheet-title"><h2><i class="fas fa-satellite-dish"></i> LIVE SKY DATA</h2><button class="close-sheet" data-sheet="skySheet">✕</button></div>
@@ -369,7 +365,7 @@
         <div class="modal-card">
             <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:25px"></i>
             <h2>SAQSKYSCOOP ULTRA</h2>
-            <p>1000x Hybrid Zoom + Full Features with Zero Latency. Smooth and Fast.</p>
+            <p>1000x Hybrid Zoom + All Features. Ultra Fast Response.</p>
             <button class="btn-primary" id="allowCamBtn">Start Telescope</button>
         </div>
     </div>
@@ -377,67 +373,72 @@
         <div class="modal-card">
             <i class="fas fa-circle-notch fa-spin" style="font-size:2.5rem;color:var(--neon-cyan);margin-bottom:20px"></i>
             <h2>CALIBRATING</h2>
-            <p>Connecting to hardware sensor...</p>
+            <p>Connecting to sensor...</p>
         </div>
     </div>
     <script>
-    // ======================== INSTALL POPUP ========================
+    // ======================== INSTALL POPUP — SIMPLE FIX ========================
     (function(){
         const popup=document.getElementById('installPopup');
         const yesBtn=document.getElementById('installYes');
         const noBtn=document.getElementById('installNo');
-        let deferredPrompt=null,popupShown=false;
-        const installed=localStorage.getItem('saqskyscoop-installed')==='true';
-        const sessionShown=sessionStorage.getItem('saqskyscoop-popup-shown')==='true';
+        let deferredPrompt=null;
+        
+        // Check if already installed
         const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-        function showPopup(){if(popupShown||installed||isStandalone||sessionShown)return;popupShown=true;sessionStorage.setItem('saqskyscoop-popup-shown','true');popup.classList.add('show')}
-        function hidePopup(p){popup.classList.remove('show');if(p)localStorage.setItem('saqskyscoop-installed','true')}
-        window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;setTimeout(showPopup,300)});
-        setTimeout(showPopup,800);
-        yesBtn.addEventListener('click',async()=>{
-            if(deferredPrompt){try{deferredPrompt.prompt();const c=await deferredPrompt.userChoice;if(c.outcome==='accepted')hidePopup(true);else hidePopup(false);deferredPrompt=null}catch(e){hidePopup(false)}}
-            else{alert(/iphone|ipad|ipod/i.test(navigator.userAgent)?'📱 iOS: Tap Share (□↑) → "Add to Home Screen"':'📱 Browser Menu (⋮) → "Install app"');hidePopup(false)}
+        if(isStandalone){popup.style.display='none';return}
+        
+        // Show popup after 1.5 seconds
+        setTimeout(()=>{popup.classList.add('show')},1500);
+        
+        // Listen for install prompt (if browser supports)
+        window.addEventListener('beforeinstallprompt',(e)=>{
+            e.preventDefault();
+            deferredPrompt=e;
         });
-        noBtn.addEventListener('click',()=>hidePopup(false));
-        window.addEventListener('appinstalled',()=>hidePopup(true));
+        
+        yesBtn.addEventListener('click',async()=>{
+            if(deferredPrompt){
+                try{
+                    deferredPrompt.prompt();
+                    const c=await deferredPrompt.userChoice;
+                    deferredPrompt=null;
+                }catch(e){}
+            } else {
+                const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+                alert(isIOS
+                    ?'📱 iOS Instructions:\n\n1. Tap Share button (□↑)\n2. Scroll down\n3. Tap "Add to Home Screen"\n4. Tap "Add"'
+                    :'📱 Android Instructions:\n\n1. Tap browser menu (⋮)\n2. Tap "Install app"\nOR "Add to Home screen"'
+                );
+            }
+            popup.classList.remove('show');
+        });
+        
+        noBtn.addEventListener('click',()=>{
+            popup.classList.remove('show');
+        });
+        
+        window.addEventListener('appinstalled',()=>{
+            popup.classList.remove('show');
+        });
     })();
 
-    // ======================== PARTICLES ========================
+    // ======================== PARTICLES (Lightweight) ========================
     const particleCanvas=document.getElementById('particleCanvas');
     const pctx=particleCanvas.getContext('2d');
     let particles=[],particleFrame=0;
     function resizeParticles(){particleCanvas.width=window.innerWidth;particleCanvas.height=window.innerHeight}
     window.addEventListener('resize',resizeParticles);resizeParticles();
     class Particle{constructor(x,y,s=false){this.x=x;this.y=y;this.size=s?Math.random()*2+1:Math.random()*1.5+.5;this.speedX=s?(Math.random()-.5)*8:(Math.random()-.5)*.2;this.speedY=s?(Math.random()-.5)*8:(Math.random()-.5)*.2;this.life=s?40:Infinity;this.color=s?`rgba(0,240,255,.8)`:`rgba(255,255,255,${Math.random()*.4+.1})`}update(){this.x+=this.speedX;this.y+=this.speedY;if(this.life!==Infinity)this.life--;if(this.speedX!==undefined){this.speedX*=.94;this.speedY*=.94}}draw(){pctx.fillStyle=this.color;pctx.beginPath();pctx.arc(this.x,this.y,this.size,0,Math.PI*2);pctx.fill()}}
-    for(let i=0;i<30;i++)particles.push(new Particle(Math.random()*window.innerWidth,Math.random()*window.innerHeight));
-    function animateParticles(){particleFrame++;if(particleFrame%3===0){pctx.clearRect(0,0,particleCanvas.width,particleCanvas.height);particles=particles.filter(p=>p.life>0);particles.forEach(p=>{p.update();p.draw()})}requestAnimationFrame(animateParticles)}animateParticles();
+    for(let i=0;i<20;i++)particles.push(new Particle(Math.random()*window.innerWidth,Math.random()*window.innerHeight));
+    function animateParticles(){particleFrame++;if(particleFrame%4===0){pctx.clearRect(0,0,particleCanvas.width,particleCanvas.height);particles=particles.filter(p=>p.life>0);particles.forEach(p=>{p.update();p.draw()})}requestAnimationFrame(animateParticles)}animateParticles();
     function triggerShower(x,y){for(let i=0;i<6;i++)particles.push(new Particle(x,y,true))}
     document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-card').forEach(el=>{
         el.addEventListener('pointerdown',function(e){const rect=this.getBoundingClientRect();const ripple=document.createElement('span');ripple.className='ripple';const size=Math.max(rect.width,rect.height);ripple.style.width=ripple.style.height=`${size}px`;ripple.style.left=`${e.clientX-rect.left-size/2}px`;ripple.style.top=`${e.clientY-rect.top-size/2}px`;this.style.position='relative';this.style.overflow='hidden';this.appendChild(ripple);setTimeout(()=>ripple.remove(),500);triggerShower(e.clientX,e.clientY)})
     });
 
-    // ======================== TELESCOPE ENGINE — FAST ========================
+    // ======================== TELESCOPE ENGINE — ULTRA FAST ========================
     (()=>{
-        // ⚡ PERFORMANCE UTILITIES
-        function throttle(fn,wait){
-            let last=0,timer=null;
-            return function(...args){
-                const now=Date.now();
-                const remaining=wait-(now-last);
-                if(remaining<=0){
-                    if(timer){clearTimeout(timer);timer=null}
-                    last=now;
-                    fn.apply(this,args);
-                } else if(!timer){
-                    timer=setTimeout(()=>{
-                        last=Date.now();
-                        timer=null;
-                        fn.apply(this,args);
-                    },remaining);
-                }
-            };
-        }
-
         const video=document.getElementById('video');const finderVideo=document.getElementById('finderVideo');
         const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d');
         const zebraCanvas=document.getElementById('zebraCanvas');const zctx=zebraCanvas.getContext('2d',{willReadFrequently:true});
@@ -510,45 +511,53 @@
         
         // ⚡ RENDER FLAGS
         let needsRender=true;
-        let lastRenderTime=0;
-        const MIN_RENDER_INTERVAL=33; // ~30 FPS max for overlays
+        let isDraggingZoom=false;
+        let zoomDebounceTimer=null;
         
         function markNeedsRender(){needsRender=true}
         function markFilterDirty(){filterDirty=true;needsRender=true}
         
-        // ⚡ THROTTLED HARDWARE ZOOM
-        const applyHardwareZoomThrottled = throttle((hwVal)=>{
-            if(!track) return;
-            track.applyConstraints({advanced:[{zoom:hwVal}]}).catch(()=>{});
-        },150);
-
-        // ⚡ THROTTLED ISO / EXPOSURE / FOCUS
-        const applyISOThrottled = throttle((val)=>{
-            if(!track||!caps.iso) return;
-            track.applyConstraints({advanced:[{iso:val}]}).catch(()=>{});
-        },200);
+        // ⚡ DEBOUNCED HARDWARE ZOOM (fires only after drag ends)
+        function scheduleHardwareZoom(hwVal){
+            if(zoomDebounceTimer)clearTimeout(zoomDebounceTimer);
+            zoomDebounceTimer=setTimeout(()=>{
+                if(!track)return;
+                track.applyConstraints({advanced:[{zoom:hwVal}]}).catch(()=>{});
+            },250);
+        }
         
-        const applyExposureThrottled = throttle((val)=>{
-            if(!track) return;
-            try{
-                if(caps.exposureCompensation){
-                    const min=caps.exposureCompensation.min||-4;
-                    const max=caps.exposureCompensation.max||4;
-                    const ev=min+((val/100)*(max-min));
-                    track.applyConstraints({advanced:[{exposureCompensation:ev}]}).catch(()=>{});
-                }
-            }catch(e){}
-        },200);
+        // ⚡ DEBOUNCED ISO
+        function scheduleISO(val){
+            if(window._isoTimer)clearTimeout(window._isoTimer);
+            window._isoTimer=setTimeout(()=>{
+                if(!track||!caps.iso)return;
+                track.applyConstraints({advanced:[{iso:val}]}).catch(()=>{});
+            },250);
+        }
         
-        const applyFocusThrottled = throttle((val)=>{
-            if(!track||!caps.focusDistance) return;
-            try{
+        // ⚡ DEBOUNCED EXPOSURE
+        function scheduleExposure(val){
+            if(window._expTimer)clearTimeout(window._expTimer);
+            window._expTimer=setTimeout(()=>{
+                if(!track||!caps.exposureCompensation)return;
+                const min=caps.exposureCompensation.min||-4;
+                const max=caps.exposureCompensation.max||4;
+                const ev=min+((val/100)*(max-min));
+                track.applyConstraints({advanced:[{exposureCompensation:ev}]}).catch(()=>{});
+            },250);
+        }
+        
+        // ⚡ DEBOUNCED FOCUS
+        function scheduleFocus(val){
+            if(window._focusTimer)clearTimeout(window._focusTimer);
+            window._focusTimer=setTimeout(()=>{
+                if(!track||!caps.focusDistance)return;
                 const min=caps.focusDistance.min||0;
                 const max=caps.focusDistance.max||1;
                 const dist=min+((val/100)*(max-min));
                 track.applyConstraints({advanced:[{focusDistance:dist,focusMode:'manual'}]}).catch(()=>{});
-            }catch(e){}
-        },200);
+            },250);
+        }
 
         const PRESETS={
             normal:{bright:100,cont:100,sat:100,gamma:100,temp:0,sharp:0},
@@ -569,17 +578,21 @@
             allowCamBtn.addEventListener('click',startCamera);
             closeSheetBtns.forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.sheet).classList.remove('open')));
 
-            // ⚡ ZOOM SLIDER — Instant CSS + Throttled HW
+            // ⚡ ZOOM SLIDER — CSS instant, HW debounced
             zoomSlider.addEventListener('input',(e)=>{
                 e.stopPropagation();
                 currentSliderVal=parseFloat(zoomSlider.value);
                 zoom=Math.pow(1000,currentSliderVal/100);
+                isDraggingZoom=true;
                 applyHybridZoom(zoom);
                 updateZoomDisplay();
             });
-            ['touchstart','touchmove','touchend'].forEach(ev=>zoomSlider.addEventListener(ev,e=>e.stopPropagation()));
+            zoomSlider.addEventListener('change',()=>{
+                isDraggingZoom=false;
+            });
+            ['touchstart','touchmove','touchend','pointerup','pointercancel'].forEach(ev=>zoomSlider.addEventListener(ev,e=>e.stopPropagation()));
 
-            function startZoomHold(dir){if(zoomHoldTimer)return;zoomHoldDir=dir;zoomInBtn.classList.toggle('pressing',dir===1);zoomOutBtn.classList.toggle('pressing',dir===-1);applyZoomStep();zoomHoldTimer=setInterval(applyZoomStep,80)}
+            function startZoomHold(dir){if(zoomHoldTimer)return;zoomHoldDir=dir;zoomInBtn.classList.toggle('pressing',dir===1);zoomOutBtn.classList.toggle('pressing',dir===-1);applyZoomStep();zoomHoldTimer=setInterval(applyZoomStep,100)}
             function stopZoomHold(){if(zoomHoldTimer){clearInterval(zoomHoldTimer);zoomHoldTimer=null}zoomHoldDir=0;zoomInBtn.classList.remove('pressing');zoomOutBtn.classList.remove('pressing')}
             function applyZoomStep(){
                 if(zoomHoldDir===0)return;
@@ -596,15 +609,15 @@
             zoomOutBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(-1)});
             [zoomInBtn,zoomOutBtn].forEach(b=>{b.addEventListener('pointerup',e=>{e.stopPropagation();stopZoomHold()});b.addEventListener('pointerleave',stopZoomHold);b.addEventListener('pointercancel',stopZoomHold)});
 
-            // ISO / Exposure / Focus — throttled
-            isoSlider.addEventListener('input',()=>{isoAuto=false;currentISO=parseInt(isoSlider.value);isoVal.textContent=currentISO;applyISOThrottled(currentISO)});
-            expSlider.addEventListener('input',()=>{exposureAuto=false;currentExposure=parseInt(expSlider.value);expVal.textContent=currentExposure+'%';applyExposureThrottled(currentExposure)});
-            focusSlider.addEventListener('input',()=>{focusAuto=false;currentFocus=parseInt(focusSlider.value);focusVal.textContent=currentFocus+'%';applyFocusThrottled(currentFocus)});
-            proIsoSlider.addEventListener('input',()=>{isoAuto=false;currentISO=parseInt(proIsoSlider.value);proIsoVal.textContent=currentISO;isoSlider.value=currentISO;isoVal.textContent=currentISO;applyISOThrottled(currentISO)});
-            proExpSlider.addEventListener('input',()=>{exposureAuto=false;currentExposure=parseInt(proExpSlider.value);proExpVal.textContent=currentExposure+'%';expSlider.value=currentExposure;expVal.textContent=currentExposure+'%';applyExposureThrottled(currentExposure)});
-            proFocusSlider.addEventListener('input',()=>{focusAuto=false;currentFocus=parseInt(proFocusSlider.value);proFocusVal.textContent=currentFocus+'%';focusSlider.value=currentFocus;focusVal.textContent=currentFocus+'%';applyFocusThrottled(currentFocus)});
+            // ISO / Exposure / Focus — debounced
+            isoSlider.addEventListener('input',()=>{isoAuto=false;currentISO=parseInt(isoSlider.value);isoVal.textContent=currentISO;scheduleISO(currentISO)});
+            expSlider.addEventListener('input',()=>{exposureAuto=false;currentExposure=parseInt(expSlider.value);expVal.textContent=currentExposure+'%';scheduleExposure(currentExposure)});
+            focusSlider.addEventListener('input',()=>{focusAuto=false;currentFocus=parseInt(focusSlider.value);focusVal.textContent=currentFocus+'%';scheduleFocus(currentFocus)});
+            proIsoSlider.addEventListener('input',()=>{isoAuto=false;currentISO=parseInt(proIsoSlider.value);proIsoVal.textContent=currentISO;isoSlider.value=currentISO;isoVal.textContent=currentISO;scheduleISO(currentISO)});
+            proExpSlider.addEventListener('input',()=>{exposureAuto=false;currentExposure=parseInt(proExpSlider.value);proExpVal.textContent=currentExposure+'%';expSlider.value=currentExposure;expVal.textContent=currentExposure+'%';scheduleExposure(currentExposure)});
+            proFocusSlider.addEventListener('input',()=>{focusAuto=false;currentFocus=parseInt(proFocusSlider.value);proFocusVal.textContent=currentFocus+'%';focusSlider.value=currentFocus;focusVal.textContent=currentFocus+'%';scheduleFocus(currentFocus)});
 
-            // Image adjustments — markFilterDirty
+            // Image adjustments
             brightSlider.addEventListener('input',()=>{brightness=parseInt(brightSlider.value);brightVal.textContent=brightness+'%';markFilterDirty()});
             contSlider.addEventListener('input',()=>{contrast=parseInt(contSlider.value);contVal.textContent=contrast+'%';markFilterDirty()});
             satSlider.addEventListener('input',()=>{saturation=parseInt(satSlider.value);satVal.textContent=saturation+'%';markFilterDirty()});
@@ -646,16 +659,15 @@
 
             telescopeBtn.addEventListener('click',()=>{isTelescopeMode=!isTelescopeMode;telescopeBtn.classList.toggle('active-btn',isTelescopeMode);markNeedsRender();showToast(isTelescopeMode?'🔭 Telescope: ON':'Telescope: OFF')});
             
-            // ⭐ LOCK
             lockBtn.addEventListener('click',async()=>{
                 isExposureLocked=!isExposureLocked;
                 lockBtn.classList.toggle('locked',isExposureLocked);
                 try{
                     if(track&&caps.exposureMode){
-                        await track.applyConstraints({advanced:[{exposureMode:isExposureLocked?'manual':'continuous'}]});
+                        track.applyConstraints({advanced:[{exposureMode:isExposureLocked?'manual':'continuous'}]}).catch(()=>{});
                     }
                 }catch(e){}
-                showToast(isExposureLocked?'🔒 Exposure Locked':'🔓 Auto Exposure');
+                showToast(isExposureLocked?'🔒 Locked':'🔓 Auto');
             });
 
             surfaceBtn.addEventListener('click',()=>{isSurfaceEnhance=!isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',isSurfaceEnhance);markNeedsRender();showToast(isSurfaceEnhance?'🏔️ Surface: ON':'Surface: OFF')});
@@ -665,10 +677,10 @@
                 if(isStack){
                     stackBuffer=new Float32Array(processCanvas.width*processCanvas.height*4);
                     stackCount=0;
-                    showToast('🌌 Deep Stack: ON');
+                    showToast('🌌 Stack: ON');
                 } else {
                     stackBuffer=null;stackCount=0;
-                    showToast('Deep Stack: OFF');
+                    showToast('Stack: OFF');
                 }
                 markNeedsRender();
             });
@@ -689,21 +701,20 @@
             finderBtn.addEventListener('click',()=>{const s=finderScope.style.display==='block';finderScope.style.display=s?'none':'block';finderBtn.classList.toggle('active',!s)});
         }
 
-        // ⚡ HYBRID ZOOM — Instant CSS + Throttled HW
+        // ⚡ HYBRID ZOOM — Instant CSS + Debounced HW
         function applyHybridZoom(val){
-            // CSS transform = INSTANT visual
+            // CSS transform = INSTANT
             if(val>hwZoomMax){
                 const factor=val/hwZoomMax;
                 video.style.transform=`scale(${factor})`;
-                video.style.transformOrigin='center';
             } else {
                 video.style.transform='scale(1)';
             }
             
-            // Hardware zoom = throttled background
+            // Hardware zoom = debounced (fires only after 250ms pause)
             if(hwZoomAvail){
                 const hwVal=Math.min(val,hwZoomMax);
-                applyHardwareZoomThrottled(hwVal);
+                scheduleHardwareZoom(hwVal);
             }
             
             // UI indicators
@@ -833,18 +844,16 @@
                     processCanvas.width=480;processCanvas.height=Math.round(480*(canvas.height/canvas.width));
                     loadingModal.classList.add('hidden');
                     requestAnimationFrame(renderLoop);
-                    showToast('✅ '+(hwZoomAvail?'HW':'DIGITAL')+' READY — Fast Mode');
+                    showToast('✅ '+(hwZoomAvail?'HW':'DIGITAL')+' READY — Fast');
                 };
             }catch(err){clearTimeout(timeoutId);loadingModal.classList.add('hidden');alert('Camera Error: '+err.message)}
         }
 
-        // ⚡ RENDER LOOP — Only render when needed (dirty flag)
+        // ⚡ RENDER LOOP — Only renders when needed
         function renderLoop(){
-            const now=performance.now();
-            if((needsRender || isTelescopeMode || isZebra || isHistogram) && video.readyState>=video.HAVE_ENOUGH_DATA){
-                if(now-lastRenderTime>=MIN_RENDER_INTERVAL){
-                    lastRenderTime=now;
-                    needsRender=false;
+            if(needsRender){
+                needsRender=false;
+                if(video.readyState>=video.HAVE_ENOUGH_DATA){
                     renderFrame();
                 }
             }
@@ -852,48 +861,56 @@
         }
 
         function renderFrame(){
-            // Apply CSS filters to video
-            if(filterDirty){cachedFilter=buildCSSFilter();filterDirty=false;video.style.filter=cachedFilter}
-            
-            // Check for pixel effects (heavy)
-            const needsPixelProcessing = isStack || isHdr || isSurfaceEnhance || isFalseColor || highlightRecovery>0 || purpleNoiseFix>0;
-            
-            // Overlay rendering on canvas
-            const hasOverlays = isGrid || vignetteAmount>0 || leakAmount>0 || activeColor!=='none' || isZebra || isHistogram || (isTelescopeMode&&zoom>1.2) || needsPixelProcessing;
-            
-            if(hasOverlays){
-                if(canvas.width!==video.videoWidth && video.videoWidth>0){
-                    canvas.width=video.videoWidth;
-                    canvas.height=video.videoHeight;
-                }
-                ctx.clearRect(0,0,canvas.width,canvas.height);
-                
-                if(needsPixelProcessing){
-                    ctx.drawImage(video,0,0,canvas.width,canvas.height);
-                    if(isStack&&stackBuffer)applyDeepStack();
-                    if(isHdr)applyHdrBoost();
-                    if(isSurfaceEnhance)applySurfaceEnhancement();
-                    if(isFalseColor)applyFalseColor();
-                    if(highlightRecovery>0)applyHighlightRecovery();
-                    if(purpleNoiseFix>0)applyPurpleNoiseFix();
-                }
-                
-                if(isTelescopeMode&&zoom>1.2){
-                    frameCounter++;
-                    if(frameCounter%30===0){detectObject();markNeedsRender()}
-                    applyTelescopeDark();
-                }
-                if(vignetteAmount>0)applyVignette();
-                if(leakAmount>0)applyLightLeak();
-                if(activeColor!=='none')applyColorOverlay();
-                if(isGrid)drawGrid();
-                if(isZebra)drawZebra();
-                if(isHistogram)drawHistogram();
-                
-                canvas.style.display='block';
-            } else {
-                canvas.style.display='none';
+            // CSS filters on video (fast GPU)
+            if(filterDirty){
+                cachedFilter=buildCSSFilter();
+                filterDirty=false;
+                video.style.filter=cachedFilter;
             }
+            
+            // Check overlays
+            const hasOverlays = isGrid || vignetteAmount>0 || leakAmount>0 || activeColor!=='none' || isZebra || isHistogram || (isTelescopeMode&&zoom>1.2) || isStack || isHdr || isSurfaceEnhance || isFalseColor || highlightRecovery>0 || purpleNoiseFix>0;
+            
+            if(!hasOverlays){
+                canvas.style.display='none';
+                return;
+            }
+            
+            // Set canvas to match window
+            if(canvas.width!==window.innerWidth || canvas.height!==window.innerHeight){
+                canvas.width=window.innerWidth;
+                canvas.height=window.innerHeight;
+            }
+            
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            
+            // Pixel processing effects
+            const hasPixelEffects = isStack || isHdr || isSurfaceEnhance || isFalseColor || highlightRecovery>0 || purpleNoiseFix>0;
+            if(hasPixelEffects){
+                // Only process when needed
+                ctx.drawImage(video,0,0,canvas.width,canvas.height);
+                if(isStack&&stackBuffer)applyDeepStack();
+                if(isHdr)applyHdrBoost();
+                if(isSurfaceEnhance)applySurfaceEnhancement();
+                if(isFalseColor)applyFalseColor();
+                if(highlightRecovery>0)applyHighlightRecovery();
+                if(purpleNoiseFix>0)applyPurpleNoiseFix();
+            }
+            
+            // Overlays
+            if(isTelescopeMode&&zoom>1.2){
+                frameCounter++;
+                if(frameCounter%45===0){detectObject()}
+                applyTelescopeDark();
+            }
+            if(vignetteAmount>0)applyVignette();
+            if(leakAmount>0)applyLightLeak();
+            if(activeColor!=='none')applyColorOverlay();
+            if(isGrid)drawGrid();
+            if(isZebra)drawZebra();
+            if(isHistogram)drawHistogram();
+            
+            canvas.style.display='block';
         }
 
         function buildCSSFilter(){
@@ -918,7 +935,7 @@
             return f.trim();
         }
 
-        // Pixel effects (only when enabled)
+        // Pixel effects
         function applyDeepStack(){
             try{
                 const w=processCanvas.width,h=processCanvas.height;
@@ -926,7 +943,7 @@
                 const imgData=processCtx.getImageData(0,0,w,h);
                 const data=imgData.data,len=data.length;
                 if(stackCount===0){for(let i=0;i<len;i++)stackBuffer[i]=data[i];stackCount=1}
-                else{const alpha=1/Math.min(stackCount+1,10);for(let i=0;i<len;i++){stackBuffer[i]=stackBuffer[i]*(1-alpha)+data[i]*alpha;data[i]=stackBuffer[i]}stackCount++}
+                else{const alpha=1/Math.min(stackCount+1,8);for(let i=0;i<len;i++){stackBuffer[i]=stackBuffer[i]*(1-alpha)+data[i]*alpha;data[i]=stackBuffer[i]}stackCount++}
                 processCtx.putImageData(imgData,0,0);
                 ctx.save();ctx.globalAlpha=0.9;ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
             }catch(e){}
@@ -1012,7 +1029,7 @@
             gradient.addColorStop(1,'rgba(0,0,0,0.85)');
             ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=gradient;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.restore();
             if(detectedObject!=='none'){
-                const names={moon:'🌕 MOON DETECTED',planet:'🪐 PLANET DETECTED',star:'⭐ STAR DETECTED',object:'🔭 OBJECT LOCKED'};
+                const names={moon:'🌕 MOON',planet:'🪐 PLANET',star:'⭐ STAR',object:'🔭 OBJECT'};
                 objectName.textContent=names[detectedObject];objectBadge.classList.add('show');
             } else objectBadge.classList.remove('show');
         }
@@ -1110,7 +1127,6 @@
             tempCanvas.height=video.videoHeight||1920;
             const tctx=tempCanvas.getContext('2d');
             tctx.filter=video.style.filter||'none';
-            // Account for digital zoom
             const hwVal=Math.min(zoom,hwZoomMax);
             const srcW=video.videoWidth/hwVal;
             const srcH=video.videoHeight/hwVal;
