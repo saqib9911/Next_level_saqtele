@@ -347,7 +347,7 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
 <div class="modal-card">
 <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:22px"></i>
 <h2>SAQSKYSCOOP ULTRA</h2>
-<p>1000x Hybrid Zoom + Focus 200% + Full Features. Ultra Fast. Works Offline.</p>
+<p>1000x Hybrid Zoom + Focus 200% + Full Features. Smooth Recording. Works Offline.</p>
 <button class="btn-primary" id="allowCamBtn">Start Telescope</button>
 </div>
 </div>
@@ -458,7 +458,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     let hwZoomAvail=false,hwZoomMin=1,hwZoomMax=10;
     const MAX_ZOOM=1000;
     let zoom=1,brightness=100,contrast=100;
-    let focusLevel=100; // 0-200 (100 = normal, 200 = max clarity, 0 = defocus)
+    let focusLevel=100;
     let gamma=100,temperature=0,sharpness=0,highlightRecovery=0,purpleNoiseFix=0,clarityBoost=0,denoise=0;
     let activeColor='none',colorOpacity=25,activeEffect='none',activeGrade='none';
     let vignetteAmount=0,leakAmount=0;
@@ -467,13 +467,14 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     let isSurfaceEnhance=false,isFalseColor=false,isStack=false,isHdr=false;
     let mediaRecorder=null,recordedChunks=[];
     let recStartTime=0,recInterval=null;
+    let recFrameTimer=null;
+    let recCanvas=null,recCtx=null;
     let stackBuffer=null,stackCount=0;
     let objectCenter={x:.5,y:.5};
     let frameCounter=0;
     let detectedObject='none';
     const detectionCanvas=document.createElement('canvas');const detectionCtx=detectionCanvas.getContext('2d',{willReadFrequently:true});
     const processCanvas=document.createElement('canvas');const processCtx=processCanvas.getContext('2d',{willReadFrequently:true});
-    const captureCanvas=document.createElement('canvas');const captureCtx=captureCanvas.getContext('2d');
     let zoomHoldTimer=null,zoomHoldDir=0;
     let cachedFilter='',filterDirty=true;
     let needsRender=false;
@@ -514,8 +515,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         if(!track||!caps.focusDistance)return;
         const min=caps.focusDistance.min||0;
         const max=caps.focusDistance.max||1;
-        // Map 0-200 to focus distance
-        // 0 = minimum focus (defocus), 100 = mid, 200 = maximum focus
         const dist=min+((val/200)*(max-min));
         track.applyConstraints({advanced:[{focusDistance:dist,focusMode:'manual'}]}).catch(()=>{});
     },300);
@@ -546,20 +545,12 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         allowCamBtn.addEventListener('click',startCamera);
         closeSheetBtns.forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.sheet).classList.remove('open')));
 
-        // ZOOM
         zoomSlider.addEventListener('input',(e)=>{
             e.stopPropagation();
             const sv=parseFloat(zoomSlider.value);
             zoom=Math.pow(1000,sv/100);
-            if(zoom>hwZoomMax){
-                const factor=zoom/hwZoomMax;
-                video.style.transform='scale('+factor+')';
-            }else{
-                video.style.transform='scale(1)';
-            }
-            if(hwZoomAvail){
-                scheduleHardwareZoom(Math.min(zoom,hwZoomMax));
-            }
+            if(zoom>hwZoomMax){video.style.transform='scale('+(zoom/hwZoomMax)+')';}else{video.style.transform='scale(1)';}
+            if(hwZoomAvail)scheduleHardwareZoom(Math.min(zoom,hwZoomMax));
             updateZoomDisplay();
         });
         ['touchstart','touchmove','touchend'].forEach(ev=>zoomSlider.addEventListener(ev,e=>e.stopPropagation()));
@@ -580,24 +571,16 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         zoomOutBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(-1);});
         [zoomInBtn,zoomOutBtn].forEach(b=>{b.addEventListener('pointerup',e=>{e.stopPropagation();stopZoomHold();});b.addEventListener('pointerleave',stopZoomHold);b.addEventListener('pointercancel',stopZoomHold);});
 
-        // IMAGE
         brightSlider.addEventListener('input',()=>{brightness=parseInt(brightSlider.value);brightVal.textContent=brightness+'%';markFilterDirty();});
         contSlider.addEventListener('input',()=>{contrast=parseInt(contSlider.value);contVal.textContent=contrast+'%';markFilterDirty();});
 
-        // ⭐ FOCUS — 0-200
         focusSlider.addEventListener('input',()=>{
             focusLevel=parseInt(focusSlider.value);
             focusVal.textContent=focusLevel+'%';
             proFocusSlider.value=focusLevel;
             proFocusVal.textContent=focusLevel;
-            // Highlight when above 100
-            if(focusLevel>100){
-                focusItem.classList.add('focus-highlight');
-                focusVal.style.color='#ffb700';
-            }else{
-                focusItem.classList.remove('focus-highlight');
-                focusVal.style.color='var(--neon-cyan)';
-            }
+            if(focusLevel>100){focusItem.classList.add('focus-highlight');focusVal.style.color='#ffb700';}
+            else{focusItem.classList.remove('focus-highlight');focusVal.style.color='var(--neon-cyan)';}
             markFilterDirty();
         });
         focusSlider.addEventListener('change',()=>{scheduleFocus(focusLevel);});
@@ -610,7 +593,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         noiseSlider.addEventListener('input',()=>{purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=purpleNoiseFix;markNeedsRender();});
         denoiseSlider.addEventListener('input',()=>{denoise=parseInt(denoiseSlider.value);denoiseVal.textContent=denoise;markNeedsRender();});
 
-        // PRO
         proIsoSlider.addEventListener('input',()=>{proIsoVal.textContent=proIsoSlider.value;scheduleISO(parseInt(proIsoSlider.value));});
         proExpSlider.addEventListener('input',()=>{proExpVal.textContent=proExpSlider.value+'%';scheduleExposure(parseInt(proExpSlider.value));});
         proFocusSlider.addEventListener('input',()=>{
@@ -624,7 +606,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         });
         proFocusSlider.addEventListener('change',()=>{scheduleFocus(focusLevel);});
 
-        // TORCH
         function toggleTorch(){
             if(!caps.torch){showToast('⚠️ No torch');return;}
             isTorchOn=!isTorchOn;
@@ -637,20 +618,17 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         torchBtnTop.addEventListener('click',toggleTorch);
         torchBtnMain.addEventListener('click',toggleTorch);
 
-        // PRESETS
         presetChips.forEach(chip=>chip.addEventListener('click',()=>{
             presetChips.forEach(c=>c.classList.remove('active'));
             chip.classList.add('active');
             applyPreset(chip.dataset.preset);
         }));
 
-        // SHEETS
         fxBtn.addEventListener('click',()=>openSheet(fxSheet));
         proBtn.addEventListener('click',()=>openSheet(proSheet));
         lensBtn.addEventListener('click',()=>openSheet(lensSheet));
         skyDataBtn.addEventListener('click',()=>{if(skySheet.classList.contains('open'))skySheet.classList.remove('open');else{openSheet(skySheet);loadSkyData();}});
 
-        // LENS
         lensCards.forEach(card=>card.addEventListener('click',()=>{
             lensCards.forEach(c=>c.classList.remove('active'));
             card.classList.add('active');
@@ -660,7 +638,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             showToast('📷 '+lens.toUpperCase());
         }));
 
-        // COLORS
         colorDots.forEach(dot=>dot.addEventListener('click',()=>{
             colorDots.forEach(d=>d.classList.remove('active'));
             dot.classList.add('active');
@@ -671,7 +648,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         vignetteSlider.addEventListener('input',()=>{vignetteAmount=parseInt(vignetteSlider.value);vignetteVal.textContent=vignetteAmount+'%';markNeedsRender();});
         leakSlider.addEventListener('input',()=>{leakAmount=parseInt(leakSlider.value);leakVal.textContent=leakAmount+'%';markNeedsRender();});
 
-        // EFFECTS
         effectChips.forEach(chip=>chip.addEventListener('click',()=>{
             effectChips.forEach(c=>c.classList.remove('active'));
             chip.classList.add('active');
@@ -705,10 +681,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         falseColorBtn.addEventListener('click',()=>{isFalseColor=!isFalseColor;falseColorBtn.classList.toggle('active-btn',isFalseColor);markNeedsRender();});
         stackBtn.addEventListener('click',()=>{
             isStack=!isStack;stackBtn.classList.toggle('active-btn',isStack);
-            if(isStack){
-                stackBuffer=new Float32Array(processCanvas.width*processCanvas.height*4);
-                stackCount=0;
-            }else{stackBuffer=null;stackCount=0;}
+            if(isStack){stackBuffer=new Float32Array(processCanvas.width*processCanvas.height*4);stackCount=0;}else{stackBuffer=null;stackCount=0;}
             markNeedsRender();
         });
         hdrBtn.addEventListener('click',()=>{isHdr=!isHdr;hdrBtn.classList.toggle('active-btn',isHdr);markNeedsRender();});
@@ -878,7 +851,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
 
     function buildCSSFilter(){
         let f='brightness('+brightness+'%) contrast('+contrast+'%) ';
-        // FOCUS: 0-100 = defocus (blur), 100 = normal, 100-200 = clarity boost (extra contrast + slight sharp)
         if(focusLevel<100){
             const blurAmt=((100-focusLevel)/100)*8;
             f+='blur('+blurAmt+'px) ';
@@ -949,7 +921,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         ctx.save();ctx.globalAlpha=0.85;ctx.globalCompositeOperation='overlay';ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
     }
 
-    // ⭐ CLARITY BOOST — Edge-aware sharpening for clarity
     function applyClarityBoost(){
         const w=processCanvas.width,h=processCanvas.height;
         processCtx.drawImage(canvas,0,0,w,h);
@@ -971,7 +942,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         ctx.save();ctx.globalAlpha=0.9;ctx.globalCompositeOperation='overlay';ctx.drawImage(processCanvas,0,0,canvas.width,canvas.height);ctx.restore();
     }
 
-    // ⭐ DENOISE — Simple noise reduction
     function applyDenoise(){
         const w=processCanvas.width,h=processCanvas.height;
         processCtx.drawImage(canvas,0,0,w,h);
@@ -1132,124 +1102,157 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         }else{zoomModeEl.textContent='📱 DIGITAL '+zoom.toFixed(0)+'x';zoomModeEl.style.color='#ffb700';}
     }
 
-    // ⭐ FAST CAPTURE — includes all overlays and effects
+    // ⭐ CAPTURE — Uses same crop logic as preview
     function captureImage(){
         try{
             const vw=video.videoWidth||1080;
             const vh=video.videoHeight||1920;
-            const maxW=1920,maxH=1920;
-            let w=vw,h=vh;
-            if(w>maxW){h=h*(maxW/w);w=maxW;}
-            if(h>maxH){w=w*(maxH/h);h=maxH;}
             
-            captureCanvas.width=w;
-            captureCanvas.height=h;
-            captureCtx.filter=video.style.filter||'none';
+            // Use the same aspect ratio as visible preview
+            const previewW=window.innerWidth;
+            const previewH=window.innerHeight;
+            const previewAspect=previewW/previewH;
             
-            // Account for zoom
+            // Fixed output: 1080p max
+            let outW=1080;
+            let outH=Math.round(1080/previewAspect);
+            if(outH>1920){outH=1920;outW=Math.round(1920*previewAspect);}
+            
+            const c=document.createElement('canvas');
+            c.width=outW;c.height=outH;
+            const cctx=c.getContext('2d');
+            cctx.filter=video.style.filter||'none';
+            
+            // Calculate crop for zoom - MATCH what user sees
             const hwVal=Math.min(zoom,hwZoomMax);
-            const srcW=vw/hwVal;
-            const srcH=vh/hwVal;
-            const srcX=(vw-srcW)/2;
-            const srcY=(vh-srcH)/2;
+            // When object-fit:cover is used, video is cropped to fill preview
+            const videoAspect=vw/vh;
+            let cropW,cropH,cropX,cropY;
             
-            // Draw base image
-            captureCtx.drawImage(video,srcX,srcY,srcW,srcH,0,0,w,h);
-            captureCtx.filter='none';
+            // First apply zoom crop
+            const zoomedW=vw/hwVal;
+            const zoomedH=vh/hwVal;
+            const zoomedX=(vw-zoomedW)/2;
+            const zoomedY=(vh-zoomedH)/2;
             
-            // Apply overlays if visible
-            if(canvas.style.display==='block'){
-                captureCtx.save();
-                captureCtx.globalAlpha=1;
-                captureCtx.drawImage(canvas,0,0,w,h);
-                captureCtx.restore();
+            // Then apply cover crop to match preview aspect
+            if(videoAspect>previewAspect){
+                // video wider than preview — crop sides
+                cropH=zoomedH;
+                cropW=zoomedH*previewAspect;
+                cropX=zoomedX+(zoomedW-cropW)/2;
+                cropY=zoomedY;
+            }else{
+                // video taller than preview — crop top/bottom
+                cropW=zoomedW;
+                cropH=zoomedW/previewAspect;
+                cropX=zoomedX;
+                cropY=zoomedY+(zoomedH-cropH)/2;
             }
             
-            // Save as JPEG (better for download)
-            captureCanvas.toBlob((b)=>{
+            cctx.drawImage(video,cropX,cropY,cropW,cropH,0,0,outW,outH);
+            cctx.filter='none';
+            
+            // Overlays if visible
+            if(canvas.style.display==='block'){
+                cctx.drawImage(canvas,0,0,outW,outH);
+            }
+            
+            c.toBlob((b)=>{
                 if(!b){showToast('❌ Failed');return;}
                 const url=URL.createObjectURL(b);
                 const a=document.createElement('a');
-                a.href=url;
-                a.download='saqskyscoop-'+Date.now()+'.jpg';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                a.href=url;a.download='saqskyscoop-'+Date.now()+'.jpg';
+                document.body.appendChild(a);a.click();document.body.removeChild(a);
                 setTimeout(()=>URL.revokeObjectURL(url),5000);
                 showToast('📸 Captured!');
             },'image/jpeg',0.92);
         }catch(e){showToast('❌ '+e.message);}
     }
 
-    // ⭐ ROBUST RECORDING — Multiple codec fallback
+    // ⭐ RECORDING — Fixed: No stretch, no hang
     function toggleRecording(){
         if(!isRecording){
             try{
-                // Prefer 1080p max for performance
                 const vw=video.videoWidth||1080;
                 const vh=video.videoHeight||1920;
-                let w=Math.min(vw,1920);
-                let h=Math.min(vh,1920);
-                if(h>w){ [w,h]=[h,w]; } // Ensure landscape for recording
+                const previewW=window.innerWidth;
+                const previewH=window.innerHeight;
+                const previewAspect=previewW/previewH;
+                const videoAspect=vw/vh;
                 
-                captureCanvas.width=w;
-                captureCanvas.height=h;
+                // Output size: fixed 720p for smooth recording
+                let outW=720;
+                let outH=Math.round(720/previewAspect);
+                if(outH>1280){outH=1280;outW=Math.round(1280*previewAspect);}
                 
-                // Draw initial frame
-                const drawFrame=()=>{
+                // Create hidden recording canvas
+                recCanvas=document.createElement('canvas');
+                recCanvas.width=outW;
+                recCanvas.height=outH;
+                recCtx=recCanvas.getContext('2d');
+                
+                // Draw first frame
+                const drawRecFrame=()=>{
                     try{
+                        if(!isRecording||!recCtx)return;
                         const vw2=video.videoWidth||1080;
                         const vh2=video.videoHeight||1920;
-                        captureCtx.filter=video.style.filter||'none';
                         const hwVal=Math.min(zoom,hwZoomMax);
-                        const srcW=vw2/hwVal;
-                        const srcH=vh2/hwVal;
-                        const srcX=(vw2-srcW)/2;
-                        const srcY=(vh2-srcH)/2;
-                        captureCtx.drawImage(video,srcX,srcY,srcW,srcH,0,0,w,h);
-                        captureCtx.filter='none';
+                        const zoomedW=vw2/hwVal;
+                        const zoomedH=vh2/hwVal;
+                        const zoomedX=(vw2-zoomedW)/2;
+                        const zoomedY=(vh2-zoomedH)/2;
+                        const videoAspect2=vw2/vh2;
+                        let cropW,cropH,cropX,cropY;
+                        if(videoAspect2>previewAspect){
+                            cropH=zoomedH;
+                            cropW=zoomedH*previewAspect;
+                            cropX=zoomedX+(zoomedW-cropW)/2;
+                            cropY=zoomedY;
+                        }else{
+                            cropW=zoomedW;
+                            cropH=zoomedW/previewAspect;
+                            cropX=zoomedX;
+                            cropY=zoomedY+(zoomedH-cropH)/2;
+                        }
+                        recCtx.filter=video.style.filter||'none';
+                        recCtx.drawImage(video,cropX,cropY,cropW,cropH,0,0,outW,outH);
+                        recCtx.filter='none';
                         if(canvas.style.display==='block'){
-                            captureCtx.drawImage(canvas,0,0,w,h);
+                            recCtx.drawImage(canvas,0,0,outW,outH);
                         }
                     }catch(e){}
                 };
-                drawFrame();
+                drawRecFrame();
                 
-                // Capture stream from canvas at 24fps
-                const captureStream=captureCanvas.captureStream(24);
+                // Capture stream at 24fps (smooth)
+                const recStream=recCanvas.captureStream(24);
                 
-                // Try codecs in order of preference
-                const codecs=[
-                    'video/webm;codecs=vp8',
-                    'video/webm;codecs=vp9',
-                    'video/webm',
-                    'video/mp4'
-                ];
-                let selectedCodec='video/webm';
-                for(const codec of codecs){
-                    if(MediaRecorder.isTypeSupported(codec)){
-                        selectedCodec=codec;
-                        break;
-                    }
+                // Codec fallback: VP8 → VP9 → WebM
+                let opts={mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:2000000};
+                if(!MediaRecorder.isTypeSupported(opts.mimeType)){
+                    opts={mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:2000000};
+                }
+                if(!MediaRecorder.isTypeSupported(opts.mimeType)){
+                    opts={mimeType:'video/webm'};
                 }
                 
-                const options={mimeType:selectedCodec,videoBitsPerSecond:2000000};
-                if(selectedCodec==='video/webm'){delete options.videoBitsPerSecond;}
-                
                 recordedChunks=[];
-                mediaRecorder=new MediaRecorder(captureStream,options);
+                mediaRecorder=new MediaRecorder(recStream,opts);
                 
                 mediaRecorder.ondataavailable=(e)=>{
-                    if(e.data&&e.data.size>0){recordedChunks.push(e.data);}
+                    if(e.data&&e.data.size>0)recordedChunks.push(e.data);
                 };
                 
                 mediaRecorder.onerror=(e)=>{
                     console.log('Rec error:',e);
                     stopRecording();
-                    showToast('❌ Rec error');
+                    showToast('❌ Recording error');
                 };
                 
                 mediaRecorder.onstop=()=>{
+                    if(recFrameTimer){clearInterval(recFrameTimer);recFrameTimer=null;}
                     if(recordedChunks.length===0){showToast('❌ No data');return;}
                     try{
                         const blob=new Blob(recordedChunks,{type:'video/webm'});
@@ -1260,17 +1263,18 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
-                        setTimeout(()=>URL.revokeObjectURL(url),5000);
-                        showToast('✅ Saved');
+                        setTimeout(()=>URL.revokeObjectURL(url),8000);
+                        showToast('✅ Video Saved');
                     }catch(e){showToast('❌ '+e.message);}
                 };
                 
-                // Draw frames at 24fps
-                let rafId=null;
-                const frameInterval=setInterval(drawFrame,42);
-                
-                mediaRecorder.start(2000);
+                // Start recording
+                mediaRecorder.start(3000);
                 isRecording=true;
+                
+                // Draw frames at 24fps
+                recFrameTimer=setInterval(drawRecFrame,42);
+                
                 recordBtn.classList.add('active-btn');
                 recBadge.classList.add('show');
                 recStartTime=Date.now();
@@ -1280,13 +1284,11 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
                     recTimer.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
                 },500);
                 
-                // Store interval for cleanup
-                mediaRecorder._frameInterval=frameInterval;
                 showToast('🔴 Recording...');
             }catch(e){
                 console.log('Rec start error:',e);
                 showToast('❌ '+e.message);
-                isRecording=false;
+                stopRecording();
             }
         }else{
             stopRecording();
@@ -1295,14 +1297,12 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     
     function stopRecording(){
         try{
+            if(recFrameTimer){clearInterval(recFrameTimer);recFrameTimer=null;}
             if(mediaRecorder&&mediaRecorder.state!=='inactive'){
-                if(mediaRecorder._frameInterval){
-                    clearInterval(mediaRecorder._frameInterval);
-                }
                 mediaRecorder.stop();
             }
-        }catch(e){}
-        if(recInterval)clearInterval(recInterval);
+        }catch(e){console.log('Stop err:',e);}
+        if(recInterval){clearInterval(recInterval);recInterval=null;}
         recordBtn.classList.remove('active-btn');
         recBadge.classList.remove('show');
         isRecording=false;
