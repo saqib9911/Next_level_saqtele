@@ -6,13 +6,7 @@
 <meta name="theme-color" content="#050510">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Saqskyscoop Ultra – Virtual Hardware 4K Telescope</title>
-<meta property="og:title" content="Saqskyscoop Ultra – 4K Virtual Hardware Telescope">
-<meta property="og:image" content="https://placehold.co/1200x630/0c1445/00f0ff/png?text=Saqskyscoop">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://placehold.co/1200x630/0c1445/00f0ff/png?text=Saqskyscoop">
+<title>Saqskyscoop Ultra – 4K All-in-One Telescope</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -20,9 +14,10 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 body{background:#000;color:var(--text-main);font-family:'Segoe UI',-apple-system,sans-serif;overflow:hidden;height:100vh;width:100vw;position:fixed;touch-action:none}
 body.ghost-mode .ui-overlay{opacity:.22!important}
+body.night-mode #video{filter:sepia(1) hue-rotate(-30deg) saturate(5) brightness(.7)!important}
 .camera-view{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;overflow:hidden;background:#000;touch-action:none}
 #video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;background:#000;transform:translateZ(0)}
-#canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none}
+#canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none}
 #zebraCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;display:none;opacity:.6}
 .lens-overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none;display:none}
 .lens-overlay.show{display:block}
@@ -47,10 +42,11 @@ body.ghost-mode .ui-overlay{opacity:.22!important}
 .hud-badge i{color:var(--neon-pink)}
 .hud-badge.hw-mode{background:linear-gradient(135deg,rgba(0,255,136,.3),rgba(0,240,255,.3));border-color:var(--neon-green);color:var(--neon-green)}
 .hud-badge.hw-mode i{color:var(--neon-green)}
-.hud-badge.vsr-mode{background:linear-gradient(135deg,rgba(138,43,226,.3),rgba(0,240,255,.3));border-color:var(--neon-purple);color:#c8a2ff}
-.hud-badge.vsr-mode i{color:#c8a2ff}
 .hud-badge.digital-mode{background:linear-gradient(135deg,rgba(255,183,0,.3),rgba(255,140,0,.3));border-color:var(--neon-gold);color:var(--neon-gold)}
 .hud-badge.digital-mode i{color:var(--neon-gold)}
+.hud-badge.warning-mode{background:linear-gradient(135deg,rgba(255,50,50,.35),rgba(255,0,127,.3));border-color:var(--neon-red);color:var(--neon-red);animation:warn-pulse .8s infinite}
+.hud-badge.warning-mode i{color:var(--neon-red)}
+@keyframes warn-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .top-buttons{display:flex;gap:6px}
 .icon-btn{width:40px;height:40px;border-radius:50%;background:var(--glass-bg);backdrop-filter:blur(15px);border:1px solid var(--glass-border);color:var(--text-main);display:flex;justify-content:center;align-items:center;font-size:1rem;cursor:pointer;transition:.2s}
 .icon-btn:active{transform:scale(.9)}
@@ -106,9 +102,6 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
 .action-btn.stack-btn i{color:#4cc9f0}
 .action-btn.torch-btn i{color:#ffb700}
 .action-btn.torch-btn.torch-on{background:linear-gradient(135deg,rgba(255,183,0,.3),rgba(255,140,0,.3));border-color:#ffb700;color:#ffb700}
-.action-btn.vsr-btn i{color:#c8a2ff}
-.action-btn.vsr-btn.active-btn i{color:#c8a2ff}
-.action-btn.vsr-btn.active-btn{background:rgba(138,43,226,.25);border-color:#8a2be2;color:#c8a2ff}
 .ripple{position:absolute;border-radius:50%;background:rgba(0,240,255,.5);transform:scale(0);animation:ripple-anim .5s ease-out;pointer-events:none}
 @keyframes ripple-anim{to{transform:scale(5);opacity:0}}
 .sheet{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(180deg,rgba(10,20,40,.98),rgba(5,5,16,.99));border-top:2px solid var(--neon-cyan);border-radius:24px 24px 0 0;padding:16px 16px 28px;z-index:500;transform:translateY(100%);transition:transform .3s ease;max-height:85vh;overflow-y:auto}
@@ -142,6 +135,12 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
 .pro-item{background:rgba(0,10,30,.5);border-radius:12px;padding:10px;border:1px solid rgba(0,240,255,.15)}
 .pro-label{display:flex;justify-content:space-between;font-size:.55rem;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase}
 .pro-label span:last-child{color:var(--neon-cyan);font-weight:bold;font-family:monospace}
+.pro-live{margin-top:14px;background:linear-gradient(135deg,rgba(0,255,136,.08),rgba(0,240,255,.08));border:1px solid rgba(0,255,136,.3);border-radius:14px;padding:12px 15px}
+.pro-live h3{font-size:.6rem;color:var(--neon-green);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.pro-live .data-row span:last-child{color:var(--neon-green)}
+.auto-btn{background:rgba(0,240,255,.15);border:1px solid var(--neon-cyan);color:var(--neon-cyan);border-radius:10px;padding:4px 10px;font-size:.55rem;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;margin-top:6px;width:100%}
+.auto-btn:active{background:var(--neon-cyan);color:#000}
+.auto-btn.active{background:var(--neon-green);border-color:var(--neon-green);color:#000}
 .data-section{margin-bottom:12px;background:rgba(0,10,30,.5);border:1px solid rgba(0,240,255,.15);border-radius:14px;padding:12px 15px}
 .data-section h3{font-size:.65rem;color:var(--neon-pink);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
 .data-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.75rem;border-bottom:1px solid rgba(255,255,255,.05)}
@@ -229,13 +228,9 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
 <div class="sliders-grid">
 <div class="slider-item"><div class="slider-label"><span>Bright</span><span id="brightVal">100%</span></div><input type="range" id="brightSlider" min="0" max="200" value="100"></div>
 <div class="slider-item"><div class="slider-label"><span>Contrast</span><span id="contVal">100%</span></div><input type="range" id="contSlider" min="0" max="200" value="100"></div>
-<div class="slider-item"><div class="slider-label"><span>Saturation</span><span id="satVal">100%</span></div><input type="range" id="satSlider" min="0" max="200" value="100"></div>
-</div>
-<div class="sliders-grid">
-<div class="slider-item focus-highlight" id="focusItem" style="grid-column:span 3"><div class="slider-label highlight"><span>Focus (0-200) — 100 Normal, 200 Max Clarity</span><span id="focusVal">100%</span></div><input type="range" id="focusSlider" min="0" max="200" value="100"></div>
+<div class="slider-item focus-highlight" id="focusItem"><div class="slider-label highlight"><span>Focus</span><span id="focusVal">100%</span></div><input type="range" id="focusSlider" min="0" max="200" value="100"></div>
 </div>
 <div class="action-grid">
-<button class="action-btn vsr-btn" id="vsrBtn"><i class="fas fa-gem"></i><span>VSR</span></button>
 <button class="action-btn" id="telescopeBtn"><i class="fas fa-eye"></i><span>Telescope</span></button>
 <button class="action-btn lock-btn" id="lockBtn"><i class="fas fa-lock"></i><span>Lock</span></button>
 <button class="action-btn torch-btn" id="torchBtnMain"><i class="fas fa-lightbulb"></i><span>Torch</span></button>
@@ -312,10 +307,9 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
 </div>
 <div class="sheet" id="proSheet"><div class="sheet-handle"></div><div class="sheet-title"><h2><i class="fas fa-sliders-h"></i> PRO</h2><button class="close-sheet" data-sheet="proSheet">✕</button></div>
 <div class="pro-grid">
-<div class="pro-item"><div class="pro-label"><span>ISO</span><span id="proIsoVal">Auto</span></div><input type="range" id="proIsoSlider" min="50" max="6400" value="400" step="50"></div>
-<div class="pro-item"><div class="pro-label"><span>Exposure</span><span id="proExpVal">Auto</span></div><input type="range" id="proExpSlider" min="0" max="100" value="50"></div>
-<div class="pro-item"><div class="pro-label"><span>Focus 200</span><span id="proFocusVal">100</span></div><input type="range" id="proFocusSlider" min="0" max="200" value="100"></div>
-<div class="pro-item"><div class="pro-label"><span>Saturation</span><span id="proSatVal">100%</span></div><input type="range" id="proSatSlider" min="0" max="200" value="100"></div>
+<div class="pro-item"><div class="pro-label"><span>ISO</span><span id="proIsoVal">Auto</span></div><input type="range" id="proIsoSlider" min="50" max="6400" value="400" step="50"><button class="auto-btn" id="isoAutoBtn">Auto ISO</button></div>
+<div class="pro-item"><div class="pro-label"><span>Exposure</span><span id="proExpVal">0.0 EV</span></div><input type="range" id="proExpSlider" min="0" max="100" value="50"><button class="auto-btn" id="expAutoBtn">Auto Exp</button></div>
+<div class="pro-item"><div class="pro-label"><span>Focus</span><span id="proFocusVal">100</span></div><input type="range" id="proFocusSlider" min="0" max="200" value="100"><button class="auto-btn" id="focusAutoBtn">Auto Focus</button></div>
 <div class="pro-item"><div class="pro-label"><span>Highlight Rec</span><span id="highRecVal">0</span></div><input type="range" id="highRecSlider" min="0" max="100" value="0"></div>
 <div class="pro-item"><div class="pro-label"><span>Gamma</span><span id="gammaVal">1.0</span></div><input type="range" id="gammaSlider" min="50" max="200" value="100"></div>
 <div class="pro-item"><div class="pro-label"><span>Temp</span><span id="tempVal">0</span></div><input type="range" id="tempSlider" min="-100" max="100" value="0"></div>
@@ -323,8 +317,17 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
 <div class="pro-item"><div class="pro-label"><span>Clarity</span><span id="clarityVal">0</span></div><input type="range" id="claritySlider" min="0" max="100" value="0"></div>
 <div class="pro-item"><div class="pro-label"><span>Purple Fix</span><span id="noiseVal">0</span></div><input type="range" id="noiseSlider" min="0" max="100" value="0"></div>
 <div class="pro-item"><div class="pro-label"><span>Denoise</span><span id="denoiseVal">0</span></div><input type="range" id="denoiseSlider" min="0" max="100" value="0"></div>
-<div class="pro-item"><div class="pro-label"><span>VSR Strength</span><span id="vsrVal">50</span></div><input type="range" id="vsrSlider" min="0" max="100" value="50"></div>
-</div></div>
+</div>
+<div class="pro-live">
+<h3><i class="fas fa-satellite-dish"></i> Live Camera Data</h3>
+<div class="data-row"><span>ISO</span><span id="liveIso">--</span></div>
+<div class="data-row"><span>Exposure Comp</span><span id="liveExp">--</span></div>
+<div class="data-row"><span>Focus Distance</span><span id="liveFocus">--</span></div>
+<div class="data-row"><span>Exposure Mode</span><span id="liveExpMode">--</span></div>
+<div class="data-row"><span>Focus Mode</span><span id="liveFocusMode">--</span></div>
+<div class="data-row"><span>Locked</span><span id="liveLocked">No</span></div>
+</div>
+</div>
 <div class="sheet" id="skySheet"><div class="sheet-handle"></div><div class="sheet-title"><h2><i class="fas fa-satellite-dish"></i> SKY DATA</h2><button class="close-sheet" data-sheet="skySheet">✕</button></div>
 <div class="data-section"><h3><i class="fas fa-sun"></i> Sun & Moon</h3>
 <div class="data-row"><span>Sunrise</span><span id="sunrise">--:--</span></div>
@@ -353,15 +356,15 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;hei
 <div class="modal-card">
 <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:22px"></i>
 <h2>SAQSKYSCOOP ULTRA</h2>
-<p>4K Virtual Hardware Telescope. Super Resolution + Bicubic + Adaptive Sharpening.</p>
+<p>4K All-in-One Telescope. Every feature works together smoothly.</p>
 <button class="btn-primary" id="allowCamBtn">Start Telescope</button>
 </div>
 </div>
 <div class="modal-overlay hidden" id="loadingModal">
 <div class="modal-card">
 <i class="fas fa-circle-notch fa-spin" style="font-size:2.5rem;color:var(--neon-cyan);margin-bottom:20px"></i>
-<h2>LOADING VSR</h2>
-<p>Initializing Virtual Hardware pipeline...</p>
+<h2>LOADING 4K</h2>
+<p>Connecting to sensor...</p>
 </div>
 </div>
 <script>
@@ -378,7 +381,8 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.s
     window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;});
     yesBtn.addEventListener('click',async()=>{
         if(deferredPrompt){try{deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;}catch(e){}}
-        else{alert(/iphone|ipad|ipod/i.test(navigator.userAgent)?'📱 iOS:\n1. Tap Share (□↑)\n2. "Add to Home Screen"':'📱 Android:\n1. Tap browser menu (⋮)\n2. "Install app"');}
+        else{const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+            alert(isIOS?'📱 iOS:\n1. Tap Share (□↑)\n2. "Add to Home Screen"\n3. Tap "Add"':'📱 Android:\n1. Tap browser menu (⋮)\n2. "Install app" or "Add to Home screen"');}
         popup.classList.remove('show');
     });
     noBtn.addEventListener('click',()=>popup.classList.remove('show'));
@@ -388,21 +392,21 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.s
 document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-card').forEach(el=>{
     el.addEventListener('pointerdown',function(e){
         const rect=this.getBoundingClientRect();
-        const r=document.createElement('span');r.className='ripple';
+        const ripple=document.createElement('span');
+        ripple.className='ripple';
         const size=Math.max(rect.width,rect.height);
-        r.style.width=r.style.height=size+'px';
-        r.style.left=(e.clientX-rect.left-size/2)+'px';
-        r.style.top=(e.clientY-rect.top-size/2)+'px';
+        ripple.style.width=ripple.style.height=size+'px';
+        ripple.style.left=(e.clientX-rect.left-size/2)+'px';
+        ripple.style.top=(e.clientY-rect.top-size/2)+'px';
         this.style.position='relative';this.style.overflow='hidden';
-        this.appendChild(r);setTimeout(()=>r.remove(),500);
+        this.appendChild(ripple);
+        setTimeout(()=>ripple.remove(),500);
     });
 });
 
-// ═══════════ TELESCOPE ENGINE WITH VIRTUAL HARDWARE ═══════════
 (()=>{
     const video=document.getElementById('video');const finderVideo=document.getElementById('finderVideo');
-    const canvas=document.getElementById('canvas');
-    const ctx=canvas.getContext('2d',{alpha:false,imageSmoothingEnabled:true,imageSmoothingQuality:'high'});
+    const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d',{alpha:false});
     const zebraCanvas=document.getElementById('zebraCanvas');const zctx=zebraCanvas.getContext('2d',{willReadFrequently:true});
     const objectBadge=document.getElementById('objectBadge');const objectName=document.getElementById('objectName');
     const recBadge=document.getElementById('recBadge');const recTimer=document.getElementById('recTimer');
@@ -414,7 +418,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     const zoomInBtn=document.getElementById('zoomInBtn');const zoomOutBtn=document.getElementById('zoomOutBtn');
     const brightSlider=document.getElementById('brightSlider');const brightVal=document.getElementById('brightVal');
     const contSlider=document.getElementById('contSlider');const contVal=document.getElementById('contVal');
-    const satSlider=document.getElementById('satSlider');const satVal=document.getElementById('satVal');
     const focusSlider=document.getElementById('focusSlider');const focusVal=document.getElementById('focusVal');
     const telescopeBtn=document.getElementById('telescopeBtn');const surfaceBtn=document.getElementById('surfaceBtn');
     const gridBtn=document.getElementById('gridBtn');const lensBtn=document.getElementById('lensBtn');
@@ -426,7 +429,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     const zebraBtn=document.getElementById('zebraBtn');const falseColorBtn=document.getElementById('falseColorBtn');
     const stackBtn=document.getElementById('stackBtn');const hdrBtn=document.getElementById('hdrBtn');
     const torchBtnTop=document.getElementById('torchBtn');const torchBtnMain=document.getElementById('torchBtnMain');
-    const vsrBtn=document.getElementById('vsrBtn');
     const lensSheet=document.getElementById('lensSheet');const fxSheet=document.getElementById('fxSheet');
     const proSheet=document.getElementById('proSheet');const skySheet=document.getElementById('skySheet');
     const finderScope=document.getElementById('finderScope');
@@ -439,7 +441,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     const proIsoSlider=document.getElementById('proIsoSlider');const proIsoVal=document.getElementById('proIsoVal');
     const proExpSlider=document.getElementById('proExpSlider');const proExpVal=document.getElementById('proExpVal');
     const proFocusSlider=document.getElementById('proFocusSlider');const proFocusVal=document.getElementById('proFocusVal');
-    const proSatSlider=document.getElementById('proSatSlider');const proSatVal=document.getElementById('proSatVal');
     const highRecSlider=document.getElementById('highRecSlider');const highRecVal=document.getElementById('highRecVal');
     const gammaSlider=document.getElementById('gammaSlider');const gammaVal=document.getElementById('gammaVal');
     const tempSlider=document.getElementById('tempSlider');const tempVal=document.getElementById('tempVal');
@@ -447,110 +448,219 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     const claritySlider=document.getElementById('claritySlider');const clarityVal=document.getElementById('clarityVal');
     const noiseSlider=document.getElementById('noiseSlider');const noiseVal=document.getElementById('noiseVal');
     const denoiseSlider=document.getElementById('denoiseSlider');const denoiseVal=document.getElementById('denoiseVal');
-    const vsrSlider=document.getElementById('vsrSlider');const vsrVal=document.getElementById('vsrVal');
+    const isoAutoBtn=document.getElementById('isoAutoBtn');const expAutoBtn=document.getElementById('expAutoBtn');const focusAutoBtn=document.getElementById('focusAutoBtn');
+    const liveIso=document.getElementById('liveIso');const liveExp=document.getElementById('liveExp');
+    const liveFocus=document.getElementById('liveFocus');const liveExpMode=document.getElementById('liveExpMode');
+    const liveFocusMode=document.getElementById('liveFocusMode');const liveLocked=document.getElementById('liveLocked');
     const permModal=document.getElementById('permModal');const loadingModal=document.getElementById('loadingModal');
     const allowCamBtn=document.getElementById('allowCamBtn');
 
     const S={
         stream:null,track:null,caps:{},
-        hwZoomAvail:false,hwZoomMin:1,hwZoomMax:10,MAX_ZOOM:1000,
-        zoom:1,brightness:100,contrast:100,saturation:100,focusLevel:100,
+        hwZoomAvail:false,hwZoomMin:1,hwZoomMax:10,
+        MAX_ZOOM:1000,
+        zoom:1,brightness:100,contrast:100,focusLevel:100,
         gamma:100,temperature:0,sharpness:0,highlightRecovery:0,purpleNoiseFix:0,clarityBoost:0,denoise:0,
         activeColor:'none',colorOpacity:25,activeEffect:'none',activeGrade:'none',
         vignetteAmount:0,leakAmount:0,
         isTelescopeMode:false,isGrid:false,isNight:false,isRecording:false,isTransparent:false,
         isExposureLocked:false,isCinema:false,isTorchOn:false,isZebra:false,
         isSurfaceEnhance:false,isFalseColor:false,isStack:false,isHdr:false,
-        isVSR:true,vsrStrength:50,
         stackBuffer:null,stackCount:0,
         objectCenter:{x:.5,y:.5},frameCounter:0,detectedObject:'none',
         cachedFilter:'',filterDirty:true,
         needsRender:true,isVisible:true,
         canvasW:0,canvasH:0,procW:480,procH:270,
-        // ⭐ VIRTUAL HARDWARE buffers
-        vsrUpCanvas:null,vsrUpCtx:null,
-        vsrDownCanvas:null,vsrDownCtx:null,
-        vsrDetailCanvas:null,vsrDetailCtx:null,
-        recFrameTimer:null,
+        recCanvas:null,recCtx:null,recFrameTimer:null,
         mediaRecorder:null,recordedChunks:[],
         recStartTime:0,recInterval:null,
-        teleTick:null,
-        lastRender:0,renderThrottle:33
+        teleTick:null,liveTick:null,
+        lastRender:0,
+        renderThrottle:33,
+        manualIso:false,manualExp:false,manualFocus:false
     };
 
     const detectionCanvas=document.createElement('canvas');const detectionCtx=detectionCanvas.getContext('2d',{willReadFrequently:true});
-    const processCanvas=document.createElement('canvas');const processCtx=processCanvas.getContext('2d',{willReadFrequently:true,imageSmoothingEnabled:true,imageSmoothingQuality:'high'});
-
-    // ⭐ VSR Init: create virtual hardware buffers
-    function initVSRBuffers(){
-        S.vsrUpCanvas=document.createElement('canvas');
-        S.vsrUpCtx=S.vsrUpCanvas.getContext('2d',{imageSmoothingEnabled:true,imageSmoothingQuality:'high'});
-        S.vsrDownCanvas=document.createElement('canvas');
-        S.vsrDownCtx=S.vsrDownCanvas.getContext('2d',{imageSmoothingEnabled:true,imageSmoothingQuality:'high'});
-        S.vsrDetailCanvas=document.createElement('canvas');
-        S.vsrDetailCtx=S.vsrDetailCanvas.getContext('2d',{willReadFrequently:true});
-        resizeVSR();
-    }
-
-    function resizeVSR(){
-        if(!S.vsrUpCanvas)return;
-        // VSR at 2x canvas resolution
-        const vw=S.canvasW*2,vh=S.canvasH*2;
-        S.vsrUpCanvas.width=vw;S.vsrUpCanvas.height=vh;
-        S.vsrDownCanvas.width=S.canvasW;S.vsrDownCanvas.height=S.canvasH;
-        S.vsrDetailCanvas.width=S.canvasW;S.vsrDetailCanvas.height=S.canvasH;
-    }
+    const processCanvas=document.createElement('canvas');const processCtx=processCanvas.getContext('2d',{willReadFrequently:true});
 
     document.addEventListener('visibilitychange',()=>{S.isVisible=!document.hidden;});
 
-    function markDirty(){S.filterDirty=true;S.needsRender=true;}
-    function markRender(){S.needsRender=true;}
+    function markFilterDirty(){S.filterDirty=true;S.needsRender=true;}
+    function markNeedsRender(){S.needsRender=true;}
 
-    function debounce(fn,wait){let t=null;return function(...args){if(t)clearTimeout(t);t=setTimeout(()=>{fn.apply(this,args);t=null;},wait);};}
+    // ⭐⭐⭐ ZERO-LATENCY rAF-throttled HW constraints ⭐⭐⭐
+    // Each function applies at most once per animation frame — feels instant, no queue buildup
+    function makeRAFScheduler(applyFn){
+        let pending=false;
+        return function(value){
+            pending=value;
+            if(!this._scheduled){
+                this._scheduled=true;
+                requestAnimationFrame(()=>{
+                    this._scheduled=false;
+                    const v=pending;
+                    pending=false;
+                    if(v!==false)applyFn(v);
+                });
+            }
+        };
+    }
 
-    const scheduleHWZoom=debounce((v)=>{if(S.track)S.track.applyConstraints({advanced:[{zoom:v}]}).catch(()=>{});},350);
-    const scheduleISO=debounce((v)=>{if(S.track&&S.caps.iso)S.track.applyConstraints({advanced:[{iso:v}]}).catch(()=>{});},300);
-    const scheduleExp=debounce((v)=>{if(S.track&&S.caps.exposureCompensation){const mn=S.caps.exposureCompensation.min||-4;const mx=S.caps.exposureCompensation.max||4;S.track.applyConstraints({advanced:[{exposureCompensation:mn+((v/100)*(mx-mn))}]}).catch(()=>{});}},300);
-    const scheduleFocus=debounce((v)=>{if(S.track&&S.caps.focusDistance){const mn=S.caps.focusDistance.min||0;const mx=S.caps.focusDistance.max||1;S.track.applyConstraints({advanced:[{focusDistance:mn+((v/200)*(mx-mn)),focusMode:'manual'}]}).catch(()=>{});}},300);
+    // Zoom — apply every frame while dragging
+    let pendingZoom=null,zoomScheduled=false;
+    function scheduleHWZoom(v){
+        pendingZoom=v;
+        if(zoomScheduled)return;
+        zoomScheduled=true;
+        requestAnimationFrame(()=>{
+            zoomScheduled=false;
+            const z=pendingZoom;pendingZoom=null;
+            if(!S.track||z===null)return;
+            S.track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});
+        });
+    }
+
+    // ISO — apply every frame while dragging, force manual mode combined
+    let pendingIso=null,isoScheduled=false;
+    function applyISO(v){
+        pendingIso=v;
+        if(isoScheduled)return;
+        isoScheduled=true;
+        requestAnimationFrame(()=>{
+            isoScheduled=false;
+            const val=pendingIso;pendingIso=null;
+            if(!S.track||val===null)return;
+            // Single combined call: manual mode + iso value
+            S.track.applyConstraints({advanced:[{exposureMode:'manual',iso:val}]})
+                .catch(()=>S.track.applyConstraints({advanced:[{iso:val}]}).catch(()=>{}));
+        });
+    }
+
+    // Exposure — apply every frame while dragging
+    let pendingExp=null,expScheduled=false;
+    function applyExp(v){
+        pendingExp=v;
+        if(expScheduled)return;
+        expScheduled=true;
+        requestAnimationFrame(()=>{
+            expScheduled=false;
+            const val=pendingExp;pendingExp=null;
+            if(!S.track||val===null)return;
+            const c=S.caps.exposureCompensation||{min:-4,max:4};
+            const mn=c.min??-4,mx=c.max??4;
+            const ev=mn+((val/100)*(mx-mn));
+            S.track.applyConstraints({advanced:[{exposureMode:'manual',exposureCompensation:ev}]})
+                .catch(()=>S.track.applyConstraints({advanced:[{exposureCompensation:ev}]}).catch(()=>{}));
+        });
+    }
+
+    // Focus — apply every frame while dragging
+    let pendingFocus=null,focusScheduled=false;
+    function applyFocus(v){
+        pendingFocus=v;
+        if(focusScheduled)return;
+        focusScheduled=true;
+        requestAnimationFrame(()=>{
+            focusScheduled=false;
+            const val=pendingFocus;pendingFocus=null;
+            if(!S.track||val===null)return;
+            const c=S.caps.focusDistance||{min:0,max:1};
+            const mn=c.min??0,mx=c.max??1;
+            const d=mn+((val/200)*(mx-mn));
+            S.track.applyConstraints({advanced:[{focusMode:'manual',focusDistance:d}]})
+                .catch(()=>S.track.applyConstraints({advanced:[{focusDistance:d}]}).catch(()=>{}));
+        });
+    }
+
+    const scheduleISO=applyISO;
+    const scheduleExp=applyExp;
+    const scheduleFocus=applyFocus;
 
     const PRESETS={
-        normal:{bright:100,cont:100,sat:100,focus:100,gamma:100,temp:0,sharp:0,clarity:0,vsr:50},
-        moon:{bright:105,cont:120,sat:80,focus:130,gamma:100,temp:-5,sharp:10,clarity:20,vsr:70},
-        jupiter:{bright:105,cont:125,sat:130,focus:140,gamma:105,temp:5,sharp:15,clarity:25,vsr:75},
-        saturn:{bright:105,cont:125,sat:130,focus:140,gamma:105,temp:5,sharp:15,clarity:25,vsr:75},
-        mars:{bright:105,cont:120,sat:150,focus:130,gamma:100,temp:15,sharp:10,clarity:20,vsr:65},
-        venus:{bright:110,cont:120,sat:100,focus:130,gamma:105,temp:-10,sharp:10,clarity:20,vsr:65},
-        nebula:{bright:100,cont:115,sat:170,focus:90,gamma:110,temp:15,sharp:8,clarity:15,vsr:60},
-        deepsky:{bright:100,cont:125,sat:145,focus:100,gamma:115,temp:0,sharp:5,clarity:20,vsr:70}
+        normal:{bright:100,cont:100,focus:100,gamma:100,temp:0,sharp:0,clarity:0},
+        moon:{bright:105,cont:120,focus:130,gamma:100,temp:-5,sharp:10,clarity:20},
+        jupiter:{bright:105,cont:125,focus:140,gamma:105,temp:5,sharp:15,clarity:25},
+        saturn:{bright:105,cont:125,focus:140,gamma:105,temp:5,sharp:15,clarity:25},
+        mars:{bright:105,cont:120,focus:130,gamma:100,temp:15,sharp:10,clarity:20},
+        venus:{bright:110,cont:120,focus:130,gamma:105,temp:-10,sharp:10,clarity:20},
+        nebula:{bright:100,cont:115,focus:90,gamma:110,temp:15,sharp:8,clarity:15},
+        deepsky:{bright:100,cont:125,focus:100,gamma:115,temp:0,sharp:5,clarity:20}
     };
 
-    function init(){initVSRBuffers();bindEvents();permModal.classList.remove('hidden');loadSkyData();setInterval(loadSkyData,120000);updateZoomUI();}
+    function init(){
+        bindEvents();
+        permModal.classList.remove('hidden');
+        loadSkyData();
+        setInterval(loadSkyData,120000);
+        updateZoomUI();
+    }
+
     function closeAllSheets(){lensSheet.classList.remove('open');fxSheet.classList.remove('open');proSheet.classList.remove('open');skySheet.classList.remove('open');}
-    function openSheet(s){closeAllSheets();s.classList.add('open');}
+    function openSheet(s){
+        closeAllSheets();
+        s.classList.add('open');
+        if(s===proSheet)startLiveReadout();
+    }
+
+    function startLiveReadout(){
+        stopLiveReadout();
+        const tick=()=>{
+            if(!S.track){return;}
+            try{
+                const s=S.track.getSettings?S.track.getSettings():{};
+                liveIso.textContent=(s.iso!==undefined)?s.iso:'--';
+                if(s.exposureCompensation!==undefined){
+                    liveExp.textContent=(s.exposureCompensation>0?'+':'')+s.exposureCompensation.toFixed(2)+' EV';
+                }else liveExp.textContent='--';
+                liveFocus.textContent=(s.focusDistance!==undefined)?(+s.focusDistance).toFixed(3):'--';
+                liveExpMode.textContent=s.exposureMode||'--';
+                liveFocusMode.textContent=s.focusMode||'--';
+                liveLocked.textContent=S.isExposureLocked?'YES':'No';
+                liveLocked.style.color=S.isExposureLocked?'#ffb700':'#00ff88';
+            }catch(e){}
+        };
+        tick();
+        S.liveTick=setInterval(tick,500);
+    }
+    function stopLiveReadout(){if(S.liveTick){clearInterval(S.liveTick);S.liveTick=null;}}
 
     function bindEvents(){
         allowCamBtn.addEventListener('click',startCamera);
-        closeSheetBtns.forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.sheet).classList.remove('open')));
+        closeSheetBtns.forEach(btn=>btn.addEventListener('click',()=>{
+            const id=btn.dataset.sheet;
+            document.getElementById(id).classList.remove('open');
+            if(id==='proSheet')stopLiveReadout();
+        }));
 
         zoomSlider.addEventListener('input',(e)=>{
             e.stopPropagation();
-            S.zoom=Math.pow(1000,parseFloat(zoomSlider.value)/100);
-            applyZoomVisual();
+            const sv=parseFloat(zoomSlider.value);
+            S.zoom=Math.pow(1000,sv/100);
+            if(S.zoom>S.hwZoomMax){video.style.transform='scale('+(S.zoom/S.hwZoomMax)+')';}else{video.style.transform='scale(1)';}
             if(S.hwZoomAvail)scheduleHWZoom(Math.min(S.zoom,S.hwZoomMax));
             updateZoomDisplay();
         });
         ['touchstart','touchmove','touchend'].forEach(ev=>zoomSlider.addEventListener(ev,e=>e.stopPropagation()));
 
-        function startZH(d){if(S.zhT)return;S.zhD=d;zoomInBtn.classList.toggle('pressing',d===1);zoomOutBtn.classList.toggle('pressing',d===-1);stepZ();S.zhT=setInterval(stepZ,120);}
-        function stopZH(){if(S.zhT){clearInterval(S.zhT);S.zhT=null;}S.zhD=0;zoomInBtn.classList.remove('pressing');zoomOutBtn.classList.remove('pressing');}
-        function stepZ(){if(!S.zhD)return;let f;if(S.zoom<10)f=1.06;else if(S.zoom<100)f=1.1;else f=1.15;S.zoom=S.zhD===1?Math.min(S.MAX_ZOOM,S.zoom*f):Math.max(S.hwZoomMin,S.zoom/f);applyZoomVisual();if(S.hwZoomAvail)scheduleHWZoom(Math.min(S.zoom,S.hwZoomMax));updateZoomUI();}
-        zoomInBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZH(1);});
-        zoomOutBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZH(-1);});
-        [zoomInBtn,zoomOutBtn].forEach(b=>{b.addEventListener('pointerup',e=>{e.stopPropagation();stopZH();});b.addEventListener('pointerleave',stopZH);b.addEventListener('pointercancel',stopZH);});
+        let zoomHoldTimer=null,zoomHoldDir=0;
+        function startZoomHold(dir){if(zoomHoldTimer)return;zoomHoldDir=dir;zoomInBtn.classList.toggle('pressing',dir===1);zoomOutBtn.classList.toggle('pressing',dir===-1);applyZoomStep();zoomHoldTimer=setInterval(applyZoomStep,80);}
+        function stopZoomHold(){if(zoomHoldTimer){clearInterval(zoomHoldTimer);zoomHoldTimer=null;}zoomHoldDir=0;zoomInBtn.classList.remove('pressing');zoomOutBtn.classList.remove('pressing');}
+        function applyZoomStep(){
+            if(!zoomHoldDir)return;
+            let f;
+            if(S.zoom<10)f=1.06;else if(S.zoom<100)f=1.1;else f=1.15;
+            if(zoomHoldDir===1)S.zoom=Math.min(S.MAX_ZOOM,S.zoom*f);
+            else S.zoom=Math.max(S.hwZoomMin,S.zoom/f);
+            if(S.zoom>S.hwZoomMax){video.style.transform='scale('+(S.zoom/S.hwZoomMax)+')';}else{video.style.transform='scale(1)';}
+            if(S.hwZoomAvail)scheduleHWZoom(Math.min(S.zoom,S.hwZoomMax));
+            updateZoomUI();
+        }
+        zoomInBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(1);});
+        zoomOutBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(-1);});
+        [zoomInBtn,zoomOutBtn].forEach(b=>{b.addEventListener('pointerup',e=>{e.stopPropagation();stopZoomHold();});b.addEventListener('pointerleave',stopZoomHold);b.addEventListener('pointercancel',stopZoomHold);});
 
-        brightSlider.addEventListener('input',()=>{S.brightness=parseInt(brightSlider.value);brightVal.textContent=S.brightness+'%';markDirty();});
-        contSlider.addEventListener('input',()=>{S.contrast=parseInt(contSlider.value);contVal.textContent=S.contrast+'%';markDirty();});
-        satSlider.addEventListener('input',()=>{S.saturation=parseInt(satSlider.value);satVal.textContent=S.saturation+'%';markDirty();proSatSlider.value=S.saturation;proSatVal.textContent=S.saturation+'%';});
+        brightSlider.addEventListener('input',()=>{S.brightness=parseInt(brightSlider.value);brightVal.textContent=S.brightness+'%';markFilterDirty();});
+        contSlider.addEventListener('input',()=>{S.contrast=parseInt(contSlider.value);contVal.textContent=S.contrast+'%';markFilterDirty();});
 
         focusSlider.addEventListener('input',()=>{
             S.focusLevel=parseInt(focusSlider.value);
@@ -558,36 +668,68 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             proFocusSlider.value=S.focusLevel;proFocusVal.textContent=S.focusLevel;
             if(S.focusLevel>100){focusItem.classList.add('focus-highlight');focusVal.style.color='#ffb700';}
             else{focusItem.classList.remove('focus-highlight');focusVal.style.color='var(--neon-cyan)';}
-            markDirty();
+            markFilterDirty();
         });
         focusSlider.addEventListener('pointerup',()=>{scheduleFocus(S.focusLevel);});
 
-        gammaSlider.addEventListener('input',()=>{S.gamma=parseInt(gammaSlider.value);gammaVal.textContent=(S.gamma/100).toFixed(2);markDirty();});
-        tempSlider.addEventListener('input',()=>{S.temperature=parseInt(tempSlider.value);tempVal.textContent=S.temperature;markDirty();});
-        sharpSlider.addEventListener('input',()=>{S.sharpness=parseInt(sharpSlider.value);sharpVal.textContent=S.sharpness;markDirty();});
-        claritySlider.addEventListener('input',()=>{S.clarityBoost=parseInt(claritySlider.value);clarityVal.textContent=S.clarityBoost;markRender();});
-        highRecSlider.addEventListener('input',()=>{S.highlightRecovery=parseInt(highRecSlider.value);highRecVal.textContent=S.highlightRecovery;markRender();});
-        noiseSlider.addEventListener('input',()=>{S.purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=S.purpleNoiseFix;markRender();});
-        denoiseSlider.addEventListener('input',()=>{S.denoise=parseInt(denoiseSlider.value);denoiseVal.textContent=S.denoise;markRender();});
-        vsrSlider.addEventListener('input',()=>{S.vsrStrength=parseInt(vsrSlider.value);vsrVal.textContent=S.vsrStrength;markRender();});
+        gammaSlider.addEventListener('input',()=>{S.gamma=parseInt(gammaSlider.value);gammaVal.textContent=(S.gamma/100).toFixed(2);markFilterDirty();});
+        tempSlider.addEventListener('input',()=>{S.temperature=parseInt(tempSlider.value);tempVal.textContent=S.temperature;markFilterDirty();});
+        sharpSlider.addEventListener('input',()=>{S.sharpness=parseInt(sharpSlider.value);sharpVal.textContent=S.sharpness;markFilterDirty();});
+        claritySlider.addEventListener('input',()=>{S.clarityBoost=parseInt(claritySlider.value);clarityVal.textContent=S.clarityBoost;markNeedsRender();});
+        highRecSlider.addEventListener('input',()=>{S.highlightRecovery=parseInt(highRecSlider.value);highRecVal.textContent=S.highlightRecovery;markNeedsRender();});
+        noiseSlider.addEventListener('input',()=>{S.purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=S.purpleNoiseFix;markNeedsRender();});
+        denoiseSlider.addEventListener('input',()=>{S.denoise=parseInt(denoiseSlider.value);denoiseVal.textContent=S.denoise;markNeedsRender();});
 
-        proIsoSlider.addEventListener('input',()=>{proIsoVal.textContent=proIsoSlider.value;scheduleISO(parseInt(proIsoSlider.value));});
-        proExpSlider.addEventListener('input',()=>{proExpVal.textContent=proExpSlider.value+'%';scheduleExp(parseInt(proExpSlider.value));});
-        proSatSlider.addEventListener('input',()=>{
-            S.saturation=parseInt(proSatSlider.value);
-            proSatVal.textContent=S.saturation+'%';
-            satSlider.value=S.saturation;satVal.textContent=S.saturation+'%';
-            markDirty();
+        // ⭐⭐⭐ PRO SLIDERS — instant feedback (rAF-throttled) ⭐⭐⭐
+        proIsoSlider.addEventListener('input',()=>{
+            S.manualIso=true;
+            proIsoVal.textContent=proIsoSlider.value;
+            isoAutoBtn.classList.remove('active');
+            applyISO(parseInt(proIsoSlider.value));
+        });
+        proExpSlider.addEventListener('input',()=>{
+            S.manualExp=true;
+            const c=S.caps.exposureCompensation||{min:-4,max:4};
+            const mn=c.min??-4,mx=c.max??4;
+            const ev=mn+((parseInt(proExpSlider.value)/100)*(mx-mn));
+            proExpVal.textContent=(ev>0?'+':'')+ev.toFixed(2)+' EV';
+            expAutoBtn.classList.remove('active');
+            applyExp(parseInt(proExpSlider.value));
         });
         proFocusSlider.addEventListener('input',()=>{
+            S.manualFocus=true;
             S.focusLevel=parseInt(proFocusSlider.value);
             proFocusVal.textContent=S.focusLevel;
             focusSlider.value=S.focusLevel;focusVal.textContent=S.focusLevel+'%';
             if(S.focusLevel>100){focusItem.classList.add('focus-highlight');focusVal.style.color='#ffb700';}
             else{focusItem.classList.remove('focus-highlight');focusVal.style.color='var(--neon-cyan)';}
-            markDirty();
+            focusAutoBtn.classList.remove('active');
+            markFilterDirty();
+            applyFocus(S.focusLevel);
         });
-        proFocusSlider.addEventListener('pointerup',()=>{scheduleFocus(S.focusLevel);});
+
+        // ⭐ AUTO buttons — instant, no await
+        isoAutoBtn.addEventListener('click',()=>{
+            S.manualIso=false;
+            isoAutoBtn.classList.add('active');
+            proIsoVal.textContent='Auto';
+            if(S.track)S.track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});
+            showToast('📷 Auto ISO');
+        });
+        expAutoBtn.addEventListener('click',()=>{
+            S.manualExp=false;
+            expAutoBtn.classList.add('active');
+            proExpVal.textContent='Auto';
+            if(S.track)S.track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});
+            showToast('📷 Auto Exposure');
+        });
+        focusAutoBtn.addEventListener('click',()=>{
+            S.manualFocus=false;
+            focusAutoBtn.classList.add('active');
+            proFocusVal.textContent='Auto';
+            if(S.track)S.track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
+            showToast('📷 Auto Focus');
+        });
 
         function toggleTorch(){
             if(!S.caps.torch){showToast('⚠️ No torch');return;}
@@ -625,138 +767,146 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             colorDots.forEach(d=>d.classList.remove('active'));
             dot.classList.add('active');
             S.activeColor=dot.dataset.color;
-            markRender();
+            markNeedsRender();
         }));
-        opacitySlider.addEventListener('input',()=>{S.colorOpacity=parseInt(opacitySlider.value);opacityVal.textContent=S.colorOpacity+'%';markRender();});
-        vignetteSlider.addEventListener('input',()=>{S.vignetteAmount=parseInt(vignetteSlider.value);vignetteVal.textContent=S.vignetteAmount+'%';markRender();});
-        leakSlider.addEventListener('input',()=>{S.leakAmount=parseInt(leakSlider.value);leakVal.textContent=S.leakAmount+'%';markRender();});
+        opacitySlider.addEventListener('input',()=>{S.colorOpacity=parseInt(opacitySlider.value);opacityVal.textContent=S.colorOpacity+'%';markNeedsRender();});
+        vignetteSlider.addEventListener('input',()=>{S.vignetteAmount=parseInt(vignetteSlider.value);vignetteVal.textContent=S.vignetteAmount+'%';markNeedsRender();});
+        leakSlider.addEventListener('input',()=>{S.leakAmount=parseInt(leakSlider.value);leakVal.textContent=S.leakAmount+'%';markNeedsRender();});
 
         effectChips.forEach(chip=>chip.addEventListener('click',()=>{
             effectChips.forEach(c=>c.classList.remove('active'));
             chip.classList.add('active');
             S.activeEffect=chip.dataset.effect;
-            markDirty();
+            markFilterDirty();
         }));
         gradeChips.forEach(chip=>chip.addEventListener('click',()=>{
             gradeChips.forEach(c=>c.classList.remove('active'));
             chip.classList.add('active');
             S.activeGrade=chip.dataset.grade;
-            markDirty();
+            markFilterDirty();
         }));
-
-        // ⭐ VSR Toggle
-        vsrBtn.addEventListener('click',()=>{
-            S.isVSR=!S.isVSR;
-            vsrBtn.classList.toggle('active-btn',S.isVSR);
-            statusBadge.className='hud-badge '+(S.isVSR?'vsr-mode':(S.hwZoomAvail?'hw-mode':'digital-mode'));
-            statusText.textContent=S.isVSR?'VSR ACTIVE':(S.hwZoomAvail?'HW ZOOM':'DIGITAL');
-            markRender();
-            showToast(S.isVSR?'💎 Virtual Super Resolution ON':'VSR OFF');
-        });
 
         telescopeBtn.addEventListener('click',()=>{
             S.isTelescopeMode=!S.isTelescopeMode;
             telescopeBtn.classList.toggle('active-btn',S.isTelescopeMode);
             if(S.isTelescopeMode){
                 if(S.teleTick)clearInterval(S.teleTick);
-                S.teleTick=setInterval(()=>{if(S.isTelescopeMode)markRender();},600);
+                S.teleTick=setInterval(()=>{if(S.isTelescopeMode)markNeedsRender();},600);
                 showToast('🔭 ON');
             }else{
                 if(S.teleTick){clearInterval(S.teleTick);S.teleTick=null;}
                 objectBadge.classList.remove('show');
                 showToast('🔭 OFF');
             }
-            markRender();
+            markNeedsRender();
         });
 
+        // ⭐⭐⭐ LOCK BUTTON — instant UI + fire-and-forget (single combined constraint) ⭐⭐⭐
         lockBtn.addEventListener('click',()=>{
             S.isExposureLocked=!S.isExposureLocked;
             lockBtn.classList.toggle('locked',S.isExposureLocked);
-            if(S.track&&S.caps.exposureMode)S.track.applyConstraints({advanced:[{exposureMode:S.isExposureLocked?'manual':'continuous'}]}).catch(()=>{});
-            showToast(S.isExposureLocked?'🔒':'🔓');
+            liveLocked.textContent=S.isExposureLocked?'YES':'No';
+            liveLocked.style.color=S.isExposureLocked?'#ffb700':'#00ff88';
+
+            if(!S.track){showToast('⚠️ No camera');return;}
+
+            if(S.isExposureLocked){
+                // UI already updated — now fire camera call in background (non-blocking)
+                const settings=S.track.getSettings?S.track.getSettings():{};
+                const c=S.caps.exposureCompensation||{min:-4,max:4};
+                const mn=c.min??-4,mx=c.max??4;
+                const ev=mn+((parseInt(proExpSlider.value)/100)*(mx-mn));
+                const adv={exposureMode:'manual',exposureCompensation:ev};
+                if(settings.focusDistance!==undefined){adv.focusDistance=settings.focusDistance;adv.focusMode='manual';}
+                if(settings.iso!==undefined)adv.iso=settings.iso;
+                // Single combined call — one roundtrip
+                S.track.applyConstraints({advanced:[adv]}).catch(()=>{
+                    // Fallback to bare minimum
+                    S.track.applyConstraints({advanced:[{exposureMode:'manual'}]}).catch(()=>{});
+                });
+                showToast('🔒 LOCKED');
+            }else{
+                S.track.applyConstraints({advanced:[{exposureMode:'continuous',focusMode:'continuous'}]}).catch(()=>{});
+                showToast('🔓 AUTO');
+            }
         });
 
-        surfaceBtn.addEventListener('click',()=>{S.isSurfaceEnhance=!S.isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',S.isSurfaceEnhance);markRender();showToast(S.isSurfaceEnhance?'🏔️ ON':'🏔️ OFF');});
-        falseColorBtn.addEventListener('click',()=>{S.isFalseColor=!S.isFalseColor;falseColorBtn.classList.toggle('active-btn',S.isFalseColor);markRender();showToast(S.isFalseColor?'🌈 ON':'🌈 OFF');});
+        surfaceBtn.addEventListener('click',()=>{S.isSurfaceEnhance=!S.isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',S.isSurfaceEnhance);markNeedsRender();showToast(S.isSurfaceEnhance?'🏔️ ON':'🏔️ OFF');});
+        falseColorBtn.addEventListener('click',()=>{S.isFalseColor=!S.isFalseColor;falseColorBtn.classList.toggle('active-btn',S.isFalseColor);markNeedsRender();showToast(S.isFalseColor?'🌈 ON':'🌈 OFF');});
         stackBtn.addEventListener('click',()=>{
             S.isStack=!S.isStack;stackBtn.classList.toggle('active-btn',S.isStack);
             if(S.isStack){S.stackBuffer=new Float32Array(S.procW*S.procH*4);S.stackCount=0;}else{S.stackBuffer=null;S.stackCount=0;}
-            markRender();
+            markNeedsRender();
         });
-        hdrBtn.addEventListener('click',()=>{S.isHdr=!S.isHdr;hdrBtn.classList.toggle('active-btn',S.isHdr);markRender();showToast(S.isHdr?'✨ HDR ON':'HDR OFF');});
+        hdrBtn.addEventListener('click',()=>{S.isHdr=!S.isHdr;hdrBtn.classList.toggle('active-btn',S.isHdr);markNeedsRender();});
 
-        gridBtn.addEventListener('click',()=>{S.isGrid=!S.isGrid;gridBtn.classList.toggle('active-btn',S.isGrid);markRender();});
-        nightBtn.addEventListener('click',()=>{S.isNight=!S.isNight;nightBtn.classList.toggle('active-btn',S.isNight);markDirty();showToast(S.isNight?'🔴 Night ON':'Night OFF');});
+        gridBtn.addEventListener('click',()=>{S.isGrid=!S.isGrid;gridBtn.classList.toggle('active-btn',S.isGrid);markNeedsRender();});
+        nightBtn.addEventListener('click',()=>{S.isNight=!S.isNight;nightBtn.classList.toggle('active-btn',S.isNight);document.body.classList.toggle('night-mode',S.isNight);});
         transparentBtn.addEventListener('click',()=>{S.isTransparent=!S.isTransparent;transparentBtn.classList.toggle('active',S.isTransparent);document.body.classList.toggle('ghost-mode',S.isTransparent);});
         cinemaBtn.addEventListener('click',()=>{S.isCinema=!S.isCinema;cinemaBtn.classList.toggle('active-btn',S.isCinema);document.getElementById('cinemaBars').classList.toggle('show',S.isCinema);lensOverlays.anamorphic.classList.toggle('show',S.isCinema);});
-        zebraBtn.addEventListener('click',()=>{S.isZebra=!S.isZebra;zebraBtn.classList.toggle('active-btn',S.isZebra);zebraCanvas.style.display=S.isZebra?'block':'none';markRender();});
+        zebraBtn.addEventListener('click',()=>{S.isZebra=!S.isZebra;zebraBtn.classList.toggle('active-btn',S.isZebra);zebraCanvas.style.display=S.isZebra?'block':'none';markNeedsRender();});
 
         resetBtn.addEventListener('click',resetAll);
         captureBtn.addEventListener('click',captureImage);
         recordBtn.addEventListener('click',toggleRecording);
         finderBtn.addEventListener('click',()=>{
-            const sh=finderScope.style.display==='block';
-            finderScope.style.display=sh?'none':'block';
-            finderBtn.classList.toggle('active',!sh);
+            const showing=finderScope.style.display==='block';
+            finderScope.style.display=showing?'none':'block';
+            finderBtn.classList.toggle('active',!showing);
         });
-    }
-
-    function applyZoomVisual(){
-        if(S.zoom>S.hwZoomMax){video.style.transform='scale('+(S.zoom/S.hwZoomMax)+')';}
-        else{video.style.transform='scale(1)';}
     }
 
     function applyPreset(name){
         const p=PRESETS[name]||PRESETS.normal;
-        S.brightness=p.bright;S.contrast=p.cont;S.saturation=p.sat;S.focusLevel=p.focus;
-        S.gamma=p.gamma;S.temperature=p.temp;S.sharpness=p.sharp;S.clarityBoost=p.clarity;S.vsrStrength=p.vsr;
+        S.brightness=p.bright;S.contrast=p.cont;S.focusLevel=p.focus;
+        S.gamma=p.gamma;S.temperature=p.temp;S.sharpness=p.sharp;S.clarityBoost=p.clarity;
         brightSlider.value=S.brightness;brightVal.textContent=S.brightness+'%';
         contSlider.value=S.contrast;contVal.textContent=S.contrast+'%';
-        satSlider.value=S.saturation;satVal.textContent=S.saturation+'%';
-        proSatSlider.value=S.saturation;proSatVal.textContent=S.saturation+'%';
         focusSlider.value=S.focusLevel;focusVal.textContent=S.focusLevel+'%';
         proFocusSlider.value=S.focusLevel;proFocusVal.textContent=S.focusLevel;
         gammaSlider.value=S.gamma;gammaVal.textContent=(S.gamma/100).toFixed(2);
         tempSlider.value=S.temperature;tempVal.textContent=S.temperature;
         sharpSlider.value=S.sharpness;sharpVal.textContent=S.sharpness;
         claritySlider.value=S.clarityBoost;clarityVal.textContent=S.clarityBoost;
-        vsrSlider.value=S.vsrStrength;vsrVal.textContent=S.vsrStrength;
         if(S.focusLevel>100){focusItem.classList.add('focus-highlight');focusVal.style.color='#ffb700';}
         else{focusItem.classList.remove('focus-highlight');focusVal.style.color='var(--neon-cyan)';}
-        markDirty();
+        markFilterDirty();
         showToast('✨ '+name.toUpperCase());
     }
 
     function resetAll(){
         closeAllSheets();
-        if(S.track)S.track.applyConstraints({advanced:[{zoom:S.hwZoomMin,exposureMode:'continuous',focusMode:'continuous',torch:false}]}).catch(()=>{});
+        if(S.track){S.track.applyConstraints({advanced:[{zoom:S.hwZoomMin,exposureMode:'continuous',focusMode:'continuous',torch:false}]}).catch(()=>{});}
         video.style.transform='scale(1)';
-        S.zoom=S.hwZoomMin;S.brightness=100;S.contrast=100;S.saturation=100;S.focusLevel=100;
-        S.gamma=100;S.temperature=0;S.sharpness=0;S.highlightRecovery=0;S.purpleNoiseFix=0;S.clarityBoost=0;S.denoise=0;S.vsrStrength=50;
+        S.zoom=S.hwZoomMin;S.brightness=100;S.contrast=100;S.focusLevel=100;
+        S.gamma=100;S.temperature=0;S.sharpness=0;S.highlightRecovery=0;S.purpleNoiseFix=0;S.clarityBoost=0;S.denoise=0;
         S.colorOpacity=25;S.vignetteAmount=0;S.leakAmount=0;
         S.activeColor='none';S.activeEffect='none';S.activeGrade='none';
         S.isTelescopeMode=false;S.isGrid=false;S.isNight=false;S.isTransparent=false;S.isCinema=false;
         S.isExposureLocked=false;S.isTorchOn=false;S.isZebra=false;
-        S.isSurfaceEnhance=false;S.isFalseColor=false;S.isStack=false;S.isHdr=false;S.isVSR=true;
+        S.isSurfaceEnhance=false;S.isFalseColor=false;S.isStack=false;S.isHdr=false;
+        S.manualIso=false;S.manualExp=false;S.manualFocus=false;
         if(S.teleTick){clearInterval(S.teleTick);S.teleTick=null;}
         S.stackBuffer=null;S.stackCount=0;
-        zoomSlider.value=0;brightSlider.value=100;contSlider.value=100;satSlider.value=100;focusSlider.value=100;
+        zoomSlider.value=0;
+        brightSlider.value=100;contSlider.value=100;focusSlider.value=100;
         gammaSlider.value=100;tempSlider.value=0;sharpSlider.value=0;
-        claritySlider.value=0;highRecSlider.value=0;noiseSlider.value=0;denoiseSlider.value=0;vsrSlider.value=50;
+        claritySlider.value=0;highRecSlider.value=0;noiseSlider.value=0;denoiseSlider.value=0;
         opacitySlider.value=25;vignetteSlider.value=0;leakSlider.value=0;
-        proIsoSlider.value=400;proExpSlider.value=50;proFocusSlider.value=100;proSatSlider.value=100;
+        proIsoSlider.value=400;proExpSlider.value=50;proFocusSlider.value=100;
         updateZoomUI();
-        brightVal.textContent='100%';contVal.textContent='100%';satVal.textContent='100%';
+        brightVal.textContent='100%';contVal.textContent='100%';
         focusVal.textContent='100%';focusVal.style.color='var(--neon-cyan)';
         focusItem.classList.remove('focus-highlight');
         gammaVal.textContent='1.00';tempVal.textContent='0';sharpVal.textContent='0';
-        clarityVal.textContent='0';highRecVal.textContent='0';noiseVal.textContent='0';denoiseVal.textContent='0';vsrVal.textContent='50';
+        clarityVal.textContent='0';highRecVal.textContent='0';noiseVal.textContent='0';denoiseVal.textContent='0';
         opacityVal.textContent='25%';vignetteVal.textContent='0%';leakVal.textContent='0%';
-        proFocusVal.textContent='100';proSatVal.textContent='100%';
+        proFocusVal.textContent='100';
+        proIsoVal.textContent='Auto';proExpVal.textContent='0.00 EV';
+        isoAutoBtn.classList.remove('active');expAutoBtn.classList.remove('active');focusAutoBtn.classList.remove('active');
         document.querySelectorAll('.action-btn').forEach(b=>b.classList.remove('active-btn','active','locked','torch-on'));
         document.querySelectorAll('.icon-btn').forEach(b=>b.classList.remove('active','torch-on'));
-        vsrBtn.classList.add('active-btn');
-        document.body.classList.remove('ghost-mode');
+        document.body.classList.remove('night-mode','ghost-mode');
         Object.values(lensOverlays).forEach(o=>o.classList.remove('show'));
         document.getElementById('cinemaBars').classList.remove('show');
         zebraCanvas.style.display='none';
@@ -766,7 +916,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         presetChips.forEach((c,i)=>c.classList.toggle('active',i===0));
         lensCards.forEach((c,i)=>c.classList.toggle('active',i===0));
         objectBadge.classList.remove('show');
-        markDirty();
+        markFilterDirty();
         showToast('✅ Reset');
     }
 
@@ -774,47 +924,42 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         permModal.classList.add('hidden');loadingModal.classList.remove('hidden');
         const timeoutId=setTimeout(()=>{loadingModal.classList.add('hidden');alert('Camera timeout');},12000);
         try{
-            const constraints={video:{facingMode:'environment',width:{ideal:3840},height:{ideal:2160},frameRate:{ideal:30}},audio:false};
+            let constraints={video:{facingMode:'environment',width:{ideal:3840},height:{ideal:2160},frameRate:{ideal:30}},audio:false};
             try{S.stream=await navigator.mediaDevices.getUserMedia(constraints);}
-            catch(e){
-                constraints.video.width={ideal:1920};constraints.video.height={ideal:1080};
-                S.stream=await navigator.mediaDevices.getUserMedia(constraints);
-            }
+            catch(e){constraints.video.width={ideal:1920};constraints.video.height={ideal:1080};S.stream=await navigator.mediaDevices.getUserMedia(constraints);}
             video.srcObject=S.stream;finderVideo.srcObject=S.stream;
             S.track=S.stream.getVideoTracks()[0];
             S.caps=S.track.getCapabilities?S.track.getCapabilities():{};
-
             if(S.caps.zoom){
                 S.hwZoomAvail=true;S.hwZoomMin=S.caps.zoom.min||1;S.hwZoomMax=S.caps.zoom.max||10;
                 statusBadge.classList.add('hw-mode');statusText.textContent='4K HW ZOOM';
+                zoomModeEl.textContent='🔧 HARDWARE ZOOM';
             }else{
                 S.hwZoomAvail=false;statusText.textContent='4K DIGITAL';
                 statusBadge.classList.add('digital-mode');
             }
-
             video.onloadedmetadata=()=>{
-                clearTimeout(timeoutId);video.play();
+                clearTimeout(timeoutId);
+                video.play();
                 S.canvasW=window.innerWidth;S.canvasH=window.innerHeight;
                 canvas.width=S.canvasW;canvas.height=S.canvasH;
                 zebraCanvas.width=S.canvasW;zebraCanvas.height=S.canvasH;
                 S.procW=480;S.procH=Math.round(480*(S.canvasH/S.canvasW));
                 processCanvas.width=S.procW;processCanvas.height=S.procH;
-                resizeVSR();
-                statusText.textContent='4K '+(video.videoWidth||'?');
+                statusText.textContent='4K '+(video.videoWidth||'?')+'p';
                 loadingModal.classList.add('hidden');
                 requestAnimationFrame(renderLoop);
-                showToast('✅ '+(video.videoWidth||1920)+' VSR READY');
+                showToast('✅ '+(video.videoWidth||1920)+' READY');
             };
-        }catch(err){clearTimeout(timeoutId);loadingModal.classList.add('hidden');alert('Camera Error: '+err.message);}
+        }catch(err){
+            clearTimeout(timeoutId);loadingModal.classList.add('hidden');
+            alert('Camera Error: '+err.message);
+        }
     }
 
     function renderLoop(){
         const now=performance.now();
-        const needsPixel=S.isStack||S.isHdr||S.isSurfaceEnhance||S.isFalseColor||S.highlightRecovery>0||S.purpleNoiseFix>0||S.clarityBoost>0||S.denoise>0;
-        const hasOverlay=S.isGrid||S.vignetteAmount>0||S.leakAmount>0||S.activeColor!=='none'||(S.isTelescopeMode&&S.zoom>1.2)||S.isRecording||needsPixel;
-        const needsContinuous=needsPixel||hasOverlay;
-
-        if(S.isVisible && (S.needsRender||needsContinuous) && (now-S.lastRender>=S.renderThrottle)){
+        if(S.needsRender&&S.isVisible&&(now-S.lastRender>=S.renderThrottle)){
             S.needsRender=false;
             S.lastRender=now;
             renderFrame();
@@ -822,67 +967,14 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         requestAnimationFrame(renderLoop);
     }
 
-    // ⭐⭐⭐ RENDER WITH VIRTUAL HARDWARE VSR ⭐⭐⭐
     function renderFrame(){
         if(S.filterDirty){S.cachedFilter=buildCSSFilter();S.filterDirty=false;video.style.filter=S.cachedFilter;}
-
         const needsPixel=S.isStack||S.isHdr||S.isSurfaceEnhance||S.isFalseColor||S.highlightRecovery>0||S.purpleNoiseFix>0||S.clarityBoost>0||S.denoise>0;
-        const hasOverlay=S.isGrid||S.vignetteAmount>0||S.leakAmount>0||S.activeColor!=='none'||(S.isTelescopeMode&&S.zoom>1.2)||needsPixel||S.isRecording;
-
-        // ⭐ VSR path for high zoom / virtual hardware mode
-        const useVSR = S.isVSR && (S.zoom > 1.5);
-
-        if(!hasOverlay && !useVSR){canvas.style.display='none';return;}
-
+        const hasOverlay=S.isGrid||S.vignetteAmount>0||S.leakAmount>0||S.activeColor!=='none'||(S.isTelescopeMode&&S.zoom>1.2)||needsPixel;
+        if(!hasOverlay){canvas.style.display='none';return;}
         canvas.style.display='block';
-
-        // ⭐ VIRTUAL SUPER RESOLUTION Pipeline
-        if(useVSR && !needsPixel){
-            // Step 1: Draw video to canvas
-            ctx.clearRect(0,0,S.canvasW,S.canvasH);
-            ctx.drawImage(video,0,0,S.canvasW,S.canvasH);
-
-            // Step 2: Bicubic upscale to 2x (VSR master resolution)
-            S.vsrUpCtx.clearRect(0,0,S.vsrUpCanvas.width,S.vsrUpCanvas.height);
-            S.vsrUpCtx.imageSmoothingEnabled=true;
-            S.vsrUpCtx.imageSmoothingQuality='high';
-            S.vsrUpCtx.drawImage(canvas,0,0,S.vsrUpCanvas.width,S.vsrUpCanvas.height);
-
-            // Step 3: Extract high-frequency detail
-            const masterData=S.vsrUpCtx.getImageData(0,0,S.vsrUpCanvas.width,S.vsrUpCanvas.height);
-            S.vsrDetailCtx.putImageData(masterData,0,0);
-
-            // Step 4: Downsample back with high quality (this averages = bicubic-like)
-            ctx.clearRect(0,0,S.canvasW,S.canvasH);
-            ctx.imageSmoothingEnabled=true;
-            ctx.imageSmoothingQuality='high';
-            ctx.drawImage(S.vsrUpCanvas,0,0,S.canvasW,S.canvasH);
-
-            // Step 5: Apply adaptive unsharp mask for detail re-injection
-            applyAdaptiveSharpen();
-
-            // Step 6: Apply pixel effects if any
-            if(needsPixel){
-                processCtx.drawImage(canvas,0,0,S.procW,S.procH);
-                const imgData=processCtx.getImageData(0,0,S.procW,S.procH);
-                const data=imgData.data;
-                if(S.isStack&&S.stackBuffer)applyDeepStackData(data);
-                if(S.isHdr)applyHdrData(data);
-                if(S.isSurfaceEnhance)applySurfaceData(data);
-                if(S.isFalseColor)applyFalseColorData(data);
-                if(S.clarityBoost>0)applyClarityData(data);
-                if(S.denoise>0)applyDenoiseData(data);
-                if(S.highlightRecovery>0)applyHighRecData(data);
-                if(S.purpleNoiseFix>0)applyPurpleData(data);
-                processCtx.putImageData(imgData,0,0);
-                ctx.clearRect(0,0,S.canvasW,S.canvasH);
-                ctx.imageSmoothingEnabled=true;
-                ctx.imageSmoothingQuality='high';
-                ctx.drawImage(processCanvas,0,0,S.canvasW,S.canvasH);
-            }
-        } else if(needsPixel){
-            // Standard pixel-effect path
-            ctx.clearRect(0,0,S.canvasW,S.canvasH);
+        ctx.clearRect(0,0,S.canvasW,S.canvasH);
+        if(needsPixel){
             ctx.drawImage(video,0,0,S.canvasW,S.canvasH);
             processCtx.drawImage(canvas,0,0,S.procW,S.procH);
             const imgData=processCtx.getImageData(0,0,S.procW,S.procH);
@@ -898,16 +990,8 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             processCtx.putImageData(imgData,0,0);
             ctx.clearRect(0,0,S.canvasW,S.canvasH);
             ctx.imageSmoothingEnabled=true;
-            ctx.imageSmoothingQuality='high';
             ctx.drawImage(processCanvas,0,0,S.canvasW,S.canvasH);
-        } else if(S.isRecording){
-            ctx.clearRect(0,0,S.canvasW,S.canvasH);
-            ctx.drawImage(video,0,0,S.canvasW,S.canvasH);
-        } else {
-            // Simple overlay-only
-            ctx.clearRect(0,0,S.canvasW,S.canvasH);
         }
-
         if(S.activeColor!=='none')applyColorOverlay();
         if(S.isTelescopeMode&&S.zoom>1.2){
             S.frameCounter++;
@@ -920,43 +1004,12 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         if(S.isZebra)drawZebra();
     }
 
-    // ⭐ ADAPTIVE SHARPEN — virtual hardware detail re-injection
-    function applyAdaptiveSharpen(){
-        const w=S.canvasW,h=S.canvasH;
-        // Only process a strip (fast) — every 3rd row
-        const imgData=ctx.getImageData(0,0,w,h);
-        const data=imgData.data;
-        const copy=new Uint8ClampedArray(data);
-        const strength=(S.vsrStrength/100)*0.8;
-        const zoomBoost=Math.min(1,(S.zoom/50));
-        const finalStrength=strength*(1+zoomBoost);
-
-        for(let y=1;y<h-1;y+=2){
-            for(let x=1;x<w-1;x+=2){
-                const idx=(y*w+x)*4;
-                const u=((y-1)*w+x)*4,d=((y+1)*w+x)*4;
-                const l=(y*w+(x-1))*4,r=(y*w+(x+1))*4;
-                for(let c=0;c<3;c++){
-                    const cur=copy[idx+c];
-                    const avg=(copy[u+c]+copy[d+c]+copy[l+c]+copy[r+c])/4;
-                    const detail=cur-avg;
-                    // Only boost if edge (detail strong enough)
-                    if(Math.abs(detail)>3){
-                        data[idx+c]=Math.min(255,Math.max(0,cur+detail*finalStrength));
-                    }
-                }
-            }
-        }
-        ctx.putImageData(imgData,0,0);
-    }
-
     function buildCSSFilter(){
-        let f='brightness('+S.brightness+'%) contrast('+S.contrast+'%) saturate('+S.saturation+'%) ';
-        if(S.isNight)f+='sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.7) ';
+        let f='brightness('+S.brightness+'%) contrast('+S.contrast+'%) ';
         if(S.focusLevel<100){const b=((100-S.focusLevel)/100)*8;f+='blur('+b+'px) ';}
         else if(S.focusLevel>100){const s=((S.focusLevel-100)/100)*25;f+='contrast('+(100+s)+'%) ';}
         if(S.gamma!==100){const g=S.gamma/100;f+='contrast('+Math.round(100/g)+'%) brightness('+Math.round(100*g)+'%) ';}
-        if(S.temperature!==0){const sep=Math.max(0,S.temperature/100);f+='sepia('+Math.abs(sep)+') hue-rotate('+(S.temperature>0?-10:15)+'deg) ';}
+        if(S.temperature!==0){const sepia=Math.max(0,S.temperature/100);f+='sepia('+Math.abs(sepia)+') hue-rotate('+(S.temperature>0?-10:15)+'deg) ';}
         if(S.activeEffect==='invert')f+='invert(1) ';
         if(S.activeEffect==='grayscale')f+='grayscale(1) ';
         if(S.activeEffect==='sepia')f+='sepia(1) ';
@@ -975,21 +1028,95 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         return f.trim();
     }
 
-    function applyDeepStackData(data){const len=data.length;if(S.stackCount===0){for(let i=0;i<len;i++)S.stackBuffer[i]=data[i];S.stackCount=1;}else{const a=1/Math.min(S.stackCount+1,8);for(let i=0;i<len;i++){S.stackBuffer[i]=S.stackBuffer[i]*(1-a)+data[i]*a;data[i]=S.stackBuffer[i];}S.stackCount++;}}
-    function applyHdrData(data){for(let i=0;i<data.length;i+=4){const avg=(data[i]+data[i+1]+data[i+2])/3;if(avg<60){data[i]=Math.min(255,data[i]*1.4);data[i+1]=Math.min(255,data[i+1]*1.4);data[i+2]=Math.min(255,data[i+2]*1.4);}else if(avg>200){data[i]*=0.85;data[i+1]*=0.85;data[i+2]*=0.85;}}}
-    function applySurfaceData(data){const w=S.procW,h=S.procH;const cp=new Uint8ClampedArray(data);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4,r=(y*w+(x+1))*4,d=((y+1)*w+x)*4;for(let c=0;c<3;c++){const cur=cp[i+c],nr=cp[r+c],nb=cp[d+c];const e=Math.abs(cur-nr)+Math.abs(cur-nb);if(e>12){data[i+c]=Math.min(255,Math.max(0,cur+(cur-(nr+nb)/2)*0.5));}}}}
-    function applyClarityData(data){const w=S.procW,h=S.procH;const cp=new Uint8ClampedArray(data);const st=(S.clarityBoost/100)*0.7;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4,u=((y-1)*w+x)*4,d=((y+1)*w+x)*4,l=(y*w+(x-1))*4,r=(y*w+(x+1))*4;for(let c=0;c<3;c++){const cur=cp[i+c];const avg=(cp[u+c]+cp[d+c]+cp[l+c]+cp[r+c])/4;data[i+c]=Math.min(255,Math.max(0,cur+(cur-avg)*st*2));}}}
-    function applyDenoiseData(data){const w=S.procW,h=S.procH;const cp=new Uint8ClampedArray(data);const st=S.denoise/100;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4,u=((y-1)*w+x)*4,d=((y+1)*w+x)*4,l=(y*w+(x-1))*4,r=(y*w+(x+1))*4;for(let c=0;c<3;c++){const avg=(cp[u+c]+cp[d+c]+cp[l+c]+cp[r+c]+cp[i+c])/5;data[i+c]=cp[i+c]*(1-st)+avg*st;}}}
-    function applyFalseColorData(data){for(let i=0;i<data.length;i+=4){const lum=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];const h=(1-lum/255)*240;const[r,g,b]=hslToRgb(h/360,0.9,0.5);data[i]=r;data[i+1]=g;data[i+2]=b;}}
-    function applyHighRecData(data){const st=S.highlightRecovery/100;for(let i=0;i<data.length;i+=4){const r=data[i],g=data[i+1],b=data[i+2],avg=(r+g+b)/3;if(avg>200){const over=avg-200,f=1-(st*0.5),t=200+(over*f),ra=t/avg;data[i]=Math.min(255,r*ra);data[i+1]=Math.min(255,g*ra);data[i+2]=Math.min(255,b*ra);}}}
-    function applyPurpleData(data){const st=S.purpleNoiseFix/100;for(let i=0;i<data.length;i+=4){const r=data[i],g=data[i+1],b=data[i+2];if(b>r&&b>g&&r>g){const p=((b+r)/2)-g;if(p>15){const red=p*st*0.5;data[i]=Math.max(0,r-red);data[i+2]=Math.max(0,b-red);}}}}
+    function applyDeepStackData(data){
+        const len=data.length;
+        if(S.stackCount===0){for(let i=0;i<len;i++)S.stackBuffer[i]=data[i];S.stackCount=1;}
+        else{
+            const alpha=1/Math.min(S.stackCount+1,8);
+            for(let i=0;i<len;i++){S.stackBuffer[i]=S.stackBuffer[i]*(1-alpha)+data[i]*alpha;data[i]=S.stackBuffer[i];}
+            S.stackCount++;
+        }
+    }
+    function applyHdrData(data){
+        for(let i=0;i<data.length;i+=4){
+            const avg=(data[i]+data[i+1]+data[i+2])/3;
+            if(avg<60){data[i]=Math.min(255,data[i]*1.4);data[i+1]=Math.min(255,data[i+1]*1.4);data[i+2]=Math.min(255,data[i+2]*1.4);}
+            else if(avg>200){data[i]*=0.85;data[i+1]*=0.85;data[i+2]*=0.85;}
+        }
+    }
+    function applySurfaceData(data){
+        const w=S.procW,h=S.procH;
+        const copy=new Uint8ClampedArray(data);
+        const strength=0.5;
+        for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+            const idx=(y*w+x)*4,rIdx=(y*w+(x+1))*4,dIdx=((y+1)*w+x)*4;
+            for(let c=0;c<3;c++){
+                const cur=copy[idx+c],nr=copy[rIdx+c],nb=copy[dIdx+c];
+                const edge=Math.abs(cur-nr)+Math.abs(cur-nb);
+                if(edge>12){const sh=cur+(cur-(nr+nb)/2)*strength;data[idx+c]=Math.min(255,Math.max(0,sh));}
+            }
+        }
+    }
+    function applyClarityData(data){
+        const w=S.procW,h=S.procH;
+        const copy=new Uint8ClampedArray(data);
+        const strength=(S.clarityBoost/100)*0.7;
+        for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+            const idx=(y*w+x)*4;
+            const up=((y-1)*w+x)*4,down=((y+1)*w+x)*4;
+            const left=(y*w+(x-1))*4,right=(y*w+(x+1))*4;
+            for(let c=0;c<3;c++){
+                const cur=copy[idx+c];
+                const avg=(copy[up+c]+copy[down+c]+copy[left+c]+copy[right+c])/4;
+                data[idx+c]=Math.min(255,Math.max(0,cur+(cur-avg)*strength*2));
+            }
+        }
+    }
+    function applyDenoiseData(data){
+        const w=S.procW,h=S.procH;
+        const copy=new Uint8ClampedArray(data);
+        const strength=S.denoise/100;
+        for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+            const idx=(y*w+x)*4;
+            const up=((y-1)*w+x)*4,down=((y+1)*w+x)*4;
+            const left=(y*w+(x-1))*4,right=(y*w+(x+1))*4;
+            for(let c=0;c<3;c++){
+                const avg=(copy[up+c]+copy[down+c]+copy[left+c]+copy[right+c]+copy[idx+c])/5;
+                data[idx+c]=copy[idx+c]*(1-strength)+avg*strength;
+            }
+        }
+    }
+    function applyFalseColorData(data){
+        for(let i=0;i<data.length;i+=4){
+            const lum=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
+            const hue=(1-lum/255)*240;
+            const[r,g,b]=hslToRgb(hue/360,0.9,0.5);
+            data[i]=r;data[i+1]=g;data[i+2]=b;
+        }
+    }
+    function applyHighRecData(data){
+        const strength=S.highlightRecovery/100;
+        for(let i=0;i<data.length;i+=4){
+            const r=data[i],g=data[i+1],b=data[i+2],avg=(r+g+b)/3;
+            if(avg>200){const over=avg-200,factor=1-(strength*0.5),target=200+(over*factor),ratio=target/avg;
+                data[i]=Math.min(255,r*ratio);data[i+1]=Math.min(255,g*ratio);data[i+2]=Math.min(255,b*ratio);}
+        }
+    }
+    function applyPurpleData(data){
+        const strength=S.purpleNoiseFix/100;
+        for(let i=0;i<data.length;i+=4){
+            const r=data[i],g=data[i+1],b=data[i+2];
+            if(b>r&&b>g&&r>g){const purpleAmount=((b+r)/2)-g;if(purpleAmount>15){const reduce=purpleAmount*strength*0.5;data[i]=Math.max(0,r-reduce);data[i+2]=Math.max(0,b-reduce);}}
+        }
+    }
     function hslToRgb(h,s,l){let r,g,b;if(s===0){r=g=b=l;}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);}return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];}
 
     function applyColorOverlay(){
         if(S.activeColor==='none')return;
         const m=S.activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
         if(!m)return;
-        ctx.save();ctx.globalCompositeOperation='source-over';
+        ctx.save();
+        ctx.globalCompositeOperation='source-over';
         ctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+(S.colorOpacity/100)+')';
         ctx.fillRect(0,0,S.canvasW,S.canvasH);
         ctx.restore();
@@ -997,21 +1124,60 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
 
     function applyTelescopeDark(){
         const cx=S.canvasW*S.objectCenter.x,cy=S.canvasH*S.objectCenter.y;
-        const iR=Math.max(60,Math.min(S.canvasW,S.canvasH)*0.25);
-        const oR=Math.max(S.canvasW,S.canvasH)*0.65;
-        const g=ctx.createRadialGradient(cx,cy,iR,cx,cy,oR);
-        g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(0.5,'rgba(0,0,0,0.35)');g.addColorStop(1,'rgba(0,0,0,0.85)');
+        const innerR=Math.max(60,Math.min(S.canvasW,S.canvasH)*0.25);
+        const outerR=Math.max(S.canvasW,S.canvasH)*0.65;
+        const g=ctx.createRadialGradient(cx,cy,innerR,cx,cy,outerR);
+        g.addColorStop(0,'rgba(0,0,0,0)');
+        g.addColorStop(0.5,'rgba(0,0,0,0.35)');
+        g.addColorStop(1,'rgba(0,0,0,0.85)');
         ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();
-        if(S.detectedObject!=='none'){const n={moon:'🌕 MOON',planet:'🪐 PLANET',star:'⭐ STAR',object:'🔭 OBJECT'};objectName.textContent=n[S.detectedObject];objectBadge.classList.add('show');}
-        else objectBadge.classList.remove('show');
+        if(S.detectedObject!=='none'){
+            const n={moon:'🌕 MOON',planet:'🪐 PLANET',star:'⭐ STAR',object:'🔭 OBJECT'};
+            objectName.textContent=n[S.detectedObject];objectBadge.classList.add('show');
+        }else objectBadge.classList.remove('show');
     }
 
-    function applyVignette(){const cx=S.canvasW/2,cy=S.canvasH/2;const r=Math.min(S.canvasW,S.canvasH)*0.7;const g=ctx.createRadialGradient(cx,cy,r*0.4,cx,cy,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+(S.vignetteAmount/100)+')');ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);}
-    function applyLightLeak(){const o=S.leakAmount/100;const g=ctx.createLinearGradient(0,S.canvasH,S.canvasW,0);g.addColorStop(0,'rgba(255,180,100,'+(o*0.5)+')');g.addColorStop(0.5,'rgba(255,100,200,'+(o*0.25)+')');g.addColorStop(1,'rgba(0,0,0,0)');ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();}
-    function drawGrid(){ctx.save();ctx.strokeStyle='rgba(0,240,255,0.2)';ctx.lineWidth=1;const st=60;for(let x=st;x<S.canvasW;x+=st){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,S.canvasH);ctx.stroke();}for(let y=st;y<S.canvasH;y+=st){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(S.canvasW,y);ctx.stroke();}ctx.restore();}
+    function applyVignette(){
+        const cx=S.canvasW/2,cy=S.canvasH/2;
+        const r=Math.min(S.canvasW,S.canvasH)*0.7;
+        const g=ctx.createRadialGradient(cx,cy,r*0.4,cx,cy,r);
+        g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+(S.vignetteAmount/100)+')');
+        ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);
+    }
+
+    function applyLightLeak(){
+        const o=S.leakAmount/100;
+        const g=ctx.createLinearGradient(0,S.canvasH,S.canvasW,0);
+        g.addColorStop(0,'rgba(255,180,100,'+(o*0.5)+')');
+        g.addColorStop(0.5,'rgba(255,100,200,'+(o*0.25)+')');
+        g.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();
+    }
+
+    function drawGrid(){
+        ctx.save();ctx.strokeStyle='rgba(0,240,255,0.2)';ctx.lineWidth=1;const step=60;
+        for(let x=step;x<S.canvasW;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,S.canvasH);ctx.stroke();}
+        for(let y=step;y<S.canvasH;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(S.canvasW,y);ctx.stroke();}
+        ctx.restore();
+    }
 
     function detectObject(){
-        try{const w=64,h=48;detectionCanvas.width=w;detectionCanvas.height=h;detectionCtx.drawImage(video,0,0,w,h);const d=detectionCtx.getImageData(0,0,w,h).data;let mB=0,bx=0,by=0,br=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;const l=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114;if(l>150)br++;if(l>mB){mB=l;bx=x;by=y;}}if(mB>180&&br>8){S.objectCenter.x=bx/w;S.objectCenter.y=by/h;S.detectedObject=br>50?'moon':'planet';}else{S.objectCenter={x:.5,y:.5};S.detectedObject='none';}}catch(e){}
+        try{
+            const w=64,h=48;
+            detectionCanvas.width=w;detectionCanvas.height=h;
+            detectionCtx.drawImage(video,0,0,w,h);
+            const d=detectionCtx.getImageData(0,0,w,h).data;
+            let maxB=0,bx=0,by=0,bright=0;
+            for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+                const i=(y*w+x)*4;const l=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114;
+                if(l>150)bright++;
+                if(l>maxB){maxB=l;bx=x;by=y;}
+            }
+            if(maxB>180&&bright>8){
+                S.objectCenter.x=bx/w;S.objectCenter.y=by/h;
+                S.detectedObject=bright>50?'moon':'planet';
+            }else{S.objectCenter={x:.5,y:.5};S.detectedObject='none';}
+        }catch(e){}
     }
 
     function drawZebra(){
@@ -1020,7 +1186,11 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         detectionCtx.drawImage(video,0,0,w,h);
         const d=detectionCtx.getImageData(0,0,w,h).data;
         const zData=zctx.createImageData(w,h);const zd=zData.data;
-        for(let i=0;i<d.length;i+=4){const avg=(d[i]+d[i+1]+d[i+2])/3;if(avg>235){const px=(i/4)%w,py=Math.floor((i/4)/w);if(((px+py)%8)<4){zd[i]=255;zd[i+1]=0;zd[i+2]=0;zd[i+3]=180;}}}
+        let blown=0;
+        for(let i=0;i<d.length;i+=4){
+            const avg=(d[i]+d[i+1]+d[i+2])/3;
+            if(avg>235){blown++;const px=(i/4)%w,py=Math.floor((i/4)/w);if(((px+py)%8)<4){zd[i]=255;zd[i+1]=0;zd[i+2]=0;zd[i+3]=180;}}
+        }
         zctx.putImageData(zData,0,0);
         zctx.save();zctx.imageSmoothingEnabled=false;
         zctx.clearRect(0,0,zebraCanvas.width,zebraCanvas.height);
@@ -1028,39 +1198,53 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         zctx.restore();
     }
 
-    function updateZoomUI(){zoomSlider.value=100*Math.log(S.zoom)/Math.log(1000);updateZoomDisplay();}
+    function updateZoomUI(){
+        zoomSlider.value=100*Math.log(S.zoom)/Math.log(1000);
+        updateZoomDisplay();
+    }
     function updateZoomDisplay(){
-        let d=S.zoom<10?S.zoom.toFixed(1):S.zoom.toFixed(0);
+        let d;
+        if(S.zoom<10)d=S.zoom.toFixed(1);
+        else d=S.zoom.toFixed(0);
         zoomValue.innerHTML=d+'<span class="zoom-unit">x</span>';
-        if(S.isVSR){zoomModeEl.textContent='💎 VIRTUAL HW '+d+'x';zoomModeEl.style.color='#c8a2ff';}
-        else if(S.hwZoomAvail){zoomModeEl.textContent='🔧 HARDWARE ZOOM';zoomModeEl.style.color='#00ff88';}
-        else{zoomModeEl.textContent='📱 DIGITAL '+d+'x';zoomModeEl.style.color='#ffb700';}
+        if(S.hwZoomAvail){
+            if(S.zoom>S.hwZoomMax){
+                if(S.zoom<=50){zoomModeEl.textContent='🔧 HW+'+(S.zoom/S.hwZoomMax).toFixed(1)+'x DIG';zoomModeEl.style.color='#00ff88';}
+                else{zoomModeEl.textContent='📱 DIGITAL '+S.zoom.toFixed(0)+'x';zoomModeEl.style.color='#ffb700';}
+            }else{zoomModeEl.textContent='🔧 HARDWARE ZOOM';zoomModeEl.style.color='#00ff88';}
+        }else{zoomModeEl.textContent='📱 DIGITAL '+S.zoom.toFixed(0)+'x';zoomModeEl.style.color='#ffb700';}
     }
 
     function captureImage(){
         try{
-            const vw=video.videoWidth||1080;const vh=video.videoHeight||1920;
-            const pa=S.canvasW/S.canvasH;
-            let oW=Math.min(vw,3840);let oH=Math.round(oW/pa);
-            if(oH>2160){oH=2160;oW=Math.round(2160*pa);}
-            const c=document.createElement('canvas');c.width=oW;c.height=oH;
-            const cc=c.getContext('2d',{imageSmoothingEnabled:true,imageSmoothingQuality:'high'});
-            cc.filter=video.style.filter||'none';
-            const hw=Math.min(S.zoom,S.hwZoomMax);
-            const zw=vw/hw,zh=vh/hw,zx=(vw-zw)/2,zy=(vh-zh)/2;
-            const va=vw/vh;let cw,ch,cx,cy;
-            if(va>pa){ch=zh;cw=zh*pa;cx=zx+(zw-cw)/2;cy=zy;}
-            else{cw=zw;ch=zw/pa;cx=zx;cy=zy+(zh-ch)/2;}
-            cc.drawImage(video,cx,cy,cw,ch,0,0,oW,oH);
-            cc.filter='none';
-            if(canvas.style.display==='block')cc.drawImage(canvas,0,0,oW,oH);
+            const vw=video.videoWidth||1080;
+            const vh=video.videoHeight||1920;
+            const previewAspect=S.canvasW/S.canvasH;
+            let outW=Math.min(vw,3840);
+            let outH=Math.round(outW/previewAspect);
+            if(outH>2160){outH=2160;outW=Math.round(2160*previewAspect);}
+            const c=document.createElement('canvas');
+            c.width=outW;c.height=outH;
+            const cctx=c.getContext('2d');
+            cctx.filter=video.style.filter||'none';
+            const hwVal=Math.min(S.zoom,S.hwZoomMax);
+            const zoomedW=vw/hwVal,zoomedH=vh/hwVal;
+            const zoomedX=(vw-zoomedW)/2,zoomedY=(vh-zoomedH)/2;
+            const va=vw/vh;
+            let cw,ch,cx,cy;
+            if(va>previewAspect){ch=zoomedH;cw=zoomedH*previewAspect;cx=zoomedX+(zoomedW-cw)/2;cy=zoomedY;}
+            else{cw=zoomedW;ch=zoomedW/previewAspect;cx=zoomedX;cy=zoomedY+(zoomedH-ch)/2;}
+            cctx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);
+            cctx.filter='none';
+            if(canvas.style.display==='block'){cctx.drawImage(canvas,0,0,outW,outH);}
             c.toBlob((b)=>{
                 if(!b){showToast('❌ Failed');return;}
                 const url=URL.createObjectURL(b);
-                const a=document.createElement('a');a.href=url;a.download='saqskyscoop-'+Date.now()+'.jpg';
+                const a=document.createElement('a');
+                a.href=url;a.download='saqskyscoop-'+Date.now()+'.jpg';
                 document.body.appendChild(a);a.click();document.body.removeChild(a);
                 setTimeout(()=>URL.revokeObjectURL(url),5000);
-                showToast('📸 Captured!');
+                showToast('📸 4K Captured!');
             },'image/jpeg',0.92);
         }catch(e){showToast('❌ '+e.message);}
     }
@@ -1068,31 +1252,58 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     function toggleRecording(){
         if(!S.isRecording){
             try{
-                S.needsRender=true;
-                const stream=canvas.captureStream(30);
-                let opts={mimeType:'video/webm'};
-                if(MediaRecorder.isTypeSupported('video/webm;codecs=vp8'))opts={mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:3000000};
-                else if(MediaRecorder.isTypeSupported('video/webm;codecs=vp9'))opts={mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:3000000};
+                const vw=video.videoWidth||1080;
+                const vh=video.videoHeight||1920;
+                const previewAspect=S.canvasW/S.canvasH;
+                let outW=1080;
+                let outH=Math.round(1080/previewAspect);
+                if(outH>1920){outH=1920;outW=Math.round(1920*previewAspect);}
+                S.recCanvas=document.createElement('canvas');
+                S.recCanvas.width=outW;S.recCanvas.height=outH;
+                S.recCtx=S.recCanvas.getContext('2d');
+                const drawRec=()=>{
+                    try{
+                        if(!S.isRecording||!S.recCtx)return;
+                        const vw2=video.videoWidth||1080;
+                        const vh2=video.videoHeight||1920;
+                        const hwVal=Math.min(S.zoom,S.hwZoomMax);
+                        const zw=vw2/hwVal,zh=vh2/hwVal;
+                        const zx=(vw2-zw)/2,zy=(vh2-zh)/2;
+                        const va=vw2/vh2;
+                        let cw,ch,cx,cy;
+                        if(va>previewAspect){ch=zh;cw=zh*previewAspect;cx=zx+(zw-cw)/2;cy=zy;}
+                        else{cw=zw;ch=zw/previewAspect;cx=zx;cy=zy+(zh-ch)/2;}
+                        S.recCtx.filter=video.style.filter||'none';
+                        S.recCtx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);
+                        S.recCtx.filter='none';
+                        if(canvas.style.display==='block'){S.recCtx.drawImage(canvas,0,0,outW,outH);}
+                    }catch(e){}
+                };
+                drawRec();
+                const recStream=S.recCanvas.captureStream(24);
+                let opts={mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:2500000};
+                if(!MediaRecorder.isTypeSupported(opts.mimeType)){opts={mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:2500000};}
+                if(!MediaRecorder.isTypeSupported(opts.mimeType)){opts={mimeType:'video/webm'};}
                 S.recordedChunks=[];
-                S.mediaRecorder=new MediaRecorder(stream,opts);
+                S.mediaRecorder=new MediaRecorder(recStream,opts);
                 S.mediaRecorder.ondataavailable=(e)=>{if(e.data&&e.data.size>0)S.recordedChunks.push(e.data);};
-                S.mediaRecorder.onerror=(e)=>{console.log('Rec error:',e.error);stopRecording();showToast('❌ Rec error');};
+                S.mediaRecorder.onerror=(e)=>{console.log('Rec error:',e);stopRecording();showToast('❌ Rec error');};
                 S.mediaRecorder.onstop=()=>{
-                    const size=S.recordedChunks.reduce((a,b)=>a+b.size,0);
-                    if(size===0){showToast('❌ Empty recording');return;}
+                    if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}
+                    if(S.recordedChunks.length===0){showToast('❌ No data');return;}
                     try{
                         const blob=new Blob(S.recordedChunks,{type:'video/webm'});
                         const url=URL.createObjectURL(blob);
                         const a=document.createElement('a');
                         a.href=url;a.download='saqskyscoop-'+Date.now()+'.webm';
                         document.body.appendChild(a);a.click();document.body.removeChild(a);
-                        setTimeout(()=>URL.revokeObjectURL(url),10000);
-                        showToast('✅ Saved ('+Math.round(size/1024)+'KB)');
+                        setTimeout(()=>URL.revokeObjectURL(url),8000);
+                        showToast('✅ Video Saved');
                     }catch(e){showToast('❌ '+e.message);}
                 };
-                S.mediaRecorder.start(2000);
+                S.mediaRecorder.start(3000);
                 S.isRecording=true;
-                S.needsRender=true;
+                S.recFrameTimer=setInterval(drawRec,42);
                 recordBtn.classList.add('active-btn');
                 recBadge.classList.add('show');
                 S.recStartTime=Date.now();
@@ -1102,11 +1313,14 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
                     recTimer.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
                 },500);
                 showToast('🔴 Recording...');
-            }catch(e){console.log('Rec start error:',e);showToast('❌ '+e.message);S.isRecording=false;}
+            }catch(e){console.log('Rec start error:',e);showToast('❌ '+e.message);stopRecording();}
         }else{stopRecording();}
     }
     function stopRecording(){
-        try{if(S.mediaRecorder&&S.mediaRecorder.state!=='inactive')S.mediaRecorder.stop();}catch(e){}
+        try{
+            if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}
+            if(S.mediaRecorder&&S.mediaRecorder.state!=='inactive'){S.mediaRecorder.stop();}
+        }catch(e){}
         if(S.recInterval){clearInterval(S.recInterval);S.recInterval=null;}
         recordBtn.classList.remove('active-btn');
         recBadge.classList.remove('show');
@@ -1121,10 +1335,13 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     window.showToast=showToast;
 
     window.quickZoom=function(val){
-        S.zoom=val;applyZoomVisual();
+        S.zoom=val;
+        if(S.zoom>S.hwZoomMax){video.style.transform='scale('+(S.zoom/S.hwZoomMax)+')';}else{video.style.transform='scale(1)';}
         if(S.hwZoomAvail)scheduleHWZoom(Math.min(S.zoom,S.hwZoomMax));
         updateZoomUI();
-        document.querySelectorAll('.quick-zoom-btn').forEach(b=>{b.classList.toggle('active',b.textContent===val+'x');});
+        document.querySelectorAll('.quick-zoom-btn').forEach(b=>{
+            b.classList.toggle('active',b.textContent===val+'x');
+        });
     };
 
     window.addEventListener('resize',()=>{
@@ -1133,14 +1350,12 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         zebraCanvas.width=S.canvasW;zebraCanvas.height=S.canvasH;
         S.procW=480;S.procH=Math.round(480*(S.canvasH/S.canvasW));
         processCanvas.width=S.procW;processCanvas.height=S.procH;
-        resizeVSR();
-        markRender();
+        markNeedsRender();
     });
 
     init();
 })();
 
-// ═══════════ SKY DATA ═══════════
 let userLat=null,userLng=null;
 async function loadSkyData(){
     if(userLat===null){
@@ -1156,8 +1371,12 @@ async function loadSkyData(){
 }
 async function fetchSkyData(){
     if(userLat===null)return;
-    try{const r=await fetch('https://api.sunrise-sunset.org/json?lat='+userLat+'&lng='+userLng+'&formatted=0');const d=await r.json();if(d.results){document.getElementById('sunrise').textContent=new Date(d.results.sunrise).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('sunset').textContent=new Date(d.results.sunset).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}}catch(e){}
-    try{const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+userLat+'&longitude='+userLng+'&current=temperature_2m,cloud_cover,relative_humidity_2m');const d=await r.json();if(d.current){document.getElementById('temperature').textContent=d.current.temperature_2m+'°C';document.getElementById('cloudCover').textContent=d.current.cloud_cover+'%';document.getElementById('humidity').textContent=d.current.relative_humidity_2m+'%';let q='Excellent';if(d.current.cloud_cover>70)q='Poor';else if(d.current.cloud_cover>40)q='Fair';else if(d.current.cloud_cover>15)q='Good';document.getElementById('viewQuality').textContent=q;}}catch(e){}
+    try{const r=await fetch('https://api.sunrise-sunset.org/json?lat='+userLat+'&lng='+userLng+'&formatted=0');const d=await r.json();
+        if(d.results){document.getElementById('sunrise').textContent=new Date(d.results.sunrise).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('sunset').textContent=new Date(d.results.sunset).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}}catch(e){}
+    try{const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+userLat+'&longitude='+userLng+'&current=temperature_2m,cloud_cover,relative_humidity_2m');const d=await r.json();
+        if(d.current){document.getElementById('temperature').textContent=d.current.temperature_2m+'°C';document.getElementById('cloudCover').textContent=d.current.cloud_cover+'%';document.getElementById('humidity').textContent=d.current.relative_humidity_2m+'%';
+            let q='Excellent';if(d.current.cloud_cover>70)q='Poor';else if(d.current.cloud_cover>40)q='Fair';else if(d.current.cloud_cover>15)q='Good';
+            document.getElementById('viewQuality').textContent=q;}}catch(e){}
 }
 function updateMoonPhase(){
     const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1,day=now.getDate();
@@ -1188,12 +1407,14 @@ function updatePlanets(){
         {name:'Saturn',months:[5,6,7,8,9,10],mag:'0.5'}
     ];
     const c=document.getElementById('planetList');c.innerHTML='';
-    planets.forEach(p=>{const v=p.months.includes(mi);const r=document.createElement('div');r.className='data-row';r.innerHTML='<span>'+p.name+' ('+p.mag+')</span><span style="color:'+(v?'#00ff64':'#ff6464')+'">'+(v?'● VIS':'○ HID')+'</span>';c.appendChild(r);});
+    planets.forEach(p=>{const v=p.months.includes(mi);const r=document.createElement('div');r.className='data-row';
+        r.innerHTML='<span>'+p.name+' ('+p.mag+')</span><span style="color:'+(v?'#00ff64':'#ff6464')+'">'+(v?'● VIS':'○ HID')+'</span>';c.appendChild(r);});
 }
 function updateStars(){
     const stars=[{name:'Sirius',mag:'-1.46'},{name:'Canopus',mag:'-0.74'},{name:'Arcturus',mag:'-0.05'},{name:'Vega',mag:'0.03'},{name:'Capella',mag:'0.08'},{name:'Rigel',mag:'0.13'}];
     const c=document.getElementById('starList');c.innerHTML='';
-    stars.forEach(s=>{const r=document.createElement('div');r.className='data-row';r.innerHTML='<span>'+s.name+'</span><span>'+s.mag+'</span>';c.appendChild(r);});
+    stars.forEach(s=>{const r=document.createElement('div');r.className='data-row';
+        r.innerHTML='<span>'+s.name+'</span><span>'+s.mag+'</span>';c.appendChild(r);});
 }
 </script>
 </body>
