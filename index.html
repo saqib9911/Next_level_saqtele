@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#050510">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Saqskyscoop Ultra – Final</title>
+<title>Saqskyscoop Ultra – HW + CSS Zoom</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -247,7 +247,7 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 <button class="zoom-btn" id="zoomInBtn">+</button>
 <div class="zoom-value" id="zoomValue">1.00<span class="zoom-unit">x</span></div>
 </div>
-<div class="zoom-mode" id="zoomMode">📱 SMOOTH ZOOM</div>
+<div class="zoom-mode" id="zoomMode">🔧 HW + CSS ZOOM</div>
 <div class="quick-zoom-row">
 <button class="quick-zoom-btn" onclick="quickZoom(1)">1x</button>
 <button class="quick-zoom-btn" onclick="quickZoom(2)">2x</button>
@@ -425,7 +425,7 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 <div class="modal-card">
 <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:22px"></i>
 <h2>SAQSKYSCOOP ULTRA</h2>
-<p>All features working together — smooth and accurate.</p>
+<p>Hardware 10x zoom + Digital 1000x + All features working together.</p>
 <button class="btn-primary" id="allowCamBtn">Start Telescope</button>
 </div>
 </div>
@@ -492,7 +492,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
 const IS_REDMI = /redmi|xiaomi|poco|mi\s/i.test(navigator.userAgent);
 console.log('Device:',IS_REDMI?'Redmi/Xiaomi':'Other');
 
-// ⭐⭐⭐ ADVANCED STABILIZER ⭐⭐⭐
 const Stabilizer = {
     enabled:false,mode:'off',
     smoothX:0,smoothY:0,
@@ -620,6 +619,9 @@ var userLat=null,userLng=null;
 
     const S={
         stream:null,track:null,caps:{},
+        hwZoomAvail:false,
+        hwZoomMin:1,hwZoomMax:1,
+        hwZoomCurrent:1,hwZoomInFlight:false,hwZoomPending:null,
         MAX_ZOOM:1000,MIN_ZOOM:0.01,
         zoom:1,brightness:100,contrast:100,focusLevel:100,
         gamma:100,temperature:0,sharpness:0,highlightRecovery:0,purpleNoiseFix:0,clarityBoost:0,denoise:0,
@@ -676,9 +678,14 @@ var userLat=null,userLng=null;
     function updateProcessing(pct,sub){procPct.textContent=pct+'%';if(sub)procSub.textContent=sub;}
     function hideProcessing(){processingOverlay.classList.remove('show');}
 
+    // ⭐⭐⭐ HYBRID ZOOM — HW up to 10x + CSS beyond ⭐⭐⭐
     function applyCSSZoom(){
+        const hwFactor = S.hwZoomAvail ? Math.max(1, S.hwZoomCurrent) : 1;
+        const cssScale = S.zoom / hwFactor;
         let transform='';
-        if(S.zoom!==1)transform='scale('+S.zoom.toFixed(4)+')';
+        if(Math.abs(cssScale-1)>0.001){
+            transform='scale('+cssScale.toFixed(4)+')';
+        }
         if(Stabilizer.enabled){
             const ss=Stabilizer.stabScale;
             const tx=Stabilizer.offsetX;
@@ -686,6 +693,36 @@ var userLat=null,userLng=null;
             transform=(transform?transform+' ':'')+'translate('+tx.toFixed(2)+'px,'+ty.toFixed(2)+'px) scale('+ss+')';
         }
         video.style.transform=transform;
+    }
+
+    function scheduleHWZoom(){
+        if(!S.hwZoomAvail||!S.track)return;
+        const target=Math.min(S.zoom, S.hwZoomMax);
+        if(target < S.hwZoomMin) return;
+        S.hwZoomPending = target;
+        if(S.hwZoomInFlight) return;
+        flushHWZoom();
+    }
+
+    function flushHWZoom(){
+        if(S.hwZoomInFlight || S.hwZoomPending===null) return;
+        const target = S.hwZoomPending;
+        S.hwZoomPending = null;
+        if(Math.abs(target - S.hwZoomCurrent) < 0.05){
+            applyCSSZoom();
+            return;
+        }
+        S.hwZoomInFlight = true;
+        S.track.applyConstraints({advanced:[{zoom:target}]})
+            .then(()=>{
+                S.hwZoomCurrent = target;
+                applyCSSZoom();
+            })
+            .catch(()=>{})
+            .finally(()=>{
+                S.hwZoomInFlight = false;
+                if(S.hwZoomPending!==null) flushHWZoom();
+            });
     }
 
     let isoScheduled=false,pendingIso=null;
@@ -776,12 +813,14 @@ var userLat=null,userLng=null;
             }
         }));
 
+        // Zoom slider — CSS instant + HW async
         zoomSlider.addEventListener('input',(e)=>{
             e.stopPropagation();
             const sv=parseFloat(zoomSlider.value);
             const target=0.01*Math.pow(100000,sv/1000);
             S.zoom=target;
             applyCSSZoom();
+            scheduleHWZoom();
             updateZoomDisplay();
         },{passive:false});
         ['touchstart','touchmove','touchend'].forEach(ev=>zoomSlider.addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
@@ -800,6 +839,7 @@ var userLat=null,userLng=null;
             zoomHoldDir=0;
             zoomInBtn.classList.remove('pressing');
             zoomOutBtn.classList.remove('pressing');
+            scheduleHWZoom();
         }
         function applyZoomStep(){
             if(!zoomHoldDir)return;
@@ -807,6 +847,7 @@ var userLat=null,userLng=null;
             if(zoomHoldDir===1)S.zoom=Math.min(S.MAX_ZOOM,S.zoom*f);
             else S.zoom=Math.max(S.MIN_ZOOM,S.zoom/f);
             applyCSSZoom();
+            scheduleHWZoom();
             updateZoomUI();
         }
         zoomInBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(1);});
@@ -932,7 +973,7 @@ var userLat=null,userLng=null;
         recordBtn.addEventListener('click',toggleRecording);
         finderBtn.addEventListener('click',()=>{const showing=finderScope.style.display==='block';finderScope.style.display=showing?'none':'block';finderBtn.classList.toggle('active',!showing);});
 
-        // ⭐ Live preview drag with proper click detection
+        // Live preview drag + tap
         (function(){
             const lp=document.getElementById('livePreview');
             const lpClose=lp.querySelector('.live-close');
@@ -975,7 +1016,6 @@ var userLat=null,userLng=null;
                     localStorage.setItem('lpPos',JSON.stringify({x:rect.left,y:rect.top}));
                     setTimeout(()=>{wasDrag=false;},100);
                 } else {
-                    // Tap (not drag) → open fullscreen
                     document.getElementById('livePreviewBig').classList.add('big');
                 }
             });
@@ -1006,7 +1046,9 @@ var userLat=null,userLng=null;
 
     function resetAll(){
         closeAllSheets();
-        if(S.track)S.track.applyConstraints({advanced:[{exposureMode:'continuous',focusMode:'continuous',torch:false}]}).catch(()=>{});
+        if(S.track)S.track.applyConstraints({advanced:[{zoom:S.hwZoomMin,exposureMode:'continuous',focusMode:'continuous',torch:false}]}).catch(()=>{});
+        S.hwZoomCurrent=S.hwZoomMin;
+        S.hwZoomPending=null;
         video.style.transform='';
         Stabilizer.setMode('off');
         stabBtns.forEach(b=>b.classList.toggle('active',b.dataset.stab==='off'));
@@ -1066,7 +1108,18 @@ var userLat=null,userLng=null;
             S.track=S.stream.getVideoTracks()[0];
             S.caps=S.track.getCapabilities?S.track.getCapabilities():{};
             console.log('Caps:',JSON.stringify(S.caps));
-            statusBadge.classList.add('hw-mode');
+            if(S.caps.zoom){
+                S.hwZoomAvail=true;
+                S.hwZoomMin=Math.max(1,S.caps.zoom.min||1);
+                S.hwZoomMax=S.caps.zoom.max||10;
+                S.hwZoomCurrent=S.hwZoomMin;
+                statusBadge.classList.add('hw-mode');
+                console.log('HW Zoom: '+S.hwZoomMin+' - '+S.hwZoomMax);
+            }else{
+                S.hwZoomAvail=false;
+                S.hwZoomMin=1;S.hwZoomMax=1;
+                console.log('No HW zoom');
+            }
             video.onloadedmetadata=()=>{
                 clearTimeout(timeoutId);
                 video.play();
@@ -1080,10 +1133,8 @@ var userLat=null,userLng=null;
         }catch(err){clearTimeout(timeoutId);loadingModal.classList.add('hidden');alert('Camera Error: '+err.message);}
     }
 
-    // ⭐⭐⭐ RENDER LOOP — filter applied EVERY frame, canvas only when needed ⭐⭐⭐
     function renderLoop(){
         const now=performance.now();
-        // ⭐ CSS filter ALWAYS checked (fast, instant)
         if(S.filterDirty){
             S.cachedFilter=buildCSSFilter();
             S.filterDirty=false;
@@ -1141,7 +1192,6 @@ var userLat=null,userLng=null;
         if(S.activeGrade==='forest')f+='hue-rotate(80deg) saturate(120%) ';
         if(S.activeGrade==='noir')f+='grayscale(1) contrast(130%) ';
         if(S.activeGrade==='vintage')f+='sepia(0.6) saturate(85%) contrast(105%) ';
-        // ⭐ Pixel effects as CSS
         if(S.isHdr)f+='contrast(112%) brightness(104%) saturate(105%) ';
         if(S.isStack)f+='blur(0.4px) contrast(105%) ';
         if(S.isSurfaceEnhance)f+='contrast(115%) saturate(105%) ';
@@ -1201,7 +1251,26 @@ var userLat=null,userLng=null;
     }
 
     function updateZoomUI(){const sv=1000*Math.log(Math.max(0.01,S.zoom)/0.01)/Math.log(100000);zoomSlider.value=Math.max(0,Math.min(1000,sv));updateZoomDisplay();}
-    function updateZoomDisplay(){let d;if(S.zoom<1)d=S.zoom.toFixed(2);else if(S.zoom<10)d=S.zoom.toFixed(2);else if(S.zoom<100)d=S.zoom.toFixed(1);else d=S.zoom.toFixed(0);zoomValue.innerHTML=d+'<span class="zoom-unit">x</span>';zoomModeEl.textContent='📱 SMOOTH CSS ZOOM';zoomModeEl.style.color='#00ff88';}
+    function updateZoomDisplay(){
+        let d;
+        if(S.zoom<1)d=S.zoom.toFixed(2);
+        else if(S.zoom<10)d=S.zoom.toFixed(2);
+        else if(S.zoom<100)d=S.zoom.toFixed(1);
+        else d=S.zoom.toFixed(0);
+        zoomValue.innerHTML=d+'<span class="zoom-unit">x</span>';
+        if(S.hwZoomAvail){
+            if(S.zoom<=S.hwZoomMax){
+                zoomModeEl.textContent='🔧 HARDWARE ZOOM ('+S.hwZoomMin+'-'+S.hwZoomMax+'x)';
+                zoomModeEl.style.color='#00ff88';
+            }else{
+                zoomModeEl.textContent='📱 HW+'+(S.zoom/S.hwZoomMax).toFixed(1)+'x DIGITAL';
+                zoomModeEl.style.color='#ffb700';
+            }
+        }else{
+            zoomModeEl.textContent='📱 DIGITAL '+S.zoom.toFixed(0)+'x';
+            zoomModeEl.style.color='#ffb700';
+        }
+    }
 
     async function captureImage(){
         try{
@@ -1213,7 +1282,9 @@ var userLat=null,userLng=null;
             const c=document.createElement('canvas');c.width=outW;c.height=outH;
             const cctx=c.getContext('2d');
             cctx.filter=video.style.filter||'none';
-            const zw=vw/S.zoom,zh=vh/S.zoom;
+            const hwFactor = S.hwZoomAvail ? Math.max(1, S.hwZoomCurrent) : 1;
+            const totalZoom = Math.max(1, S.zoom / hwFactor);
+            const zw=vw/totalZoom,zh=vh/totalZoom;
             const zx=(vw-zw)/2,zy=(vh-zh)/2;
             cctx.drawImage(video,zx,zy,zw,zh,0,0,outW,outH);
             cctx.filter='none';
@@ -1254,7 +1325,9 @@ var userLat=null,userLng=null;
                         if(now-lastDraw<45)return;
                         lastDraw=now;
                         const vw2=video.videoWidth||1080,vh2=video.videoHeight||1920;
-                        const zw=vw2/S.zoom,zh=vh2/S.zoom;
+                        const hwFactor = S.hwZoomAvail ? Math.max(1, S.hwZoomCurrent) : 1;
+                        const totalZoom = Math.max(1, S.zoom / hwFactor);
+                        const zw=vw2/totalZoom,zh=vh2/totalZoom;
                         const zx=(vw2-zw)/2,zy=(vh2-zh)/2;
                         S.recCtx.filter=video.style.filter||'none';
                         S.recCtx.drawImage(video,zx,zy,zw,zh,0,0,outW,outH);
@@ -1310,7 +1383,13 @@ var userLat=null,userLng=null;
     function showToast(msg){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
     window.showToast=showToast;
 
-    window.quickZoom=function(val){S.zoom=val;applyCSSZoom();updateZoomUI();document.querySelectorAll('.quick-zoom-btn').forEach(b=>{b.classList.toggle('active',b.textContent===val+'x');});};
+    window.quickZoom=function(val){
+        S.zoom=val;
+        applyCSSZoom();
+        scheduleHWZoom();
+        updateZoomUI();
+        document.querySelectorAll('.quick-zoom-btn').forEach(b=>{b.classList.toggle('active',b.textContent===val+'x');});
+    };
 
     window.addEventListener('resize',()=>{S.canvasW=window.innerWidth;S.canvasH=window.innerHeight;canvas.width=S.canvasW;canvas.height=S.canvasH;zebraCanvas.width=S.canvasW;zebraCanvas.height=S.canvasH;markNeedsRender();});
 
