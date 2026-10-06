@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#050510">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Saqskyscoop Ultra – 4K All-in-One Telescope</title>
+<title>Saqskyscoop Ultra – Complete</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -16,7 +16,7 @@ body{background:#000;color:var(--text-main);font-family:'Segoe UI',-apple-system
 body.ghost-mode .ui-overlay{opacity:.22!important}
 body.night-mode #video{filter:sepia(1) hue-rotate(-30deg) saturate(5) brightness(.7)!important}
 .camera-view{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;overflow:hidden;background:#000;touch-action:none}
-#video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;background:#000;transform:translateZ(0)}
+#video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;background:#000;transform-origin:center center;backface-visibility:hidden;will-change:transform,filter}
 #canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none}
 #zebraCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;display:none;opacity:.6}
 .lens-overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none;display:none}
@@ -188,7 +188,7 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 <div class="ui-overlay" id="uiOverlay">
 <div>
 <div class="top-hud">
-<div class="hud-badge" id="statusBadge"><i class="fas fa-satellite"></i><span id="statusText">4K READY</span></div>
+<div class="hud-badge" id="statusBadge"><i class="fas fa-satellite"></i><span id="statusText">READY</span></div>
 <div class="top-buttons">
 <button class="icon-btn" id="torchBtn"><i class="fas fa-lightbulb"></i></button>
 <button class="icon-btn" id="skyDataBtn"><i class="fas fa-globe"></i></button>
@@ -357,14 +357,14 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 <div class="modal-card">
 <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:22px"></i>
 <h2>SAQSKYSCOOP ULTRA</h2>
-<p>4K All-in-One Telescope. Every feature works together smoothly.</p>
+<p>All features work together — no resets needed.</p>
 <button class="btn-primary" id="allowCamBtn">Start Telescope</button>
 </div>
 </div>
 <div class="modal-overlay hidden" id="loadingModal">
 <div class="modal-card">
 <i class="fas fa-circle-notch fa-spin" style="font-size:2.5rem;color:var(--neon-cyan);margin-bottom:20px"></i>
-<h2>LOADING 4K</h2>
+<h2>LOADING</h2>
 <p>Connecting to sensor...</p>
 </div>
 </div>
@@ -405,19 +405,12 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     });
 });
 
-// ⭐⭐⭐ REDMI/XIAOMI DETECTION ⭐⭐⭐
-// Redmi 13, Xiaomi, POCO phones ka camera HAL "focusDistance" apply karne pe crash/freeze karta hai
-// Isliye un pe hardware focus completely skip karte hain
-const IS_REDMI = /redmi|xiaomi|poco|mi\s|redmi\s?note|m2101k7|m2007j/i.test(navigator.userAgent);
-// Also check via device hints
-const IS_XIAOMI_CAMERA = (navigator.userAgentData && navigator.userAgentData.platform === 'Android' && /redmi|xiaomi|poco/i.test(navigator.userAgent));
-const SKIP_HW_FOCUS = IS_REDMI || IS_XIAOMI_CAMERA;
-console.log('Device: Redmi/Xiaomi detected:',IS_REDMI,'| Skip HW focus:',SKIP_HW_FOCUS);
+const IS_REDMI = /redmi|xiaomi|poco|mi\s/i.test(navigator.userAgent);
+const SKIP_HW_FOCUS = IS_REDMI;
+console.log('Device: Redmi/Xiaomi:',IS_REDMI,'| Skip HW Focus:',SKIP_HW_FOCUS);
 
-// ⭐⭐⭐ SKY DATA VARIABLES — declared before use ⭐⭐⭐
 var userLat=null,userLng=null;
 
-// ============== TELESCOPE ENGINE ==============
 (()=>{
     const video=document.getElementById('video');const finderVideo=document.getElementById('finderVideo');
     const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d',{alpha:false});
@@ -484,13 +477,12 @@ var userLat=null,userLng=null;
         objectCenter:{x:.5,y:.5},frameCounter:0,detectedObject:'none',
         cachedFilter:'',filterDirty:true,
         needsRender:true,isVisible:true,
-        canvasW:0,canvasH:0,procW:480,procH:270,
+        canvasW:0,canvasH:0,procW:320,procH:180,
         recCanvas:null,recCtx:null,recFrameTimer:null,
         mediaRecorder:null,recordedChunks:[],
         recStartTime:0,recInterval:null,
-        teleTick:null,liveTick:null,
+        teleTick:null,liveTick:null,zebraInterval:null,
         lastRender:0,
-        renderThrottle:33,
         manualIso:false,manualExp:false,manualFocus:false,
         lockedSettings:null,
         hardwareFocusSupported:!SKIP_HW_FOCUS
@@ -504,92 +496,87 @@ var userLat=null,userLng=null;
     function markFilterDirty(){S.filterDirty=true;S.needsRender=true;}
     function markNeedsRender(){S.needsRender=true;}
 
-    // ⭐⭐⭐ REDMI-SAFE applyConstraints wrappers — single-fire, no await, no retry ⭐⭐⭐
+    // ⭐ ZOOM — instant CSS + async HW
+    let hwZoomCurrent=1;
+    let hwZoomInFlight=false;
+    let hwZoomPending=null;
 
-    // Zoom — safe on all devices (Redmi supports zoom capability)
-    let pendingZoom=null,zoomScheduled=false;
-    function scheduleHWZoom(v){
-        pendingZoom=v;
-        if(zoomScheduled)return;
-        zoomScheduled=true;
-        requestAnimationFrame(()=>{
-            zoomScheduled=false;
-            const z=pendingZoom;pendingZoom=null;
-            if(!S.track||z===null)return;
-            S.track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});
-        });
+    function applyCSSZoom(){
+        const cssScale=S.zoom/Math.max(1,hwZoomCurrent);
+        if(cssScale>1.005)video.style.transform='scale('+cssScale.toFixed(4)+')';
+        else video.style.transform='';
+    }
+    function scheduleHWZoom(){
+        if(!S.hwZoomAvail||!S.track)return;
+        hwZoomPending=Math.min(S.zoom,S.hwZoomMax);
+        if(hwZoomInFlight)return;
+        flushHWZoom();
+    }
+    function flushHWZoom(){
+        if(hwZoomInFlight||hwZoomPending===null)return;
+        const target=hwZoomPending;hwZoomPending=null;
+        if(Math.abs(target-hwZoomCurrent)<0.05){applyCSSZoom();return;}
+        hwZoomInFlight=true;
+        S.track.applyConstraints({advanced:[{zoom:target}]})
+            .then(()=>{hwZoomCurrent=target;applyCSSZoom();})
+            .catch(()=>{})
+            .finally(()=>{hwZoomInFlight=false;if(hwZoomPending!==null)flushHWZoom();});
     }
 
-    // ISO — Redmi-safe: single-fire, no manual mode wrapper
-    let pendingIso=null,isoScheduled=false;
+    // ⭐ ISO/EXP/FOCUS — HW apply (no verify to prevent lag, but silently errors are caught)
+    let isoScheduled=false,pendingIso=null;
     function applyISO(v){
         pendingIso=v;
         if(isoScheduled)return;
         isoScheduled=true;
-        requestAnimationFrame(()=>{
+        setTimeout(async()=>{
             isoScheduled=false;
             const val=pendingIso;pendingIso=null;
-            if(!S.track||val===null)return;
-            if(!S.caps.iso)return;
-            // Single-fire only — no manual mode (Redmi rejects it silently but doesn't crash)
-            S.track.applyConstraints({advanced:[{iso:val}]}).catch(()=>{});
-        });
+            if(!S.track||val===null||!S.caps.iso)return;
+            try{await S.track.applyConstraints({advanced:[{iso:val}]});}catch(e){}
+        },150);
     }
-
-    // Exposure — Redmi-safe: single-fire, no manual mode
-    let pendingExp=null,expScheduled=false;
+    let expScheduled=false,pendingExp=null;
     function applyExp(v){
         pendingExp=v;
         if(expScheduled)return;
         expScheduled=true;
-        requestAnimationFrame(()=>{
+        setTimeout(async()=>{
             expScheduled=false;
             const val=pendingExp;pendingExp=null;
-            if(!S.track||val===null)return;
-            if(!S.caps.exposureCompensation)return;
+            if(!S.track||val===null||!S.caps.exposureCompensation)return;
             const c=S.caps.exposureCompensation;
             const mn=c.min??-4,mx=c.max??4;
             const ev=mn+((val/100)*(mx-mn));
-            S.track.applyConstraints({advanced:[{exposureCompensation:ev}]}).catch(()=>{});
-        });
+            try{await S.track.applyConstraints({advanced:[{exposureCompensation:ev}]});}catch(e){}
+        },150);
     }
-
-    // Focus — REDMI-SAFE: skip entirely on Redmi/Xiaomi, use CSS blur instead
-    // On Redmi 13 focusDistance crashes the camera HAL when applied via applyConstraints
-    let pendingFocus=null,focusScheduled=false;
+    let focusScheduled=false,pendingFocus=null;
     function applyFocus(v){
-        // ⭐ Redmi safety: skip hardware focus entirely
-        if(!S.hardwareFocusSupported){
-            return; // CSS filter handles the visual focus, camera stays in continuous auto
-        }
+        if(!S.hardwareFocusSupported)return;
         pendingFocus=v;
         if(focusScheduled)return;
         focusScheduled=true;
-        requestAnimationFrame(()=>{
+        setTimeout(async()=>{
             focusScheduled=false;
             const val=pendingFocus;pendingFocus=null;
-            if(!S.track||val===null)return;
-            if(!S.caps.focusDistance)return;
+            if(!S.track||val===null||!S.caps.focusDistance)return;
             const c=S.caps.focusDistance;
             const mn=c.min??0,mx=c.max??10;
             const d=mn+((val/200)*(mx-mn));
-            S.track.applyConstraints({advanced:[{focusDistance:d}]}).catch(()=>{});
-        });
+            try{await S.track.applyConstraints({advanced:[{focusDistance:d}]});}catch(e){}
+        },150);
     }
-
-    const scheduleISO=applyISO;
-    const scheduleExp=applyExp;
-    const scheduleFocus=applyFocus;
 
     const PRESETS={
         normal:{bright:100,cont:100,focus:100,gamma:100,temp:0,sharp:0,clarity:0},
-        moon:{bright:105,cont:120,focus:130,gamma:100,temp:-5,sharp:10,clarity:20},
-        jupiter:{bright:105,cont:125,focus:140,gamma:105,temp:5,sharp:15,clarity:25},
-        saturn:{bright:105,cont:125,focus:140,gamma:105,temp:5,sharp:15,clarity:25},
-        mars:{bright:105,cont:120,focus:130,gamma:100,temp:15,sharp:10,clarity:20},
-        venus:{bright:110,cont:120,focus:130,gamma:105,temp:-10,sharp:10,clarity:20},
-        nebula:{bright:100,cont:115,focus:90,gamma:110,temp:15,sharp:8,clarity:15},
-        deepsky:{bright:100,cont:125,focus:100,gamma:115,temp:0,sharp:5,clarity:20}
+        moon:{bright:105,cont:120,focus:130,gamma:100,temp:-5,sharp:10,clarity:0},
+        jupiter:{bright:105,cont:125,focus:140,gamma:105,temp:5,sharp:15,clarity:0},
+        saturn:{bright:105,cont:125,focus:140,gamma:105,temp:5,sharp:15,clarity:0},
+        mars:{bright:105,cont:120,focus:130,gamma:100,temp:15,sharp:10,clarity:0},
+        venus:{bright:110,cont:120,focus:130,gamma:105,temp:-10,sharp:10,clarity:0},
+        nebula:{bright:100,cont:115,focus:90,gamma:110,temp:15,sharp:8,clarity:0},
+        deepsky:{bright:100,cont:125,focus:100,gamma:115,temp:0,sharp:5,clarity:0}
     };
 
     function init(){
@@ -601,22 +588,17 @@ var userLat=null,userLng=null;
     }
 
     function closeAllSheets(){lensSheet.classList.remove('open');fxSheet.classList.remove('open');proSheet.classList.remove('open');skySheet.classList.remove('open');}
-    function openSheet(s){
-        closeAllSheets();
-        s.classList.add('open');
-        if(s===proSheet)startLiveReadout();
-    }
+    function openSheet(s){closeAllSheets();s.classList.add('open');if(s===proSheet)startLiveReadout();}
 
     function startLiveReadout(){
         stopLiveReadout();
         const tick=()=>{
-            if(!S.track){return;}
+            if(!S.track)return;
             try{
                 const s=S.track.getSettings?S.track.getSettings():{};
                 liveIso.textContent=(s.iso!==undefined)?s.iso:'--';
-                if(s.exposureCompensation!==undefined){
-                    liveExp.textContent=(s.exposureCompensation>0?'+':'')+s.exposureCompensation.toFixed(2)+' EV';
-                }else liveExp.textContent='--';
+                if(s.exposureCompensation!==undefined)liveExp.textContent=(s.exposureCompensation>0?'+':'')+s.exposureCompensation.toFixed(2)+' EV';
+                else liveExp.textContent='--';
                 liveFocus.textContent=(s.focusDistance!==undefined)?(+s.focusDistance).toFixed(3):'--';
                 liveExpMode.textContent=s.exposureMode||'--';
                 liveFocusMode.textContent=s.focusMode||'--';
@@ -641,24 +623,21 @@ var userLat=null,userLng=null;
             e.stopPropagation();
             const sv=parseFloat(zoomSlider.value);
             S.zoom=Math.pow(1000,sv/100);
-            if(S.zoom>S.hwZoomMax){video.style.transform='scale('+(S.zoom/S.hwZoomMax)+')';}else{video.style.transform='scale(1)';}
-            if(S.hwZoomAvail)scheduleHWZoom(Math.min(S.zoom,S.hwZoomMax));
+            applyCSSZoom();
+            scheduleHWZoom();
             updateZoomDisplay();
         });
         ['touchstart','touchmove','touchend'].forEach(ev=>zoomSlider.addEventListener(ev,e=>e.stopPropagation()));
 
         let zoomHoldTimer=null,zoomHoldDir=0;
         function startZoomHold(dir){if(zoomHoldTimer)return;zoomHoldDir=dir;zoomInBtn.classList.toggle('pressing',dir===1);zoomOutBtn.classList.toggle('pressing',dir===-1);applyZoomStep();zoomHoldTimer=setInterval(applyZoomStep,80);}
-        function stopZoomHold(){if(zoomHoldTimer){clearInterval(zoomHoldTimer);zoomHoldTimer=null;}zoomHoldDir=0;zoomInBtn.classList.remove('pressing');zoomOutBtn.classList.remove('pressing');}
+        function stopZoomHold(){if(zoomHoldTimer){clearInterval(zoomHoldTimer);zoomHoldTimer=null;}zoomHoldDir=0;zoomInBtn.classList.remove('pressing');zoomOutBtn.classList.remove('pressing');scheduleHWZoom();}
         function applyZoomStep(){
             if(!zoomHoldDir)return;
-            let f;
-            if(S.zoom<10)f=1.06;else if(S.zoom<100)f=1.1;else f=1.15;
+            let f;if(S.zoom<10)f=1.06;else if(S.zoom<100)f=1.1;else f=1.15;
             if(zoomHoldDir===1)S.zoom=Math.min(S.MAX_ZOOM,S.zoom*f);
             else S.zoom=Math.max(S.hwZoomMin,S.zoom/f);
-            if(S.zoom>S.hwZoomMax){video.style.transform='scale('+(S.zoom/S.hwZoomMax)+')';}else{video.style.transform='scale(1)';}
-            if(S.hwZoomAvail)scheduleHWZoom(Math.min(S.zoom,S.hwZoomMax));
-            updateZoomUI();
+            applyCSSZoom();updateZoomUI();
         }
         zoomInBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(1);});
         zoomOutBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(-1);});
@@ -675,17 +654,16 @@ var userLat=null,userLng=null;
             else{focusItem.classList.remove('focus-highlight');focusVal.style.color='var(--neon-cyan)';}
             markFilterDirty();
         });
-        focusSlider.addEventListener('pointerup',()=>{scheduleFocus(S.focusLevel);});
+        focusSlider.addEventListener('pointerup',()=>{applyFocus(S.focusLevel);});
 
         gammaSlider.addEventListener('input',()=>{S.gamma=parseInt(gammaSlider.value);gammaVal.textContent=(S.gamma/100).toFixed(2);markFilterDirty();});
         tempSlider.addEventListener('input',()=>{S.temperature=parseInt(tempSlider.value);tempVal.textContent=S.temperature;markFilterDirty();});
         sharpSlider.addEventListener('input',()=>{S.sharpness=parseInt(sharpSlider.value);sharpVal.textContent=S.sharpness;markFilterDirty();});
-        claritySlider.addEventListener('input',()=>{S.clarityBoost=parseInt(claritySlider.value);clarityVal.textContent=S.clarityBoost;markNeedsRender();});
-        highRecSlider.addEventListener('input',()=>{S.highlightRecovery=parseInt(highRecSlider.value);highRecVal.textContent=S.highlightRecovery;markNeedsRender();});
-        noiseSlider.addEventListener('input',()=>{S.purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=S.purpleNoiseFix;markNeedsRender();});
-        denoiseSlider.addEventListener('input',()=>{S.denoise=parseInt(denoiseSlider.value);denoiseVal.textContent=S.denoise;markNeedsRender();});
+        claritySlider.addEventListener('input',()=>{S.clarityBoost=parseInt(claritySlider.value);clarityVal.textContent=S.clarityBoost;markNeedsRender();S.lastRender=0;});
+        highRecSlider.addEventListener('input',()=>{S.highlightRecovery=parseInt(highRecSlider.value);highRecVal.textContent=S.highlightRecovery;markNeedsRender();S.lastRender=0;});
+        noiseSlider.addEventListener('input',()=>{S.purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=S.purpleNoiseFix;markNeedsRender();S.lastRender=0;});
+        denoiseSlider.addEventListener('input',()=>{S.denoise=parseInt(denoiseSlider.value);denoiseVal.textContent=S.denoise;markNeedsRender();S.lastRender=0;});
 
-        // ⭐ PRO SLIDERS with Lock guard
         proIsoSlider.addEventListener('input',()=>{
             if(S.isExposureLocked)return;
             S.manualIso=true;
@@ -716,27 +694,9 @@ var userLat=null,userLng=null;
             applyFocus(S.focusLevel);
         });
 
-        isoAutoBtn.addEventListener('click',()=>{
-            S.manualIso=false;
-            isoAutoBtn.classList.add('active');
-            proIsoVal.textContent='Auto';
-            if(S.track)S.track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});
-            showToast('📷 Auto ISO');
-        });
-        expAutoBtn.addEventListener('click',()=>{
-            S.manualExp=false;
-            expAutoBtn.classList.add('active');
-            proExpVal.textContent='Auto';
-            if(S.track)S.track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});
-            showToast('📷 Auto Exposure');
-        });
-        focusAutoBtn.addEventListener('click',()=>{
-            S.manualFocus=false;
-            focusAutoBtn.classList.add('active');
-            proFocusVal.textContent='Auto';
-            if(S.track)S.track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
-            showToast('📷 Auto Focus');
-        });
+        isoAutoBtn.addEventListener('click',()=>{S.manualIso=false;isoAutoBtn.classList.add('active');proIsoVal.textContent='Auto';if(S.track)S.track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});showToast('📷 Auto ISO');});
+        expAutoBtn.addEventListener('click',()=>{S.manualExp=false;expAutoBtn.classList.add('active');proExpVal.textContent='Auto';if(S.track)S.track.applyConstraints({advanced:[{exposureMode:'continuous'}]}).catch(()=>{});showToast('📷 Auto Exposure');});
+        focusAutoBtn.addEventListener('click',()=>{S.manualFocus=false;focusAutoBtn.classList.add('active');proFocusVal.textContent='Auto';if(S.track)S.track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});showToast('📷 Auto Focus');});
 
         function toggleTorch(){
             if(!S.caps.torch){showToast('⚠️ No torch');return;}
@@ -770,15 +730,24 @@ var userLat=null,userLng=null;
             showToast('📷 '+lens.toUpperCase());
         }));
 
+        // ⭐⭐⭐ COLOR OVERLAY — multiply blend (video stays visible)
         colorDots.forEach(dot=>dot.addEventListener('click',()=>{
             colorDots.forEach(d=>d.classList.remove('active'));
             dot.classList.add('active');
             S.activeColor=dot.dataset.color;
+            S.lastRender=0;
             markNeedsRender();
         }));
-        opacitySlider.addEventListener('input',()=>{S.colorOpacity=parseInt(opacitySlider.value);opacityVal.textContent=S.colorOpacity+'%';markNeedsRender();});
-        vignetteSlider.addEventListener('input',()=>{S.vignetteAmount=parseInt(vignetteSlider.value);vignetteVal.textContent=S.vignetteAmount+'%';markNeedsRender();});
-        leakSlider.addEventListener('input',()=>{S.leakAmount=parseInt(leakSlider.value);leakVal.textContent=S.leakAmount+'%';markNeedsRender();});
+
+        // ⭐ Opacity — instant redraw
+        opacitySlider.addEventListener('input',()=>{
+            S.colorOpacity=parseInt(opacitySlider.value);
+            opacityVal.textContent=S.colorOpacity+'%';
+            S.lastRender=0;
+            markNeedsRender();
+        });
+        vignetteSlider.addEventListener('input',()=>{S.vignetteAmount=parseInt(vignetteSlider.value);vignetteVal.textContent=S.vignetteAmount+'%';S.lastRender=0;markNeedsRender();});
+        leakSlider.addEventListener('input',()=>{S.leakAmount=parseInt(leakSlider.value);leakVal.textContent=S.leakAmount+'%';S.lastRender=0;markNeedsRender();});
 
         effectChips.forEach(chip=>chip.addEventListener('click',()=>{
             effectChips.forEach(c=>c.classList.remove('active'));
@@ -808,30 +777,66 @@ var userLat=null,userLng=null;
             markNeedsRender();
         });
 
-        // ⭐⭐⭐ LOCK BUTTON — Redmi-safe software lock ⭐⭐⭐
-        // No hardware applyConstraints — pure UI freeze
-        // Prevents Redmi 13 freeze completely
-        lockBtn.addEventListener('click',()=>{
+        // ⭐⭐⭐ LOCK — multi-step HW lock (each step independent) ⭐⭐⭐
+        lockBtn.addEventListener('click',async()=>{
             S.isExposureLocked=!S.isExposureLocked;
             lockBtn.classList.toggle('locked',S.isExposureLocked);
             liveLocked.textContent=S.isExposureLocked?'YES':'No';
             liveLocked.style.color=S.isExposureLocked?'#ffb700':'#00ff88';
 
+            if(!S.track){showToast('⚠️ No camera');return;}
+
             if(S.isExposureLocked){
-                // Freeze sliders so nothing can move
+                const curIso=parseInt(proIsoSlider.value);
+                const curExp=parseInt(proExpSlider.value);
+                const curFocus=parseInt(proFocusSlider.value);
+                S.lockedSettings={iso:curIso,exp:curExp,focus:curFocus};
+
+                let hwSuccess=0;const hwTotal=3;
+                const c=S.caps.exposureCompensation||{min:-4,max:4};
+                const mn=c.min??-4,mx=c.max??4;
+                const ev=mn+((curExp/100)*(mx-mn));
+
+                // Step 1: exposureMode manual
+                try{
+                    await S.track.applyConstraints({advanced:[{exposureMode:'manual'}]});
+                    const s=S.track.getSettings();
+                    if(s.exposureMode==='manual')hwSuccess++;
+                }catch(e){}
+
+                // Step 2: ISO (independent)
+                try{
+                    await S.track.applyConstraints({advanced:[{iso:curIso}]});
+                    const s=S.track.getSettings();
+                    if(s.iso!==undefined&&Math.abs(s.iso-curIso)<=100)hwSuccess++;
+                }catch(e){}
+
+                // Step 3: Exposure comp (independent)
+                try{
+                    await S.track.applyConstraints({advanced:[{exposureCompensation:ev}]});
+                    const s=S.track.getSettings();
+                    if(s.exposureCompensation!==undefined&&Math.abs(s.exposureCompensation-ev)<=0.5)hwSuccess++;
+                }catch(e){}
+
+                // Focus lock (Redmi skip)
+                if(S.hardwareFocusSupported&&S.caps.focusDistance){
+                    try{
+                        const fc=S.caps.focusDistance;
+                        const fd=fc.min+(curFocus/200)*(fc.max-fc.min);
+                        await S.track.applyConstraints({advanced:[{focusMode:'manual',focusDistance:fd}]});
+                    }catch(e){}
+                }
+
                 proIsoSlider.disabled=true;
                 proExpSlider.disabled=true;
                 proFocusSlider.disabled=true;
 
-                // Snapshot current values
-                S.lockedSettings={
-                    iso:proIsoSlider.value,
-                    exp:proExpSlider.value,
-                    focus:proFocusSlider.value
-                };
-                showToast('🔒 LOCKED');
+                if(hwSuccess>=2)showToast('🔒 HW LOCKED');
+                else if(hwSuccess===1)showToast('🔒 PARTIAL LOCK');
+                else showToast('🔒 LOCKED (SW)');
             }else{
-                // Release
+                try{await S.track.applyConstraints({advanced:[{exposureMode:'continuous'}]});}catch(e){}
+                try{await S.track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch(e){}
                 proIsoSlider.disabled=false;
                 proExpSlider.disabled=false;
                 proFocusSlider.disabled=false;
@@ -840,20 +845,38 @@ var userLat=null,userLng=null;
             }
         });
 
-        surfaceBtn.addEventListener('click',()=>{S.isSurfaceEnhance=!S.isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',S.isSurfaceEnhance);markNeedsRender();showToast(S.isSurfaceEnhance?'🏔️ ON':'🏔️ OFF');});
-        falseColorBtn.addEventListener('click',()=>{S.isFalseColor=!S.isFalseColor;falseColorBtn.classList.toggle('active-btn',S.isFalseColor);markNeedsRender();showToast(S.isFalseColor?'🌈 ON':'🌈 OFF');});
+        surfaceBtn.addEventListener('click',()=>{S.isSurfaceEnhance=!S.isSurfaceEnhance;surfaceBtn.classList.toggle('active-btn',S.isSurfaceEnhance);markNeedsRender();showToast(S.isSurfaceEnhance?'🏔️ SURFACE ON':'🏔️ SURFACE OFF');});
+        falseColorBtn.addEventListener('click',()=>{S.isFalseColor=!S.isFalseColor;falseColorBtn.classList.toggle('active-btn',S.isFalseColor);markNeedsRender();showToast(S.isFalseColor?'🌈 FALSE ON':'🌈 FALSE OFF');});
         stackBtn.addEventListener('click',()=>{
             S.isStack=!S.isStack;stackBtn.classList.toggle('active-btn',S.isStack);
-            if(S.isStack){S.stackBuffer=new Float32Array(S.procW*S.procH*4);S.stackCount=0;}else{S.stackBuffer=null;S.stackCount=0;}
+            if(S.isStack){S.stackBuffer=new Float32Array(S.procW*S.procH*4);S.stackCount=0;}
+            else{S.stackBuffer=null;S.stackCount=0;}
             markNeedsRender();
+            showToast(S.isStack?'📚 STACK ON':'📚 STACK OFF');
         });
-        hdrBtn.addEventListener('click',()=>{S.isHdr=!S.isHdr;hdrBtn.classList.toggle('active-btn',S.isHdr);markNeedsRender();});
+        hdrBtn.addEventListener('click',()=>{S.isHdr=!S.isHdr;hdrBtn.classList.toggle('active-btn',S.isHdr);markNeedsRender();showToast(S.isHdr?'✨ HDR ON':'✨ HDR OFF');});
 
         gridBtn.addEventListener('click',()=>{S.isGrid=!S.isGrid;gridBtn.classList.toggle('active-btn',S.isGrid);markNeedsRender();});
         nightBtn.addEventListener('click',()=>{S.isNight=!S.isNight;nightBtn.classList.toggle('active-btn',S.isNight);document.body.classList.toggle('night-mode',S.isNight);});
         transparentBtn.addEventListener('click',()=>{S.isTransparent=!S.isTransparent;transparentBtn.classList.toggle('active',S.isTransparent);document.body.classList.toggle('ghost-mode',S.isTransparent);});
         cinemaBtn.addEventListener('click',()=>{S.isCinema=!S.isCinema;cinemaBtn.classList.toggle('active-btn',S.isCinema);document.getElementById('cinemaBars').classList.toggle('show',S.isCinema);lensOverlays.anamorphic.classList.toggle('show',S.isCinema);});
-        zebraBtn.addEventListener('click',()=>{S.isZebra=!S.isZebra;zebraBtn.classList.toggle('active-btn',S.isZebra);zebraCanvas.style.display=S.isZebra?'block':'none';markNeedsRender();});
+
+        zebraBtn.addEventListener('click',()=>{
+            S.isZebra=!S.isZebra;
+            zebraBtn.classList.toggle('active-btn',S.isZebra);
+            zebraCanvas.style.display=S.isZebra?'block':'none';
+            if(S.isZebra){
+                if(S.zebraInterval)clearInterval(S.zebraInterval);
+                S.zebraInterval=setInterval(()=>{
+                    if(S.isZebra&&S.isVisible&&S.track)drawZebra();
+                },160);
+                showToast('📊 ZEBRA ON');
+            }else{
+                if(S.zebraInterval){clearInterval(S.zebraInterval);S.zebraInterval=null;}
+                zctx.clearRect(0,0,zebraCanvas.width,zebraCanvas.height);
+                showToast('📊 ZEBRA OFF');
+            }
+        });
 
         resetBtn.addEventListener('click',resetAll);
         captureBtn.addEventListener('click',captureImage);
@@ -885,9 +908,10 @@ var userLat=null,userLng=null;
 
     function resetAll(){
         closeAllSheets();
-        if(S.track){S.track.applyConstraints({advanced:[{zoom:S.hwZoomMin,exposureMode:'continuous',focusMode:'continuous',torch:false}]}).catch(()=>{});}
-        video.style.transform='scale(1)';
-        S.zoom=S.hwZoomMin;S.brightness=100;S.contrast=100;S.focusLevel=100;
+        if(S.track)S.track.applyConstraints({advanced:[{zoom:S.hwZoomMin,exposureMode:'continuous',focusMode:'continuous',torch:false}]}).catch(()=>{});
+        video.style.transform='';
+        hwZoomCurrent=S.hwZoomMin;hwZoomPending=null;
+        S.zoom=1;S.brightness=100;S.contrast=100;S.focusLevel=100;
         S.gamma=100;S.temperature=0;S.sharpness=0;S.highlightRecovery=0;S.purpleNoiseFix=0;S.clarityBoost=0;S.denoise=0;
         S.colorOpacity=25;S.vignetteAmount=0;S.leakAmount=0;
         S.activeColor='none';S.activeEffect='none';S.activeGrade='none';
@@ -897,6 +921,7 @@ var userLat=null,userLng=null;
         S.manualIso=false;S.manualExp=false;S.manualFocus=false;
         S.lockedSettings=null;
         if(S.teleTick){clearInterval(S.teleTick);S.teleTick=null;}
+        if(S.zebraInterval){clearInterval(S.zebraInterval);S.zebraInterval=null;}
         S.stackBuffer=null;S.stackCount=0;
         zoomSlider.value=0;
         brightSlider.value=100;contSlider.value=100;focusSlider.value=100;
@@ -935,20 +960,22 @@ var userLat=null,userLng=null;
         permModal.classList.add('hidden');loadingModal.classList.remove('hidden');
         const timeoutId=setTimeout(()=>{loadingModal.classList.add('hidden');alert('Camera timeout');},12000);
         try{
-            let constraints={video:{facingMode:'environment',width:{ideal:3840},height:{ideal:2160},frameRate:{ideal:30}},audio:false};
+            let constraints={video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}},audio:false};
             try{S.stream=await navigator.mediaDevices.getUserMedia(constraints);}
-            catch(e){console.log('4K failed:',e.message);constraints.video.width={ideal:1920};constraints.video.height={ideal:1080};S.stream=await navigator.mediaDevices.getUserMedia(constraints);}
+            catch(e){console.log('1080p failed:',e.message);S.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});}
             video.srcObject=S.stream;finderVideo.srcObject=S.stream;
             S.track=S.stream.getVideoTracks()[0];
             S.caps=S.track.getCapabilities?S.track.getCapabilities():{};
             console.log('Caps:',JSON.stringify(S.caps));
-            console.log('Hardware Focus:',S.hardwareFocusSupported?'ENABLED':'DISABLED (Redmi-safe)');
+            console.log('HW Focus supported:',S.hardwareFocusSupported?'YES':'NO (Redmi-safe)');
             if(S.caps.zoom){
                 S.hwZoomAvail=true;S.hwZoomMin=S.caps.zoom.min||1;S.hwZoomMax=S.caps.zoom.max||10;
-                statusBadge.classList.add('hw-mode');statusText.textContent='4K HW ZOOM';
+                hwZoomCurrent=S.hwZoomMin;
+                statusBadge.classList.add('hw-mode');statusText.textContent='HW ZOOM';
                 zoomModeEl.textContent='🔧 HARDWARE ZOOM';
             }else{
-                S.hwZoomAvail=false;statusText.textContent='4K DIGITAL';
+                S.hwZoomAvail=false;S.hwZoomMin=1;S.hwZoomMax=1;hwZoomCurrent=1;
+                statusText.textContent='DIGITAL';
                 statusBadge.classList.add('digital-mode');
             }
             video.onloadedmetadata=()=>{
@@ -957,12 +984,12 @@ var userLat=null,userLng=null;
                 S.canvasW=window.innerWidth;S.canvasH=window.innerHeight;
                 canvas.width=S.canvasW;canvas.height=S.canvasH;
                 zebraCanvas.width=S.canvasW;zebraCanvas.height=S.canvasH;
-                S.procW=480;S.procH=Math.round(480*(S.canvasH/S.canvasW));
+                S.procW=320;S.procH=Math.round(320*(S.canvasH/S.canvasW));
                 processCanvas.width=S.procW;processCanvas.height=S.procH;
-                statusText.textContent='4K '+(video.videoWidth||'?')+'p';
+                statusText.textContent=(video.videoWidth||'?')+'p';
                 loadingModal.classList.add('hidden');
                 requestAnimationFrame(renderLoop);
-                showToast('✅ '+(video.videoWidth||1920)+' READY'+(S.hardwareFocusSupported?'':' (SW Focus)'));
+                showToast('✅ '+(video.videoWidth||1920)+' READY');
             };
         }catch(err){
             clearTimeout(timeoutId);loadingModal.classList.add('hidden');
@@ -973,7 +1000,11 @@ var userLat=null,userLng=null;
 
     function renderLoop(){
         const now=performance.now();
-        if(S.needsRender&&S.isVisible&&(now-S.lastRender>=S.renderThrottle)){
+        const pixelCount=(S.isStack?1:0)+(S.isHdr?1:0)+(S.isSurfaceEnhance?1:0)+
+                         (S.isFalseColor?1:0)+(S.clarityBoost>0?1:0)+
+                         (S.denoise>0?1:0)+(S.highlightRecovery>0?1:0)+(S.purpleNoiseFix>0?1:0);
+        const throttle=pixelCount===0?33:(pixelCount<=2?100:160);
+        if(S.needsRender&&S.isVisible&&(now-S.lastRender>=throttle)){
             S.needsRender=false;
             S.lastRender=now;
             renderFrame();
@@ -983,11 +1014,20 @@ var userLat=null,userLng=null;
 
     function renderFrame(){
         if(S.filterDirty){S.cachedFilter=buildCSSFilter();S.filterDirty=false;video.style.filter=S.cachedFilter;}
-        const needsPixel=S.isStack||S.isHdr||S.isSurfaceEnhance||S.isFalseColor||S.highlightRecovery>0||S.purpleNoiseFix>0||S.clarityBoost>0||S.denoise>0;
-        const hasOverlay=S.isGrid||S.vignetteAmount>0||S.leakAmount>0||S.activeColor!=='none'||(S.isTelescopeMode&&S.zoom>1.2)||needsPixel;
-        if(!hasOverlay){canvas.style.display='none';return;}
-        canvas.style.display='block';
+
+        const needsPixel=S.isStack||S.isHdr||S.isSurfaceEnhance||S.isFalseColor||
+                        S.highlightRecovery>0||S.purpleNoiseFix>0||S.clarityBoost>0||S.denoise>0;
+        const needsTelescope=S.isTelescopeMode&&S.zoom>1.2;
+        const hasOverlay=S.isGrid||S.vignetteAmount>0||S.leakAmount>0||S.activeColor!=='none'||needsTelescope||needsPixel;
+
+        if(!hasOverlay){
+            if(canvas.style.display!=='none')canvas.style.display='none';
+            return;
+        }
+        if(canvas.style.display==='none')canvas.style.display='block';
+
         ctx.clearRect(0,0,S.canvasW,S.canvasH);
+
         if(needsPixel){
             ctx.drawImage(video,0,0,S.canvasW,S.canvasH);
             processCtx.drawImage(canvas,0,0,S.procW,S.procH);
@@ -1002,12 +1042,13 @@ var userLat=null,userLng=null;
             if(S.highlightRecovery>0)applyHighRecData(data);
             if(S.purpleNoiseFix>0)applyPurpleData(data);
             processCtx.putImageData(imgData,0,0);
-            ctx.clearRect(0,0,S.canvasW,S.canvasH);
             ctx.imageSmoothingEnabled=true;
             ctx.drawImage(processCanvas,0,0,S.canvasW,S.canvasH);
         }
+
+        // ⭐ Color overlay with multiply blend (video stays visible)
         if(S.activeColor!=='none')applyColorOverlay();
-        if(S.isTelescopeMode&&S.zoom>1.2){
+        if(needsTelescope){
             S.frameCounter++;
             if(S.frameCounter%90===0)detectObject();
             applyTelescopeDark();
@@ -1015,7 +1056,6 @@ var userLat=null,userLng=null;
         if(S.vignetteAmount>0)applyVignette();
         if(S.leakAmount>0)applyLightLeak();
         if(S.isGrid)drawGrid();
-        if(S.isZebra)drawZebra();
     }
 
     function buildCSSFilter(){
@@ -1052,7 +1092,21 @@ var userLat=null,userLng=null;
     function applyPurpleData(data){const strength=S.purpleNoiseFix/100;for(let i=0;i<data.length;i+=4){const r=data[i],g=data[i+1],b=data[i+2];if(b>r&&b>g&&r>g){const purpleAmount=((b+r)/2)-g;if(purpleAmount>15){const reduce=purpleAmount*strength*0.5;data[i]=Math.max(0,r-reduce);data[i+2]=Math.max(0,b-reduce);}}}}
     function hslToRgb(h,s,l){let r,g,b;if(s===0){r=g=b=l;}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);}return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];}
 
-    function applyColorOverlay(){if(S.activeColor==='none')return;const m=S.activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);if(!m)return;ctx.save();ctx.globalCompositeOperation='source-over';ctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+(S.colorOpacity/100)+')';ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();}
+    // ⭐⭐⭐ COLOR OVERLAY — multiply blend (video stays visible) ⭐⭐⭐
+    function applyColorOverlay(){
+        if(S.activeColor==='none')return;
+        const m=S.activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
+        if(!m)return;
+        ctx.save();
+        // ⭐ 'multiply' blends color with video — video stays visible
+        ctx.globalCompositeOperation='multiply';
+        // Max 80% opacity so video never fully blacks out
+        const op=Math.min(0.8,(S.colorOpacity/100));
+        ctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+op+')';
+        ctx.fillRect(0,0,S.canvasW,S.canvasH);
+        ctx.restore();
+    }
+
     function applyTelescopeDark(){const cx=S.canvasW*S.objectCenter.x,cy=S.canvasH*S.objectCenter.y;const innerR=Math.max(60,Math.min(S.canvasW,S.canvasH)*0.25);const outerR=Math.max(S.canvasW,S.canvasH)*0.65;const g=ctx.createRadialGradient(cx,cy,innerR,cx,cy,outerR);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(0.5,'rgba(0,0,0,0.35)');g.addColorStop(1,'rgba(0,0,0,0.85)');ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();if(S.detectedObject!=='none'){const n={moon:'🌕 MOON',planet:'🪐 PLANET',star:'⭐ STAR',object:'🔭 OBJECT'};objectName.textContent=n[S.detectedObject];objectBadge.classList.add('show');}else objectBadge.classList.remove('show');}
     function applyVignette(){const cx=S.canvasW/2,cy=S.canvasH/2;const r=Math.min(S.canvasW,S.canvasH)*0.7;const g=ctx.createRadialGradient(cx,cy,r*0.4,cx,cy,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+(S.vignetteAmount/100)+')');ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);}
     function applyLightLeak(){const o=S.leakAmount/100;const g=ctx.createLinearGradient(0,S.canvasH,S.canvasW,0);g.addColorStop(0,'rgba(255,180,100,'+(o*0.5)+')');g.addColorStop(0.5,'rgba(255,100,200,'+(o*0.25)+')');g.addColorStop(1,'rgba(0,0,0,0)');ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();}
@@ -1074,12 +1128,16 @@ var userLat=null,userLng=null;
         detectionCtx.drawImage(video,0,0,w,h);
         const d=detectionCtx.getImageData(0,0,w,h).data;
         const zData=zctx.createImageData(w,h);const zd=zData.data;
-        for(let i=0;i<d.length;i+=4){const avg=(d[i]+d[i+1]+d[i+2])/3;if(avg>235){const px=(i/4)%w,py=Math.floor((i/4)/w);if(((px+py)%8)<4){zd[i]=255;zd[i+1]=0;zd[i+2]=0;zd[i+3]=180;}}}
+        let blown=0;
+        for(let i=0;i<d.length;i+=4){const avg=(d[i]+d[i+1]+d[i+2])/3;if(avg>235){blown++;const px=(i/4)%w,py=Math.floor((i/4)/w);if(((px+py)%8)<4){zd[i]=255;zd[i+1]=0;zd[i+2]=0;zd[i+3]=180;}}}
         zctx.putImageData(zData,0,0);
         zctx.save();zctx.imageSmoothingEnabled=false;
         zctx.clearRect(0,0,zebraCanvas.width,zebraCanvas.height);
         zctx.drawImage(detectionCanvas,0,0,w,h,0,0,zebraCanvas.width,zebraCanvas.height);
         zctx.restore();
+        const pct=(blown/(w*h))*100;
+        if(pct>5){statusBadge.classList.add('warning-mode');statusText.textContent='⚠ '+pct.toFixed(0)+'%';}
+        else{statusBadge.classList.remove('warning-mode');statusText.textContent=S.hwZoomAvail?'HW ZOOM':'DIGITAL';}
     }
 
     function updateZoomUI(){zoomSlider.value=100*Math.log(S.zoom)/Math.log(1000);updateZoomDisplay();}
@@ -1102,13 +1160,13 @@ var userLat=null,userLng=null;
             if(outH>2160){outH=2160;outW=Math.round(2160*previewAspect);}
             const c=document.createElement('canvas');c.width=outW;c.height=outH;
             const cctx=c.getContext('2d');cctx.filter=video.style.filter||'none';
-            const hwVal=Math.min(S.zoom,S.hwZoomMax);
+            const hwVal=Math.max(1,hwZoomCurrent);
             const zw=vw/hwVal,zh=vh/hwVal;const zx=(vw-zw)/2,zy=(vh-zh)/2;const va=vw/vh;
             let cw,ch,cx,cy;
             if(va>previewAspect){ch=zh;cw=zh*previewAspect;cx=zx+(zw-cw)/2;cy=zy;}else{cw=zw;ch=zw/previewAspect;cx=zx;cy=zy+(zh-ch)/2;}
             cctx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);cctx.filter='none';
-            if(canvas.style.display==='block'){cctx.drawImage(canvas,0,0,outW,outH);}
-            c.toBlob((b)=>{if(!b){showToast('❌ Failed');return;}const url=URL.createObjectURL(b);const a=document.createElement('a');a.href=url;a.download='saqskyscoop-'+Date.now()+'.jpg';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),5000);showToast('📸 4K Captured!');},'image/jpeg',0.92);
+            if(canvas.style.display==='block')cctx.drawImage(canvas,0,0,outW,outH);
+            c.toBlob((b)=>{if(!b){showToast('❌ Failed');return;}const url=URL.createObjectURL(b);const a=document.createElement('a');a.href=url;a.download='saqskyscoop-'+Date.now()+'.jpg';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),5000);showToast('📸 Captured!');},'image/jpeg',0.92);
         }catch(e){showToast('❌ '+e.message);}
     }
 
@@ -1120,16 +1178,16 @@ var userLat=null,userLng=null;
                 let outW=1080;let outH=Math.round(1080/previewAspect);
                 if(outH>1920){outH=1920;outW=Math.round(1920*previewAspect);}
                 S.recCanvas=document.createElement('canvas');S.recCanvas.width=outW;S.recCanvas.height=outH;S.recCtx=S.recCanvas.getContext('2d');
-                const drawRec=()=>{try{if(!S.isRecording||!S.recCtx)return;const vw2=video.videoWidth||1080,vh2=video.videoHeight||1920;const hwVal=Math.min(S.zoom,S.hwZoomMax);const zw=vw2/hwVal,zh=vh2/hwVal;const zx=(vw2-zw)/2,zy=(vh2-zh)/2;const va=vw2/vh2;let cw,ch,cx,cy;if(va>previewAspect){ch=zh;cw=zh*previewAspect;cx=zx+(zw-cw)/2;cy=zy;}else{cw=zw;ch=zw/previewAspect;cx=zx;cy=zy+(zh-ch)/2;}S.recCtx.filter=video.style.filter||'none';S.recCtx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);S.recCtx.filter='none';if(canvas.style.display==='block'){S.recCtx.drawImage(canvas,0,0,outW,outH);}}catch(e){}};
+                const drawRec=()=>{try{if(!S.isRecording||!S.recCtx)return;const vw2=video.videoWidth||1080,vh2=video.videoHeight||1920;const hwVal=Math.max(1,hwZoomCurrent);const zw=vw2/hwVal,zh=vh2/hwVal;const zx=(vw2-zw)/2,zy=(vh2-zh)/2;const va=vw2/vh2;let cw,ch,cx,cy;if(va>previewAspect){ch=zh;cw=zh*previewAspect;cx=zx+(zw-cw)/2;cy=zy;}else{cw=zw;ch=zw/previewAspect;cx=zx;cy=zy+(zh-ch)/2;}S.recCtx.filter=video.style.filter||'none';S.recCtx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);S.recCtx.filter='none';if(canvas.style.display==='block')S.recCtx.drawImage(canvas,0,0,outW,outH);}catch(e){}};
                 drawRec();
                 const recStream=S.recCanvas.captureStream(24);
                 let opts={mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:2500000};
-                if(!MediaRecorder.isTypeSupported(opts.mimeType)){opts={mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:2500000};}
-                if(!MediaRecorder.isTypeSupported(opts.mimeType)){opts={mimeType:'video/webm'};}
+                if(!MediaRecorder.isTypeSupported(opts.mimeType))opts={mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:2500000};
+                if(!MediaRecorder.isTypeSupported(opts.mimeType))opts={mimeType:'video/webm'};
                 S.recordedChunks=[];
                 S.mediaRecorder=new MediaRecorder(recStream,opts);
                 S.mediaRecorder.ondataavailable=(e)=>{if(e.data&&e.data.size>0)S.recordedChunks.push(e.data);};
-                S.mediaRecorder.onerror=(e)=>{console.log('Rec error:',e);stopRecording();showToast('❌ Rec error');};
+                S.mediaRecorder.onerror=()=>{stopRecording();showToast('❌ Rec error');};
                 S.mediaRecorder.onstop=()=>{if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}if(S.recordedChunks.length===0){showToast('❌ No data');return;}try{const blob=new Blob(S.recordedChunks,{type:'video/webm'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='saqskyscoop-'+Date.now()+'.webm';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),8000);showToast('✅ Video Saved');}catch(e){showToast('❌ '+e.message);}};
                 S.mediaRecorder.start(3000);S.isRecording=true;
                 S.recFrameTimer=setInterval(drawRec,42);
@@ -1137,11 +1195,11 @@ var userLat=null,userLng=null;
                 S.recStartTime=Date.now();recTimer.textContent='00:00';
                 S.recInterval=setInterval(()=>{const s=Math.floor((Date.now()-S.recStartTime)/1000);recTimer.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},500);
                 showToast('🔴 Recording...');
-            }catch(e){console.log('Rec start error:',e);showToast('❌ '+e.message);stopRecording();}
-        }else{stopRecording();}
+            }catch(e){showToast('❌ '+e.message);stopRecording();}
+        }else stopRecording();
     }
     function stopRecording(){
-        try{if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}if(S.mediaRecorder&&S.mediaRecorder.state!=='inactive'){S.mediaRecorder.stop();}}catch(e){}
+        try{if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}if(S.mediaRecorder&&S.mediaRecorder.state!=='inactive')S.mediaRecorder.stop();}catch(e){}
         if(S.recInterval){clearInterval(S.recInterval);S.recInterval=null;}
         recordBtn.classList.remove('active-btn');recBadge.classList.remove('show');S.isRecording=false;
     }
@@ -1155,8 +1213,8 @@ var userLat=null,userLng=null;
 
     window.quickZoom=function(val){
         S.zoom=val;
-        if(S.zoom>S.hwZoomMax){video.style.transform='scale('+(S.zoom/S.hwZoomMax)+')';}else{video.style.transform='scale(1)';}
-        if(S.hwZoomAvail)scheduleHWZoom(Math.min(S.zoom,S.hwZoomMax));
+        applyCSSZoom();
+        scheduleHWZoom();
         updateZoomUI();
         document.querySelectorAll('.quick-zoom-btn').forEach(b=>{b.classList.toggle('active',b.textContent===val+'x');});
     };
@@ -1165,7 +1223,7 @@ var userLat=null,userLng=null;
         S.canvasW=window.innerWidth;S.canvasH=window.innerHeight;
         canvas.width=S.canvasW;canvas.height=S.canvasH;
         zebraCanvas.width=S.canvasW;zebraCanvas.height=S.canvasH;
-        S.procW=480;S.procH=Math.round(480*(S.canvasH/S.canvasW));
+        S.procW=320;S.procH=Math.round(320*(S.canvasH/S.canvasW));
         processCanvas.width=S.procW;processCanvas.height=S.procH;
         markNeedsRender();
     });
@@ -1173,7 +1231,6 @@ var userLat=null,userLng=null;
     init();
 })();
 
-// ============== SKY DATA ==============
 async function loadSkyData(){
     if(userLat===null){
         if(navigator.geolocation){
