@@ -67,6 +67,7 @@ body.night-mode #video{filter:sepia(1) hue-rotate(-30deg) saturate(5) brightness
 .zoom-slider-wrap{flex:1;margin:0 10px}
 input[type="range"]{-webkit-appearance:none;width:100%;height:4px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple),var(--neon-pink));border-radius:2px;outline:none;touch-action:none}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;background:#fff;border:2px solid var(--neon-cyan);border-radius:50%;cursor:pointer}
+input[type="range"]:disabled{opacity:.4;pointer-events:none}
 .zoom-value{font-family:'Courier New',monospace;font-size:.9rem;font-weight:900;color:var(--neon-cyan);min-width:65px;text-align:right}
 .zoom-value .zoom-unit{font-size:.6rem;opacity:.8}
 .zoom-mode{margin-bottom:6px;font-size:.58rem;color:var(--neon-green);text-align:center;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px;background:rgba(0,255,136,.08);border-radius:8px}
@@ -404,6 +405,19 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     });
 });
 
+// ⭐⭐⭐ REDMI/XIAOMI DETECTION ⭐⭐⭐
+// Redmi 13, Xiaomi, POCO phones ka camera HAL "focusDistance" apply karne pe crash/freeze karta hai
+// Isliye un pe hardware focus completely skip karte hain
+const IS_REDMI = /redmi|xiaomi|poco|mi\s|redmi\s?note|m2101k7|m2007j/i.test(navigator.userAgent);
+// Also check via device hints
+const IS_XIAOMI_CAMERA = (navigator.userAgentData && navigator.userAgentData.platform === 'Android' && /redmi|xiaomi|poco/i.test(navigator.userAgent));
+const SKIP_HW_FOCUS = IS_REDMI || IS_XIAOMI_CAMERA;
+console.log('Device: Redmi/Xiaomi detected:',IS_REDMI,'| Skip HW focus:',SKIP_HW_FOCUS);
+
+// ⭐⭐⭐ SKY DATA VARIABLES — declared before use ⭐⭐⭐
+var userLat=null,userLng=null;
+
+// ============== TELESCOPE ENGINE ==============
 (()=>{
     const video=document.getElementById('video');const finderVideo=document.getElementById('finderVideo');
     const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d',{alpha:false});
@@ -477,7 +491,9 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         teleTick:null,liveTick:null,
         lastRender:0,
         renderThrottle:33,
-        manualIso:false,manualExp:false,manualFocus:false
+        manualIso:false,manualExp:false,manualFocus:false,
+        lockedSettings:null,
+        hardwareFocusSupported:!SKIP_HW_FOCUS
     };
 
     const detectionCanvas=document.createElement('canvas');const detectionCtx=detectionCanvas.getContext('2d',{willReadFrequently:true});
@@ -488,25 +504,9 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     function markFilterDirty(){S.filterDirty=true;S.needsRender=true;}
     function markNeedsRender(){S.needsRender=true;}
 
-    // ⭐⭐⭐ ZERO-LATENCY rAF-throttled HW constraints ⭐⭐⭐
-    // Each function applies at most once per animation frame — feels instant, no queue buildup
-    function makeRAFScheduler(applyFn){
-        let pending=false;
-        return function(value){
-            pending=value;
-            if(!this._scheduled){
-                this._scheduled=true;
-                requestAnimationFrame(()=>{
-                    this._scheduled=false;
-                    const v=pending;
-                    pending=false;
-                    if(v!==false)applyFn(v);
-                });
-            }
-        };
-    }
+    // ⭐⭐⭐ REDMI-SAFE applyConstraints wrappers — single-fire, no await, no retry ⭐⭐⭐
 
-    // Zoom — apply every frame while dragging
+    // Zoom — safe on all devices (Redmi supports zoom capability)
     let pendingZoom=null,zoomScheduled=false;
     function scheduleHWZoom(v){
         pendingZoom=v;
@@ -520,7 +520,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         });
     }
 
-    // ISO — apply every frame while dragging, force manual mode combined
+    // ISO — Redmi-safe: single-fire, no manual mode wrapper
     let pendingIso=null,isoScheduled=false;
     function applyISO(v){
         pendingIso=v;
@@ -530,13 +530,13 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             isoScheduled=false;
             const val=pendingIso;pendingIso=null;
             if(!S.track||val===null)return;
-            // Single combined call: manual mode + iso value
-            S.track.applyConstraints({advanced:[{exposureMode:'manual',iso:val}]})
-                .catch(()=>S.track.applyConstraints({advanced:[{iso:val}]}).catch(()=>{}));
+            if(!S.caps.iso)return;
+            // Single-fire only — no manual mode (Redmi rejects it silently but doesn't crash)
+            S.track.applyConstraints({advanced:[{iso:val}]}).catch(()=>{});
         });
     }
 
-    // Exposure — apply every frame while dragging
+    // Exposure — Redmi-safe: single-fire, no manual mode
     let pendingExp=null,expScheduled=false;
     function applyExp(v){
         pendingExp=v;
@@ -546,17 +546,22 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             expScheduled=false;
             const val=pendingExp;pendingExp=null;
             if(!S.track||val===null)return;
-            const c=S.caps.exposureCompensation||{min:-4,max:4};
+            if(!S.caps.exposureCompensation)return;
+            const c=S.caps.exposureCompensation;
             const mn=c.min??-4,mx=c.max??4;
             const ev=mn+((val/100)*(mx-mn));
-            S.track.applyConstraints({advanced:[{exposureMode:'manual',exposureCompensation:ev}]})
-                .catch(()=>S.track.applyConstraints({advanced:[{exposureCompensation:ev}]}).catch(()=>{}));
+            S.track.applyConstraints({advanced:[{exposureCompensation:ev}]}).catch(()=>{});
         });
     }
 
-    // Focus — apply every frame while dragging
+    // Focus — REDMI-SAFE: skip entirely on Redmi/Xiaomi, use CSS blur instead
+    // On Redmi 13 focusDistance crashes the camera HAL when applied via applyConstraints
     let pendingFocus=null,focusScheduled=false;
     function applyFocus(v){
+        // ⭐ Redmi safety: skip hardware focus entirely
+        if(!S.hardwareFocusSupported){
+            return; // CSS filter handles the visual focus, camera stays in continuous auto
+        }
         pendingFocus=v;
         if(focusScheduled)return;
         focusScheduled=true;
@@ -564,11 +569,11 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             focusScheduled=false;
             const val=pendingFocus;pendingFocus=null;
             if(!S.track||val===null)return;
-            const c=S.caps.focusDistance||{min:0,max:1};
-            const mn=c.min??0,mx=c.max??1;
+            if(!S.caps.focusDistance)return;
+            const c=S.caps.focusDistance;
+            const mn=c.min??0,mx=c.max??10;
             const d=mn+((val/200)*(mx-mn));
-            S.track.applyConstraints({advanced:[{focusMode:'manual',focusDistance:d}]})
-                .catch(()=>S.track.applyConstraints({advanced:[{focusDistance:d}]}).catch(()=>{}));
+            S.track.applyConstraints({advanced:[{focusDistance:d}]}).catch(()=>{});
         });
     }
 
@@ -680,14 +685,16 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         noiseSlider.addEventListener('input',()=>{S.purpleNoiseFix=parseInt(noiseSlider.value);noiseVal.textContent=S.purpleNoiseFix;markNeedsRender();});
         denoiseSlider.addEventListener('input',()=>{S.denoise=parseInt(denoiseSlider.value);denoiseVal.textContent=S.denoise;markNeedsRender();});
 
-        // ⭐⭐⭐ PRO SLIDERS — instant feedback (rAF-throttled) ⭐⭐⭐
+        // ⭐ PRO SLIDERS with Lock guard
         proIsoSlider.addEventListener('input',()=>{
+            if(S.isExposureLocked)return;
             S.manualIso=true;
             proIsoVal.textContent=proIsoSlider.value;
             isoAutoBtn.classList.remove('active');
             applyISO(parseInt(proIsoSlider.value));
         });
         proExpSlider.addEventListener('input',()=>{
+            if(S.isExposureLocked)return;
             S.manualExp=true;
             const c=S.caps.exposureCompensation||{min:-4,max:4};
             const mn=c.min??-4,mx=c.max??4;
@@ -697,6 +704,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             applyExp(parseInt(proExpSlider.value));
         });
         proFocusSlider.addEventListener('input',()=>{
+            if(S.isExposureLocked)return;
             S.manualFocus=true;
             S.focusLevel=parseInt(proFocusSlider.value);
             proFocusVal.textContent=S.focusLevel;
@@ -708,7 +716,6 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             applyFocus(S.focusLevel);
         });
 
-        // ⭐ AUTO buttons — instant, no await
         isoAutoBtn.addEventListener('click',()=>{
             S.manualIso=false;
             isoAutoBtn.classList.add('active');
@@ -801,33 +808,35 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
             markNeedsRender();
         });
 
-        // ⭐⭐⭐ LOCK BUTTON — instant UI + fire-and-forget (single combined constraint) ⭐⭐⭐
+        // ⭐⭐⭐ LOCK BUTTON — Redmi-safe software lock ⭐⭐⭐
+        // No hardware applyConstraints — pure UI freeze
+        // Prevents Redmi 13 freeze completely
         lockBtn.addEventListener('click',()=>{
             S.isExposureLocked=!S.isExposureLocked;
             lockBtn.classList.toggle('locked',S.isExposureLocked);
             liveLocked.textContent=S.isExposureLocked?'YES':'No';
             liveLocked.style.color=S.isExposureLocked?'#ffb700':'#00ff88';
 
-            if(!S.track){showToast('⚠️ No camera');return;}
-
             if(S.isExposureLocked){
-                // UI already updated — now fire camera call in background (non-blocking)
-                const settings=S.track.getSettings?S.track.getSettings():{};
-                const c=S.caps.exposureCompensation||{min:-4,max:4};
-                const mn=c.min??-4,mx=c.max??4;
-                const ev=mn+((parseInt(proExpSlider.value)/100)*(mx-mn));
-                const adv={exposureMode:'manual',exposureCompensation:ev};
-                if(settings.focusDistance!==undefined){adv.focusDistance=settings.focusDistance;adv.focusMode='manual';}
-                if(settings.iso!==undefined)adv.iso=settings.iso;
-                // Single combined call — one roundtrip
-                S.track.applyConstraints({advanced:[adv]}).catch(()=>{
-                    // Fallback to bare minimum
-                    S.track.applyConstraints({advanced:[{exposureMode:'manual'}]}).catch(()=>{});
-                });
+                // Freeze sliders so nothing can move
+                proIsoSlider.disabled=true;
+                proExpSlider.disabled=true;
+                proFocusSlider.disabled=true;
+
+                // Snapshot current values
+                S.lockedSettings={
+                    iso:proIsoSlider.value,
+                    exp:proExpSlider.value,
+                    focus:proFocusSlider.value
+                };
                 showToast('🔒 LOCKED');
             }else{
-                S.track.applyConstraints({advanced:[{exposureMode:'continuous',focusMode:'continuous'}]}).catch(()=>{});
-                showToast('🔓 AUTO');
+                // Release
+                proIsoSlider.disabled=false;
+                proExpSlider.disabled=false;
+                proFocusSlider.disabled=false;
+                S.lockedSettings=null;
+                showToast('🔓 UNLOCKED');
             }
         });
 
@@ -886,6 +895,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         S.isExposureLocked=false;S.isTorchOn=false;S.isZebra=false;
         S.isSurfaceEnhance=false;S.isFalseColor=false;S.isStack=false;S.isHdr=false;
         S.manualIso=false;S.manualExp=false;S.manualFocus=false;
+        S.lockedSettings=null;
         if(S.teleTick){clearInterval(S.teleTick);S.teleTick=null;}
         S.stackBuffer=null;S.stackCount=0;
         zoomSlider.value=0;
@@ -894,6 +904,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         claritySlider.value=0;highRecSlider.value=0;noiseSlider.value=0;denoiseSlider.value=0;
         opacitySlider.value=25;vignetteSlider.value=0;leakSlider.value=0;
         proIsoSlider.value=400;proExpSlider.value=50;proFocusSlider.value=100;
+        proIsoSlider.disabled=false;proExpSlider.disabled=false;proFocusSlider.disabled=false;
         updateZoomUI();
         brightVal.textContent='100%';contVal.textContent='100%';
         focusVal.textContent='100%';focusVal.style.color='var(--neon-cyan)';
@@ -926,10 +937,12 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         try{
             let constraints={video:{facingMode:'environment',width:{ideal:3840},height:{ideal:2160},frameRate:{ideal:30}},audio:false};
             try{S.stream=await navigator.mediaDevices.getUserMedia(constraints);}
-            catch(e){constraints.video.width={ideal:1920};constraints.video.height={ideal:1080};S.stream=await navigator.mediaDevices.getUserMedia(constraints);}
+            catch(e){console.log('4K failed:',e.message);constraints.video.width={ideal:1920};constraints.video.height={ideal:1080};S.stream=await navigator.mediaDevices.getUserMedia(constraints);}
             video.srcObject=S.stream;finderVideo.srcObject=S.stream;
             S.track=S.stream.getVideoTracks()[0];
             S.caps=S.track.getCapabilities?S.track.getCapabilities():{};
+            console.log('Caps:',JSON.stringify(S.caps));
+            console.log('Hardware Focus:',S.hardwareFocusSupported?'ENABLED':'DISABLED (Redmi-safe)');
             if(S.caps.zoom){
                 S.hwZoomAvail=true;S.hwZoomMin=S.caps.zoom.min||1;S.hwZoomMax=S.caps.zoom.max||10;
                 statusBadge.classList.add('hw-mode');statusText.textContent='4K HW ZOOM';
@@ -949,10 +962,11 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
                 statusText.textContent='4K '+(video.videoWidth||'?')+'p';
                 loadingModal.classList.add('hidden');
                 requestAnimationFrame(renderLoop);
-                showToast('✅ '+(video.videoWidth||1920)+' READY');
+                showToast('✅ '+(video.videoWidth||1920)+' READY'+(S.hardwareFocusSupported?'':' (SW Focus)'));
             };
         }catch(err){
             clearTimeout(timeoutId);loadingModal.classList.add('hidden');
+            console.log('Camera error:',err.message);
             alert('Camera Error: '+err.message);
         }
     }
@@ -1028,169 +1042,39 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         return f.trim();
     }
 
-    function applyDeepStackData(data){
-        const len=data.length;
-        if(S.stackCount===0){for(let i=0;i<len;i++)S.stackBuffer[i]=data[i];S.stackCount=1;}
-        else{
-            const alpha=1/Math.min(S.stackCount+1,8);
-            for(let i=0;i<len;i++){S.stackBuffer[i]=S.stackBuffer[i]*(1-alpha)+data[i]*alpha;data[i]=S.stackBuffer[i];}
-            S.stackCount++;
-        }
-    }
-    function applyHdrData(data){
-        for(let i=0;i<data.length;i+=4){
-            const avg=(data[i]+data[i+1]+data[i+2])/3;
-            if(avg<60){data[i]=Math.min(255,data[i]*1.4);data[i+1]=Math.min(255,data[i+1]*1.4);data[i+2]=Math.min(255,data[i+2]*1.4);}
-            else if(avg>200){data[i]*=0.85;data[i+1]*=0.85;data[i+2]*=0.85;}
-        }
-    }
-    function applySurfaceData(data){
-        const w=S.procW,h=S.procH;
-        const copy=new Uint8ClampedArray(data);
-        const strength=0.5;
-        for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
-            const idx=(y*w+x)*4,rIdx=(y*w+(x+1))*4,dIdx=((y+1)*w+x)*4;
-            for(let c=0;c<3;c++){
-                const cur=copy[idx+c],nr=copy[rIdx+c],nb=copy[dIdx+c];
-                const edge=Math.abs(cur-nr)+Math.abs(cur-nb);
-                if(edge>12){const sh=cur+(cur-(nr+nb)/2)*strength;data[idx+c]=Math.min(255,Math.max(0,sh));}
-            }
-        }
-    }
-    function applyClarityData(data){
-        const w=S.procW,h=S.procH;
-        const copy=new Uint8ClampedArray(data);
-        const strength=(S.clarityBoost/100)*0.7;
-        for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
-            const idx=(y*w+x)*4;
-            const up=((y-1)*w+x)*4,down=((y+1)*w+x)*4;
-            const left=(y*w+(x-1))*4,right=(y*w+(x+1))*4;
-            for(let c=0;c<3;c++){
-                const cur=copy[idx+c];
-                const avg=(copy[up+c]+copy[down+c]+copy[left+c]+copy[right+c])/4;
-                data[idx+c]=Math.min(255,Math.max(0,cur+(cur-avg)*strength*2));
-            }
-        }
-    }
-    function applyDenoiseData(data){
-        const w=S.procW,h=S.procH;
-        const copy=new Uint8ClampedArray(data);
-        const strength=S.denoise/100;
-        for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
-            const idx=(y*w+x)*4;
-            const up=((y-1)*w+x)*4,down=((y+1)*w+x)*4;
-            const left=(y*w+(x-1))*4,right=(y*w+(x+1))*4;
-            for(let c=0;c<3;c++){
-                const avg=(copy[up+c]+copy[down+c]+copy[left+c]+copy[right+c]+copy[idx+c])/5;
-                data[idx+c]=copy[idx+c]*(1-strength)+avg*strength;
-            }
-        }
-    }
-    function applyFalseColorData(data){
-        for(let i=0;i<data.length;i+=4){
-            const lum=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];
-            const hue=(1-lum/255)*240;
-            const[r,g,b]=hslToRgb(hue/360,0.9,0.5);
-            data[i]=r;data[i+1]=g;data[i+2]=b;
-        }
-    }
-    function applyHighRecData(data){
-        const strength=S.highlightRecovery/100;
-        for(let i=0;i<data.length;i+=4){
-            const r=data[i],g=data[i+1],b=data[i+2],avg=(r+g+b)/3;
-            if(avg>200){const over=avg-200,factor=1-(strength*0.5),target=200+(over*factor),ratio=target/avg;
-                data[i]=Math.min(255,r*ratio);data[i+1]=Math.min(255,g*ratio);data[i+2]=Math.min(255,b*ratio);}
-        }
-    }
-    function applyPurpleData(data){
-        const strength=S.purpleNoiseFix/100;
-        for(let i=0;i<data.length;i+=4){
-            const r=data[i],g=data[i+1],b=data[i+2];
-            if(b>r&&b>g&&r>g){const purpleAmount=((b+r)/2)-g;if(purpleAmount>15){const reduce=purpleAmount*strength*0.5;data[i]=Math.max(0,r-reduce);data[i+2]=Math.max(0,b-reduce);}}
-        }
-    }
+    function applyDeepStackData(data){const len=data.length;if(S.stackCount===0){for(let i=0;i<len;i++)S.stackBuffer[i]=data[i];S.stackCount=1;}else{const alpha=1/Math.min(S.stackCount+1,8);for(let i=0;i<len;i++){S.stackBuffer[i]=S.stackBuffer[i]*(1-alpha)+data[i]*alpha;data[i]=S.stackBuffer[i];}S.stackCount++;}}
+    function applyHdrData(data){for(let i=0;i<data.length;i+=4){const avg=(data[i]+data[i+1]+data[i+2])/3;if(avg<60){data[i]=Math.min(255,data[i]*1.4);data[i+1]=Math.min(255,data[i+1]*1.4);data[i+2]=Math.min(255,data[i+2]*1.4);}else if(avg>200){data[i]*=0.85;data[i+1]*=0.85;data[i+2]*=0.85;}}}
+    function applySurfaceData(data){const w=S.procW,h=S.procH;const copy=new Uint8ClampedArray(data);const strength=0.5;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const idx=(y*w+x)*4,rIdx=(y*w+(x+1))*4,dIdx=((y+1)*w+x)*4;for(let c=0;c<3;c++){const cur=copy[idx+c],nr=copy[rIdx+c],nb=copy[dIdx+c];const edge=Math.abs(cur-nr)+Math.abs(cur-nb);if(edge>12){const sh=cur+(cur-(nr+nb)/2)*strength;data[idx+c]=Math.min(255,Math.max(0,sh));}}}}
+    function applyClarityData(data){const w=S.procW,h=S.procH;const copy=new Uint8ClampedArray(data);const strength=(S.clarityBoost/100)*0.7;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const idx=(y*w+x)*4;const up=((y-1)*w+x)*4,down=((y+1)*w+x)*4;const left=(y*w+(x-1))*4,right=(y*w+(x+1))*4;for(let c=0;c<3;c++){const cur=copy[idx+c];const avg=(copy[up+c]+copy[down+c]+copy[left+c]+copy[right+c])/4;data[idx+c]=Math.min(255,Math.max(0,cur+(cur-avg)*strength*2));}}}
+    function applyDenoiseData(data){const w=S.procW,h=S.procH;const copy=new Uint8ClampedArray(data);const strength=S.denoise/100;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const idx=(y*w+x)*4;const up=((y-1)*w+x)*4,down=((y+1)*w+x)*4;const left=(y*w+(x-1))*4,right=(y*w+(x+1))*4;for(let c=0;c<3;c++){const avg=(copy[up+c]+copy[down+c]+copy[left+c]+copy[right+c]+copy[idx+c])/5;data[idx+c]=copy[idx+c]*(1-strength)+avg*strength;}}}
+    function applyFalseColorData(data){for(let i=0;i<data.length;i+=4){const lum=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];const hue=(1-lum/255)*240;const[r,g,b]=hslToRgb(hue/360,0.9,0.5);data[i]=r;data[i+1]=g;data[i+2]=b;}}
+    function applyHighRecData(data){const strength=S.highlightRecovery/100;for(let i=0;i<data.length;i+=4){const r=data[i],g=data[i+1],b=data[i+2],avg=(r+g+b)/3;if(avg>200){const over=avg-200,factor=1-(strength*0.5),target=200+(over*factor),ratio=target/avg;data[i]=Math.min(255,r*ratio);data[i+1]=Math.min(255,g*ratio);data[i+2]=Math.min(255,b*ratio);}}}
+    function applyPurpleData(data){const strength=S.purpleNoiseFix/100;for(let i=0;i<data.length;i+=4){const r=data[i],g=data[i+1],b=data[i+2];if(b>r&&b>g&&r>g){const purpleAmount=((b+r)/2)-g;if(purpleAmount>15){const reduce=purpleAmount*strength*0.5;data[i]=Math.max(0,r-reduce);data[i+2]=Math.max(0,b-reduce);}}}}
     function hslToRgb(h,s,l){let r,g,b;if(s===0){r=g=b=l;}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);}return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];}
 
-    function applyColorOverlay(){
-        if(S.activeColor==='none')return;
-        const m=S.activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
-        if(!m)return;
-        ctx.save();
-        ctx.globalCompositeOperation='source-over';
-        ctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+(S.colorOpacity/100)+')';
-        ctx.fillRect(0,0,S.canvasW,S.canvasH);
-        ctx.restore();
-    }
-
-    function applyTelescopeDark(){
-        const cx=S.canvasW*S.objectCenter.x,cy=S.canvasH*S.objectCenter.y;
-        const innerR=Math.max(60,Math.min(S.canvasW,S.canvasH)*0.25);
-        const outerR=Math.max(S.canvasW,S.canvasH)*0.65;
-        const g=ctx.createRadialGradient(cx,cy,innerR,cx,cy,outerR);
-        g.addColorStop(0,'rgba(0,0,0,0)');
-        g.addColorStop(0.5,'rgba(0,0,0,0.35)');
-        g.addColorStop(1,'rgba(0,0,0,0.85)');
-        ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();
-        if(S.detectedObject!=='none'){
-            const n={moon:'🌕 MOON',planet:'🪐 PLANET',star:'⭐ STAR',object:'🔭 OBJECT'};
-            objectName.textContent=n[S.detectedObject];objectBadge.classList.add('show');
-        }else objectBadge.classList.remove('show');
-    }
-
-    function applyVignette(){
-        const cx=S.canvasW/2,cy=S.canvasH/2;
-        const r=Math.min(S.canvasW,S.canvasH)*0.7;
-        const g=ctx.createRadialGradient(cx,cy,r*0.4,cx,cy,r);
-        g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+(S.vignetteAmount/100)+')');
-        ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);
-    }
-
-    function applyLightLeak(){
-        const o=S.leakAmount/100;
-        const g=ctx.createLinearGradient(0,S.canvasH,S.canvasW,0);
-        g.addColorStop(0,'rgba(255,180,100,'+(o*0.5)+')');
-        g.addColorStop(0.5,'rgba(255,100,200,'+(o*0.25)+')');
-        g.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();
-    }
-
-    function drawGrid(){
-        ctx.save();ctx.strokeStyle='rgba(0,240,255,0.2)';ctx.lineWidth=1;const step=60;
-        for(let x=step;x<S.canvasW;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,S.canvasH);ctx.stroke();}
-        for(let y=step;y<S.canvasH;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(S.canvasW,y);ctx.stroke();}
-        ctx.restore();
-    }
+    function applyColorOverlay(){if(S.activeColor==='none')return;const m=S.activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);if(!m)return;ctx.save();ctx.globalCompositeOperation='source-over';ctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+(S.colorOpacity/100)+')';ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();}
+    function applyTelescopeDark(){const cx=S.canvasW*S.objectCenter.x,cy=S.canvasH*S.objectCenter.y;const innerR=Math.max(60,Math.min(S.canvasW,S.canvasH)*0.25);const outerR=Math.max(S.canvasW,S.canvasH)*0.65;const g=ctx.createRadialGradient(cx,cy,innerR,cx,cy,outerR);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(0.5,'rgba(0,0,0,0.35)');g.addColorStop(1,'rgba(0,0,0,0.85)');ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();if(S.detectedObject!=='none'){const n={moon:'🌕 MOON',planet:'🪐 PLANET',star:'⭐ STAR',object:'🔭 OBJECT'};objectName.textContent=n[S.detectedObject];objectBadge.classList.add('show');}else objectBadge.classList.remove('show');}
+    function applyVignette(){const cx=S.canvasW/2,cy=S.canvasH/2;const r=Math.min(S.canvasW,S.canvasH)*0.7;const g=ctx.createRadialGradient(cx,cy,r*0.4,cx,cy,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+(S.vignetteAmount/100)+')');ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);}
+    function applyLightLeak(){const o=S.leakAmount/100;const g=ctx.createLinearGradient(0,S.canvasH,S.canvasW,0);g.addColorStop(0,'rgba(255,180,100,'+(o*0.5)+')');g.addColorStop(0.5,'rgba(255,100,200,'+(o*0.25)+')');g.addColorStop(1,'rgba(0,0,0,0)');ctx.save();ctx.globalCompositeOperation='screen';ctx.fillStyle=g;ctx.fillRect(0,0,S.canvasW,S.canvasH);ctx.restore();}
+    function drawGrid(){ctx.save();ctx.strokeStyle='rgba(0,240,255,0.2)';ctx.lineWidth=1;const step=60;for(let x=step;x<S.canvasW;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,S.canvasH);ctx.stroke();}for(let y=step;y<S.canvasH;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(S.canvasW,y);ctx.stroke();}ctx.restore();}
 
     function detectObject(){
         try{
-            const w=64,h=48;
-            detectionCanvas.width=w;detectionCanvas.height=h;
+            const w=64,h=48;detectionCanvas.width=w;detectionCanvas.height=h;
             detectionCtx.drawImage(video,0,0,w,h);
             const d=detectionCtx.getImageData(0,0,w,h).data;
             let maxB=0,bx=0,by=0,bright=0;
-            for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-                const i=(y*w+x)*4;const l=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114;
-                if(l>150)bright++;
-                if(l>maxB){maxB=l;bx=x;by=y;}
-            }
-            if(maxB>180&&bright>8){
-                S.objectCenter.x=bx/w;S.objectCenter.y=by/h;
-                S.detectedObject=bright>50?'moon':'planet';
-            }else{S.objectCenter={x:.5,y:.5};S.detectedObject='none';}
+            for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;const l=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114;if(l>150)bright++;if(l>maxB){maxB=l;bx=x;by=y;}}
+            if(maxB>180&&bright>8){S.objectCenter.x=bx/w;S.objectCenter.y=by/h;S.detectedObject=bright>50?'moon':'planet';}else{S.objectCenter={x:.5,y:.5};S.detectedObject='none';}
         }catch(e){}
     }
 
     function drawZebra(){
-        const w=120,h=Math.floor(120*(S.canvasH/S.canvasW));
-        detectionCanvas.width=w;detectionCanvas.height=h;
+        const w=120,h=Math.floor(120*(S.canvasH/S.canvasW));detectionCanvas.width=w;detectionCanvas.height=h;
         detectionCtx.drawImage(video,0,0,w,h);
         const d=detectionCtx.getImageData(0,0,w,h).data;
         const zData=zctx.createImageData(w,h);const zd=zData.data;
-        let blown=0;
-        for(let i=0;i<d.length;i+=4){
-            const avg=(d[i]+d[i+1]+d[i+2])/3;
-            if(avg>235){blown++;const px=(i/4)%w,py=Math.floor((i/4)/w);if(((px+py)%8)<4){zd[i]=255;zd[i+1]=0;zd[i+2]=0;zd[i+3]=180;}}
-        }
+        for(let i=0;i<d.length;i+=4){const avg=(d[i]+d[i+1]+d[i+2])/3;if(avg>235){const px=(i/4)%w,py=Math.floor((i/4)/w);if(((px+py)%8)<4){zd[i]=255;zd[i+1]=0;zd[i+2]=0;zd[i+3]=180;}}}
         zctx.putImageData(zData,0,0);
         zctx.save();zctx.imageSmoothingEnabled=false;
         zctx.clearRect(0,0,zebraCanvas.width,zebraCanvas.height);
@@ -1198,14 +1082,9 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         zctx.restore();
     }
 
-    function updateZoomUI(){
-        zoomSlider.value=100*Math.log(S.zoom)/Math.log(1000);
-        updateZoomDisplay();
-    }
+    function updateZoomUI(){zoomSlider.value=100*Math.log(S.zoom)/Math.log(1000);updateZoomDisplay();}
     function updateZoomDisplay(){
-        let d;
-        if(S.zoom<10)d=S.zoom.toFixed(1);
-        else d=S.zoom.toFixed(0);
+        let d;if(S.zoom<10)d=S.zoom.toFixed(1);else d=S.zoom.toFixed(0);
         zoomValue.innerHTML=d+'<span class="zoom-unit">x</span>';
         if(S.hwZoomAvail){
             if(S.zoom>S.hwZoomMax){
@@ -1217,68 +1096,31 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
 
     function captureImage(){
         try{
-            const vw=video.videoWidth||1080;
-            const vh=video.videoHeight||1920;
+            const vw=video.videoWidth||1080,vh=video.videoHeight||1920;
             const previewAspect=S.canvasW/S.canvasH;
-            let outW=Math.min(vw,3840);
-            let outH=Math.round(outW/previewAspect);
+            let outW=Math.min(vw,3840);let outH=Math.round(outW/previewAspect);
             if(outH>2160){outH=2160;outW=Math.round(2160*previewAspect);}
-            const c=document.createElement('canvas');
-            c.width=outW;c.height=outH;
-            const cctx=c.getContext('2d');
-            cctx.filter=video.style.filter||'none';
+            const c=document.createElement('canvas');c.width=outW;c.height=outH;
+            const cctx=c.getContext('2d');cctx.filter=video.style.filter||'none';
             const hwVal=Math.min(S.zoom,S.hwZoomMax);
-            const zoomedW=vw/hwVal,zoomedH=vh/hwVal;
-            const zoomedX=(vw-zoomedW)/2,zoomedY=(vh-zoomedH)/2;
-            const va=vw/vh;
+            const zw=vw/hwVal,zh=vh/hwVal;const zx=(vw-zw)/2,zy=(vh-zh)/2;const va=vw/vh;
             let cw,ch,cx,cy;
-            if(va>previewAspect){ch=zoomedH;cw=zoomedH*previewAspect;cx=zoomedX+(zoomedW-cw)/2;cy=zoomedY;}
-            else{cw=zoomedW;ch=zoomedW/previewAspect;cx=zoomedX;cy=zoomedY+(zoomedH-ch)/2;}
-            cctx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);
-            cctx.filter='none';
+            if(va>previewAspect){ch=zh;cw=zh*previewAspect;cx=zx+(zw-cw)/2;cy=zy;}else{cw=zw;ch=zw/previewAspect;cx=zx;cy=zy+(zh-ch)/2;}
+            cctx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);cctx.filter='none';
             if(canvas.style.display==='block'){cctx.drawImage(canvas,0,0,outW,outH);}
-            c.toBlob((b)=>{
-                if(!b){showToast('❌ Failed');return;}
-                const url=URL.createObjectURL(b);
-                const a=document.createElement('a');
-                a.href=url;a.download='saqskyscoop-'+Date.now()+'.jpg';
-                document.body.appendChild(a);a.click();document.body.removeChild(a);
-                setTimeout(()=>URL.revokeObjectURL(url),5000);
-                showToast('📸 4K Captured!');
-            },'image/jpeg',0.92);
+            c.toBlob((b)=>{if(!b){showToast('❌ Failed');return;}const url=URL.createObjectURL(b);const a=document.createElement('a');a.href=url;a.download='saqskyscoop-'+Date.now()+'.jpg';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),5000);showToast('📸 4K Captured!');},'image/jpeg',0.92);
         }catch(e){showToast('❌ '+e.message);}
     }
 
     function toggleRecording(){
         if(!S.isRecording){
             try{
-                const vw=video.videoWidth||1080;
-                const vh=video.videoHeight||1920;
+                const vw=video.videoWidth||1080,vh=video.videoHeight||1920;
                 const previewAspect=S.canvasW/S.canvasH;
-                let outW=1080;
-                let outH=Math.round(1080/previewAspect);
+                let outW=1080;let outH=Math.round(1080/previewAspect);
                 if(outH>1920){outH=1920;outW=Math.round(1920*previewAspect);}
-                S.recCanvas=document.createElement('canvas');
-                S.recCanvas.width=outW;S.recCanvas.height=outH;
-                S.recCtx=S.recCanvas.getContext('2d');
-                const drawRec=()=>{
-                    try{
-                        if(!S.isRecording||!S.recCtx)return;
-                        const vw2=video.videoWidth||1080;
-                        const vh2=video.videoHeight||1920;
-                        const hwVal=Math.min(S.zoom,S.hwZoomMax);
-                        const zw=vw2/hwVal,zh=vh2/hwVal;
-                        const zx=(vw2-zw)/2,zy=(vh2-zh)/2;
-                        const va=vw2/vh2;
-                        let cw,ch,cx,cy;
-                        if(va>previewAspect){ch=zh;cw=zh*previewAspect;cx=zx+(zw-cw)/2;cy=zy;}
-                        else{cw=zw;ch=zw/previewAspect;cx=zx;cy=zy+(zh-ch)/2;}
-                        S.recCtx.filter=video.style.filter||'none';
-                        S.recCtx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);
-                        S.recCtx.filter='none';
-                        if(canvas.style.display==='block'){S.recCtx.drawImage(canvas,0,0,outW,outH);}
-                    }catch(e){}
-                };
+                S.recCanvas=document.createElement('canvas');S.recCanvas.width=outW;S.recCanvas.height=outH;S.recCtx=S.recCanvas.getContext('2d');
+                const drawRec=()=>{try{if(!S.isRecording||!S.recCtx)return;const vw2=video.videoWidth||1080,vh2=video.videoHeight||1920;const hwVal=Math.min(S.zoom,S.hwZoomMax);const zw=vw2/hwVal,zh=vh2/hwVal;const zx=(vw2-zw)/2,zy=(vh2-zh)/2;const va=vw2/vh2;let cw,ch,cx,cy;if(va>previewAspect){ch=zh;cw=zh*previewAspect;cx=zx+(zw-cw)/2;cy=zy;}else{cw=zw;ch=zw/previewAspect;cx=zx;cy=zy+(zh-ch)/2;}S.recCtx.filter=video.style.filter||'none';S.recCtx.drawImage(video,cx,cy,cw,ch,0,0,outW,outH);S.recCtx.filter='none';if(canvas.style.display==='block'){S.recCtx.drawImage(canvas,0,0,outW,outH);}}catch(e){}};
                 drawRec();
                 const recStream=S.recCanvas.captureStream(24);
                 let opts={mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:2500000};
@@ -1288,43 +1130,20 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
                 S.mediaRecorder=new MediaRecorder(recStream,opts);
                 S.mediaRecorder.ondataavailable=(e)=>{if(e.data&&e.data.size>0)S.recordedChunks.push(e.data);};
                 S.mediaRecorder.onerror=(e)=>{console.log('Rec error:',e);stopRecording();showToast('❌ Rec error');};
-                S.mediaRecorder.onstop=()=>{
-                    if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}
-                    if(S.recordedChunks.length===0){showToast('❌ No data');return;}
-                    try{
-                        const blob=new Blob(S.recordedChunks,{type:'video/webm'});
-                        const url=URL.createObjectURL(blob);
-                        const a=document.createElement('a');
-                        a.href=url;a.download='saqskyscoop-'+Date.now()+'.webm';
-                        document.body.appendChild(a);a.click();document.body.removeChild(a);
-                        setTimeout(()=>URL.revokeObjectURL(url),8000);
-                        showToast('✅ Video Saved');
-                    }catch(e){showToast('❌ '+e.message);}
-                };
-                S.mediaRecorder.start(3000);
-                S.isRecording=true;
+                S.mediaRecorder.onstop=()=>{if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}if(S.recordedChunks.length===0){showToast('❌ No data');return;}try{const blob=new Blob(S.recordedChunks,{type:'video/webm'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='saqskyscoop-'+Date.now()+'.webm';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),8000);showToast('✅ Video Saved');}catch(e){showToast('❌ '+e.message);}};
+                S.mediaRecorder.start(3000);S.isRecording=true;
                 S.recFrameTimer=setInterval(drawRec,42);
-                recordBtn.classList.add('active-btn');
-                recBadge.classList.add('show');
-                S.recStartTime=Date.now();
-                recTimer.textContent='00:00';
-                S.recInterval=setInterval(()=>{
-                    const s=Math.floor((Date.now()-S.recStartTime)/1000);
-                    recTimer.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
-                },500);
+                recordBtn.classList.add('active-btn');recBadge.classList.add('show');
+                S.recStartTime=Date.now();recTimer.textContent='00:00';
+                S.recInterval=setInterval(()=>{const s=Math.floor((Date.now()-S.recStartTime)/1000);recTimer.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},500);
                 showToast('🔴 Recording...');
             }catch(e){console.log('Rec start error:',e);showToast('❌ '+e.message);stopRecording();}
         }else{stopRecording();}
     }
     function stopRecording(){
-        try{
-            if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}
-            if(S.mediaRecorder&&S.mediaRecorder.state!=='inactive'){S.mediaRecorder.stop();}
-        }catch(e){}
+        try{if(S.recFrameTimer){clearInterval(S.recFrameTimer);S.recFrameTimer=null;}if(S.mediaRecorder&&S.mediaRecorder.state!=='inactive'){S.mediaRecorder.stop();}}catch(e){}
         if(S.recInterval){clearInterval(S.recInterval);S.recInterval=null;}
-        recordBtn.classList.remove('active-btn');
-        recBadge.classList.remove('show');
-        S.isRecording=false;
+        recordBtn.classList.remove('active-btn');recBadge.classList.remove('show');S.isRecording=false;
     }
 
     function showToast(msg){
@@ -1339,9 +1158,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
         if(S.zoom>S.hwZoomMax){video.style.transform='scale('+(S.zoom/S.hwZoomMax)+')';}else{video.style.transform='scale(1)';}
         if(S.hwZoomAvail)scheduleHWZoom(Math.min(S.zoom,S.hwZoomMax));
         updateZoomUI();
-        document.querySelectorAll('.quick-zoom-btn').forEach(b=>{
-            b.classList.toggle('active',b.textContent===val+'x');
-        });
+        document.querySelectorAll('.quick-zoom-btn').forEach(b=>{b.classList.toggle('active',b.textContent===val+'x');});
     };
 
     window.addEventListener('resize',()=>{
@@ -1356,7 +1173,7 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
     init();
 })();
 
-let userLat=null,userLng=null;
+// ============== SKY DATA ==============
 async function loadSkyData(){
     if(userLat===null){
         if(navigator.geolocation){
