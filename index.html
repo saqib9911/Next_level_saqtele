@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#050510">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Saqskyscoop Ultra – Fixed</title>
+<title>Saqskyscoop Ultra – Pro Quality</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -16,31 +16,8 @@ body{background:#000;color:var(--text-main);font-family:'Segoe UI',-apple-system
 body.ghost-mode .ui-overlay{opacity:.22!important}
 body.night-mode #video{filter:sepia(1) hue-rotate(-30deg) saturate(5) brightness(.7)!important}
 .camera-view{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;overflow:hidden;background:#000;touch-action:none}
-
-/* ⭐⭐⭐ FIXED: Wrapper for zoom transform (prevents stretch) ⭐⭐⭐ */
-#videoScaleWrap{
-    position:absolute;
-    top:0;left:0;
-    width:100%;height:100%;
-    overflow:hidden;
-    z-index:1;
-    transform-origin:center center;
-    backface-visibility:hidden;
-    -webkit-backface-visibility:hidden;
-    will-change:transform;
-    pointer-events:none;
-}
-#video{
-    position:absolute;
-    top:0;left:0;
-    width:100%;height:100%;
-    object-fit:cover;
-    -webkit-object-fit:cover;
-    display:block;
-    background:#000;
-    will-change:filter;
-    transform:translateZ(0);
-}
+#videoScaleWrap{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;z-index:1;transform-origin:center center;backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:transform;pointer-events:none}
+#video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;-webkit-object-fit:cover;display:block;background:#000;will-change:filter;transform:translateZ(0)}
 #colorOverlayCSS{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;mix-blend-mode:multiply;background:transparent;will-change:background}
 #canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;display:none}
 #zebraCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:4;pointer-events:none;display:none;opacity:.6}
@@ -451,7 +428,7 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 <div class="modal-card">
 <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:22px"></i>
 <h2>SAQSKYSCOOP ULTRA</h2>
-<p>HW 10x + CSS 1000x · 22 Cinematics · Stabilizer · Fixed Stretch</p>
+<p>4K Ultra · HW 10x + CSS 1000x · 22 Cinematics · Stacking · Stabilizer</p>
 <button class="btn-primary" id="allowCamBtn">Start Telescope</button>
 </div>
 </div>
@@ -698,7 +675,6 @@ var userLat=null,userLng=null;
     function updateProcessing(pct,sub){procPct.textContent=pct+'%';if(sub)procSub.textContent=sub;}
     function hideProcessing(){processingOverlay.classList.remove('show');}
 
-    // ⭐⭐⭐ FIXED: Apply to wrapper, not video ⭐⭐⭐
     function applyCSSZoom(){
         const hwFactor=S.hwZoomAvail?Math.max(1,S.hwZoomCurrent):1;
         const cssScale=S.zoom/hwFactor;
@@ -751,6 +727,40 @@ var userLat=null,userLng=null;
         deepsky:{bright:100,cont:125,focus:100,gamma:115,temp:0,sharp:5,clarity:20}
     };
 
+    // ⭐⭐⭐ UNIFIED UNHARP MASK — high quality sharpening ⭐⭐⭐
+    function applyUnsharpMask(targetCtx,w,h,amount,radius){
+        try{
+            const imgData=targetCtx.getImageData(0,0,w,h);
+            const data=imgData.data;
+            const copy=new Uint8ClampedArray(data);
+            const r=radius||2;
+            // Simple box blur for background
+            const blurred=new Uint8ClampedArray(data.length);
+            for(let y=0;y<h;y++){
+                for(let x=0;x<w;x++){
+                    const idx=(y*w+x)*4;
+                    let rS=0,gS=0,bS=0,cnt=0;
+                    for(let dy=-r;dy<=r;dy+=r){
+                        for(let dx=-r;dx<=r;dx+=r){
+                            const nx=x+dx,ny=y+dy;
+                            if(nx>=0&&nx<w&&ny>=0&&ny<h){
+                                const ni=(ny*w+nx)*4;
+                                rS+=copy[ni];gS+=copy[ni+1];bS+=copy[ni+2];cnt++;
+                            }
+                        }
+                    }
+                    blurred[idx]=rS/cnt;blurred[idx+1]=gS/cnt;blurred[idx+2]=bS/cnt;
+                }
+            }
+            for(let i=0;i<data.length;i+=4){
+                data[i]=Math.min(255,Math.max(0,copy[i]+amount*(copy[i]-blurred[i])));
+                data[i+1]=Math.min(255,Math.max(0,copy[i+1]+amount*(copy[i+1]-blurred[i+1])));
+                data[i+2]=Math.min(255,Math.max(0,copy[i+2]+amount*(copy[i+2]-blurred[i+2])));
+            }
+            targetCtx.putImageData(imgData,0,0);
+        }catch(e){console.log('Unsharp err:',e);}
+    }
+
     function init(){
         bindEvents();
         permModal.classList.remove('hidden');
@@ -795,9 +805,7 @@ var userLat=null,userLng=null;
         closeSheetBtns.forEach(btn=>btn.addEventListener('click',()=>{
             const id=btn.dataset.sheet;
             document.getElementById(id).classList.remove('open');
-            if(id==='proSheet'||id==='fxSheet'){
-                document.getElementById('livePreview').classList.remove('show');
-            }
+            if(id==='proSheet'||id==='fxSheet'){document.getElementById('livePreview').classList.remove('show');}
         }));
 
         zoomSlider.addEventListener('input',(e)=>{
@@ -838,11 +846,7 @@ var userLat=null,userLng=null;
         }
         zoomInBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(1);});
         zoomOutBtn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();startZoomHold(-1);});
-        [zoomInBtn,zoomOutBtn].forEach(b=>{
-            b.addEventListener('pointerup',e=>{e.stopPropagation();stopZoomHold();});
-            b.addEventListener('pointerleave',stopZoomHold);
-            b.addEventListener('pointercancel',stopZoomHold);
-        });
+        [zoomInBtn,zoomOutBtn].forEach(b=>{b.addEventListener('pointerup',e=>{e.stopPropagation();stopZoomHold();});b.addEventListener('pointerleave',stopZoomHold);b.addEventListener('pointercancel',stopZoomHold);});
 
         brightSlider.addEventListener('input',()=>{S.brightness=parseInt(brightSlider.value);brightVal.textContent=S.brightness+'%';markFilterDirty();});
         contSlider.addEventListener('input',()=>{S.contrast=parseInt(contSlider.value);contVal.textContent=S.contrast+'%';markFilterDirty();});
@@ -952,9 +956,22 @@ var userLat=null,userLng=null;
         zebraBtn.addEventListener('click',()=>{S.isZebra=!S.isZebra;zebraBtn.classList.toggle('active-btn',S.isZebra);zebraCanvas.style.display=S.isZebra?'block':'none';if(S.isZebra){if(S.zebraInterval)clearInterval(S.zebraInterval);S.zebraInterval=setInterval(()=>{if(S.isZebra&&S.isVisible&&S.track)drawZebra();},200);showToast('📊 ON');}else{if(S.zebraInterval){clearInterval(S.zebraInterval);S.zebraInterval=null;}zctx.clearRect(0,0,zebraCanvas.width,zebraCanvas.height);showToast('📊 OFF');}});
 
         resetBtn.addEventListener('click',resetAll);
-        captureBtn.addEventListener('click',captureImage);
         recordBtn.addEventListener('click',toggleRecording);
         finderBtn.addEventListener('click',()=>{const showing=finderScope.style.display==='block';finderScope.style.display=showing?'none':'block';finderBtn.classList.toggle('active',!showing);});
+
+        // ⭐⭐⭐ CAPTURE: Short tap = single, Long press = stacked ⭐⭐⭐
+        let capHoldTimer=null;
+        captureBtn.addEventListener('pointerdown',()=>{
+            capHoldTimer=setTimeout(()=>{
+                capHoldTimer=null;
+                captureWithStacking(8);  // Long press → multi-frame stack
+            },600);
+        });
+        captureBtn.addEventListener('pointerup',()=>{
+            if(capHoldTimer){clearTimeout(capHoldTimer);capHoldTimer=null;captureImage();}  // Short tap → single
+        });
+        captureBtn.addEventListener('pointerleave',()=>{if(capHoldTimer){clearTimeout(capHoldTimer);capHoldTimer=null;}});
+        captureBtn.addEventListener('pointercancel',()=>{if(capHoldTimer){clearTimeout(capHoldTimer);capHoldTimer=null;}});
 
         (function(){
             const lp=document.getElementById('livePreview');
@@ -988,9 +1005,7 @@ var userLat=null,userLng=null;
                     const rect=lp.getBoundingClientRect();
                     localStorage.setItem('lpPos',JSON.stringify({x:rect.left,y:rect.top}));
                     setTimeout(()=>{wasDrag=false;},100);
-                } else {
-                    document.getElementById('livePreviewBig').classList.add('big');
-                }
+                } else {document.getElementById('livePreviewBig').classList.add('big');}
             });
             lp.addEventListener('pointercancel',()=>{dragging=false;lp.classList.remove('dragging');});
         })();
@@ -1065,13 +1080,28 @@ var userLat=null,userLng=null;
         showToast('✅ Reset');
     }
 
+    // ⭐⭐⭐ 4K CAMERA START — requests highest quality ⭐⭐⭐
     async function startCamera(){
         permModal.classList.add('hidden');loadingModal.classList.remove('hidden');
-        const timeoutId=setTimeout(()=>{loadingModal.classList.add('hidden');alert('Camera timeout');},12000);
+        const timeoutId=setTimeout(()=>{loadingModal.classList.add('hidden');alert('Camera timeout');},15000);
         try{
-            let constraints={video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}},audio:false};
-            try{S.stream=await navigator.mediaDevices.getUserMedia(constraints);}
-            catch(e){S.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});}
+            // ⭐ Try 4K first (best quality)
+            let constraints={video:{facingMode:'environment',width:{ideal:3840},height:{ideal:2160},frameRate:{ideal:30}},audio:false};
+            try{
+                S.stream=await navigator.mediaDevices.getUserMedia(constraints);
+                console.log('✅ 4K stream acquired');
+            }catch(e){
+                console.log('4K failed, trying 1080p:',e.message);
+                constraints.video.width={ideal:1920};
+                constraints.video.height={ideal:1080};
+                try{
+                    S.stream=await navigator.mediaDevices.getUserMedia(constraints);
+                    console.log('✅ 1080p stream');
+                }catch(e2){
+                    S.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+                    console.log('✅ Fallback stream');
+                }
+            }
             video.srcObject=S.stream;
             finderVideo.srcObject=S.stream;
             livePreviewVideo.srcObject=S.stream;
@@ -1101,7 +1131,7 @@ var userLat=null,userLng=null;
                 updateZoomUI();
                 statusText.textContent=(video.videoWidth||'?')+'p';
                 loadingModal.classList.add('hidden');
-                showToast('✅ '+(video.videoWidth||1920)+' READY');
+                showToast('✅ '+(video.videoWidth||1920)+'p READY');
             };
         }catch(err){clearTimeout(timeoutId);loadingModal.classList.add('hidden');alert('Camera Error: '+err.message);}
     }
@@ -1124,6 +1154,8 @@ var userLat=null,userLng=null;
         const needsTelescope=S.isTelescopeMode&&S.zoom>1.2;
         if(!S.isGrid&&S.vignetteAmount===0&&S.leakAmount===0&&S.grainAmount===0&&!needsTelescope){canvas.style.display='none';return;}
         canvas.style.display='block';
+        ctx.imageSmoothingEnabled=true;
+        ctx.imageSmoothingQuality='high';
         ctx.clearRect(0,0,S.canvasW,S.canvasH);
         if(needsTelescope){S.frameCounter++;if(S.frameCounter%120===0)detectObject();applyTelescopeDark();}
         if(S.vignetteAmount>0)applyVignette();
@@ -1222,6 +1254,7 @@ var userLat=null,userLng=null;
         }else{zoomModeEl.textContent='📱 DIGITAL '+S.zoom.toFixed(0)+'x';zoomModeEl.style.color='#ffb700';}
     }
 
+    // ⭐⭐⭐ CAPTURE — with unsharp mask + WebP + 4K ⭐⭐⭐
     async function captureImage(){
         try{
             showProcessing('Capturing','Rendering frame...');
@@ -1232,6 +1265,8 @@ var userLat=null,userLng=null;
             if(outH>2160){outH=2160;outW=Math.round(2160*previewAspect);}
             const c=document.createElement('canvas');c.width=outW;c.height=outH;
             const cctx=c.getContext('2d');
+            cctx.imageSmoothingEnabled=true;
+            cctx.imageSmoothingQuality='high';
             cctx.filter=video.style.filter||'none';
             const hwFactor=S.hwZoomAvail?Math.max(1,S.hwZoomCurrent):1;
             const totalZoom=Math.max(1,S.zoom/hwFactor);
@@ -1242,20 +1277,99 @@ var userLat=null,userLng=null;
             if(canvas.style.display==='block')cctx.drawImage(canvas,0,0,outW,outH);
             if(S.activeColor!=='none'){
                 const m=S.activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
-                if(m){const op=Math.min(0.7,(S.colorOpacity/100));cctx.globalCompositeOperation='multiply';cctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+op+')';cctx.fillRect(0,0,outW,outH);}
+                if(m){const op=Math.min(0.7,(S.colorOpacity/100));cctx.globalCompositeOperation='multiply';cctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+op+')';cctx.fillRect(0,0,outW,outH);cctx.globalCompositeOperation='source-over';}
             }
-            updateProcessing(60,'Saving...');
+            updateProcessing(50,'Sharpening...');
+            // ⭐ Unsharp mask for high quality
+            applyUnsharpMask(cctx,outW,outH,0.6,2);
+            updateProcessing(75,'Encoding...');
+            // ⭐ Try WebP first, fallback to JPEG
+            const supportsWebP=c.toDataURL('image/webp').indexOf('data:image/webp')===0;
+            const mimeType=supportsWebP?'image/webp':'image/jpeg';
+            const quality=supportsWebP?0.92:0.96;
+            const ext=supportsWebP?'webp':'jpg';
             c.toBlob((b)=>{
                 if(!b){hideProcessing();showToast('❌ Failed');return;}
                 updateProcessing(90,'Downloading...');
                 const url=URL.createObjectURL(b);
                 const a=document.createElement('a');
-                a.href=url;a.download='saqskyscoop-'+Date.now()+'.jpg';
+                a.href=url;a.download='saqskyscoop-'+Date.now()+'.'+ext;
                 document.body.appendChild(a);a.click();document.body.removeChild(a);
                 setTimeout(()=>URL.revokeObjectURL(url),5000);
                 updateProcessing(100,'Done!');
-                setTimeout(()=>{hideProcessing();showToast('📸 Captured!');},400);
-            },'image/jpeg',0.92);
+                setTimeout(()=>{hideProcessing();showToast('📸 '+(supportsWebP?'WebP':'JPEG')+' Captured!');},400);
+            },mimeType,quality);
+        }catch(e){hideProcessing();showToast('❌ '+e.message);}
+    }
+
+    // ⭐⭐⭐ STACKING — long press for multi-frame noise reduction ⭐⭐⭐
+    async function captureWithStacking(frames){
+        try{
+            frames=frames||8;
+            showProcessing('Stacking','Capturing '+frames+' frames...');
+            const vw=video.videoWidth||1080,vh=video.videoHeight||1920;
+            const previewAspect=S.canvasW/S.canvasH;
+            const hwFactor=S.hwZoomAvail?Math.max(1,S.hwZoomCurrent):1;
+            const totalZoom=Math.max(1,S.zoom/hwFactor);
+            const zw=vw/totalZoom,zh=vh/totalZoom;
+            const zx=(vw-zw)/2,zy=(vh-zh)/2;
+            let outW=Math.min(vw,3840);let outH=Math.round(outW/previewAspect);
+            if(outH>2160){outH=2160;outW=Math.round(2160*previewAspect);}
+            const acc=new Float32Array(outW*outH*3);
+            let captured=0;
+            for(let i=0;i<frames;i++){
+                updateProcessing(10+Math.round((i/frames)*70),'Frame '+(i+1)+'/'+frames);
+                const tmpCanvas=document.createElement('canvas');
+                tmpCanvas.width=outW;tmpCanvas.height=outH;
+                const tctx=tmpCanvas.getContext('2d');
+                tctx.filter=video.style.filter||'none';
+                tctx.drawImage(video,zx,zy,zw,zh,0,0,outW,outH);
+                tctx.filter='none';
+                const imgData=tctx.getImageData(0,0,outW,outH);
+                const d=imgData.data;
+                for(let p=0;p<d.length;p+=4){
+                    const idx=(p/4)*3;
+                    acc[idx]+=d[p];acc[idx+1]+=d[p+1];acc[idx+2]+=d[p+2];
+                }
+                captured++;
+                await new Promise(r=>setTimeout(r,80));
+            }
+            updateProcessing(85,'Averaging...');
+            const resultCanvas=document.createElement('canvas');
+            resultCanvas.width=outW;resultCanvas.height=outH;
+            const rctx=resultCanvas.getContext('2d');
+            const resultData=rctx.createImageData(outW,outH);
+            const rd=resultData.data;
+            for(let p=0;p<rd.length;p+=4){
+                const idx=(p/4)*3;
+                rd[p]=Math.round(acc[idx]/captured);
+                rd[p+1]=Math.round(acc[idx+1]/captured);
+                rd[p+2]=Math.round(acc[idx+2]/captured);
+                rd[p+3]=255;
+            }
+            rctx.putImageData(resultData,0,0);
+            if(canvas.style.display==='block')rctx.drawImage(canvas,0,0,outW,outH);
+            if(S.activeColor!=='none'){
+                const m=S.activeColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
+                if(m){const op=Math.min(0.7,(S.colorOpacity/100));rctx.globalCompositeOperation='multiply';rctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+op+')';rctx.fillRect(0,0,outW,outH);rctx.globalCompositeOperation='source-over';}
+            }
+            updateProcessing(92,'Sharpening...');
+            applyUnsharpMask(rctx,outW,outH,0.5,2);
+            updateProcessing(95,'Saving...');
+            const supportsWebP=resultCanvas.toDataURL('image/webp').indexOf('data:image/webp')===0;
+            const mimeType=supportsWebP?'image/webp':'image/jpeg';
+            const quality=supportsWebP?0.92:0.96;
+            const ext=supportsWebP?'webp':'jpg';
+            resultCanvas.toBlob((b)=>{
+                if(!b){hideProcessing();showToast('❌ Failed');return;}
+                const url=URL.createObjectURL(b);
+                const a=document.createElement('a');
+                a.href=url;a.download='saqskyscoop-stack-'+Date.now()+'.'+ext;
+                document.body.appendChild(a);a.click();document.body.removeChild(a);
+                setTimeout(()=>URL.revokeObjectURL(url),5000);
+                updateProcessing(100,'Done!');
+                setTimeout(()=>{hideProcessing();showToast('📸 Stacked '+frames+' frames!');},400);
+            },mimeType,quality);
         }catch(e){hideProcessing();showToast('❌ '+e.message);}
     }
 
@@ -1264,8 +1378,8 @@ var userLat=null,userLng=null;
             try{
                 const vw=video.videoWidth||1080,vh=video.videoHeight||1920;
                 const previewAspect=S.canvasW/S.canvasH;
-                let outW=540;let outH=Math.round(540/previewAspect);
-                if(outH>960){outH=960;outW=Math.round(960*previewAspect);}
+                let outW=720;let outH=Math.round(720/previewAspect);
+                if(outH>1280){outH=1280;outW=Math.round(1280*previewAspect);}
                 S.recCanvas=document.createElement('canvas');S.recCanvas.width=outW;S.recCanvas.height=outH;
                 S.recCtx=S.recCanvas.getContext('2d',{alpha:false});
                 let lastDraw=0;
@@ -1292,7 +1406,7 @@ var userLat=null,userLng=null;
                 };
                 drawRec();
                 const recStream=S.recCanvas.captureStream(22);
-                let opts={mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:1200000};
+                let opts={mimeType:'video/webm;codecs=vp8',videoBitsPerSecond:1500000};
                 if(!MediaRecorder.isTypeSupported(opts.mimeType))opts={mimeType:'video/webm'};
                 S.recordedChunks=[];
                 S.mediaRecorder=new MediaRecorder(recStream,opts);
@@ -1342,10 +1456,8 @@ var userLat=null,userLng=null;
         document.querySelectorAll('.quick-zoom-btn').forEach(b=>{b.classList.toggle('active',b.textContent===val+'x');});
     };
 
-    // ⭐⭐⭐ FIXED: Handle resize + orientation + visualViewport (mobile browser zoom) ⭐⭐⭐
     function handleResize(){
-        S.canvasW=window.innerWidth;
-        S.canvasH=window.innerHeight;
+        S.canvasW=window.innerWidth;S.canvasH=window.innerHeight;
         canvas.width=S.canvasW;canvas.height=S.canvasH;
         zebraCanvas.width=S.canvasW;zebraCanvas.height=S.canvasH;
         videoScaleWrap.style.width='100%';
