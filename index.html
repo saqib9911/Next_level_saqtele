@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#050510">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Saqskyscoop Ultra – Final</title>
+<title>Saqskyscoop Ultra – Fixed</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -16,7 +16,20 @@ body{background:#000;color:var(--text-main);font-family:'Segoe UI',-apple-system
 body.ghost-mode .ui-overlay{opacity:.22!important}
 body.night-mode #video{filter:sepia(1) hue-rotate(-30deg) saturate(5) brightness(.7)!important}
 .camera-view{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;overflow:hidden;background:#000;touch-action:none}
-/* ⭐⭐⭐ FIXED: Prevent stretch with dynamic aspect handling ⭐⭐⭐ */
+
+/* ⭐⭐⭐ FIXED: Wrapper for zoom transform (prevents stretch) ⭐⭐⭐ */
+#videoScaleWrap{
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:100%;
+    overflow:hidden;
+    z-index:1;
+    transform-origin:center center;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    will-change:transform;
+    pointer-events:none;
+}
 #video{
     position:absolute;
     top:0;left:0;
@@ -24,14 +37,9 @@ body.night-mode #video{filter:sepia(1) hue-rotate(-30deg) saturate(5) brightness
     object-fit:cover;
     -webkit-object-fit:cover;
     display:block;
-    z-index:1;
     background:#000;
-    transform-origin:center center;
-    backface-visibility:hidden;
-    -webkit-backface-visibility:hidden;
-    will-change:transform,filter;
-    image-rendering:high-quality;
-    -webkit-image-rendering:high-quality;
+    will-change:filter;
+    transform:translateZ(0);
 }
 #colorOverlayCSS{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;display:none;mix-blend-mode:multiply;background:transparent;will-change:background}
 #canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;display:none}
@@ -223,7 +231,9 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 </head>
 <body>
 <div class="camera-view" id="cameraView">
+<div id="videoScaleWrap">
 <video id="video" autoplay playsinline muted></video>
+</div>
 <div id="colorOverlayCSS"></div>
 <canvas id="canvas"></canvas>
 <canvas id="zebraCanvas"></canvas>
@@ -441,7 +451,7 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 <div class="modal-card">
 <i class="fas fa-satellite-dish" style="font-size:3.5rem;color:var(--neon-cyan);margin-bottom:22px"></i>
 <h2>SAQSKYSCOOP ULTRA</h2>
-<p>HW 10x + Digital 1000x + 22 Cinematic Presets + Stabilizer.</p>
+<p>HW 10x + CSS 1000x · 22 Cinematics · Stabilizer · Fixed Stretch</p>
 <button class="btn-primary" id="allowCamBtn">Start Telescope</button>
 </div>
 </div>
@@ -569,7 +579,9 @@ const Stabilizer = {
 var userLat=null,userLng=null;
 
 (()=>{
-    const video=document.getElementById('video');const finderVideo=document.getElementById('finderVideo');
+    const video=document.getElementById('video');
+    const videoScaleWrap=document.getElementById('videoScaleWrap');
+    const finderVideo=document.getElementById('finderVideo');
     const livePreviewVideo=document.getElementById('livePreviewVideo');
     const livePreviewVideoBig=document.getElementById('livePreviewVideoBig');
     const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d',{alpha:false});
@@ -682,11 +694,11 @@ var userLat=null,userLng=null;
 
     function markFilterDirty(){S.filterDirty=true;S.needsRender=true;}
     function markNeedsRender(){S.needsRender=true;}
-
     function showProcessing(label,sub){procLabel.textContent=label||'Processing';procSub.textContent=sub||'Please wait...';procPct.textContent='0%';processingOverlay.classList.add('show');}
     function updateProcessing(pct,sub){procPct.textContent=pct+'%';if(sub)procSub.textContent=sub;}
     function hideProcessing(){processingOverlay.classList.remove('show');}
 
+    // ⭐⭐⭐ FIXED: Apply to wrapper, not video ⭐⭐⭐
     function applyCSSZoom(){
         const hwFactor=S.hwZoomAvail?Math.max(1,S.hwZoomCurrent):1;
         const cssScale=S.zoom/hwFactor;
@@ -700,7 +712,7 @@ var userLat=null,userLng=null;
             const ty=Stabilizer.offsetY;
             transform=(transform?transform+' ':'')+'translate('+tx.toFixed(2)+'px,'+ty.toFixed(2)+'px) scale('+ss+')';
         }
-        video.style.transform=transform;
+        videoScaleWrap.style.transform=transform;
     }
 
     function scheduleHWZoom(){
@@ -744,10 +756,10 @@ var userLat=null,userLng=null;
         permModal.classList.remove('hidden');
         loadSkyData();
         setInterval(loadSkyData,120000);
-        // ⭐ Reset zoom to 1x on start
         S.zoom=1;
         S.hwZoomCurrent=Math.max(1,S.hwZoomMin);
         zoomSlider.value=500;
+        videoScaleWrap.style.transform='';
         applyCSSZoom();
         updateZoomUI();
         requestAnimationFrame(renderLoop);
@@ -912,12 +924,9 @@ var userLat=null,userLng=null;
             lockBtn.classList.toggle('locked',S.isExposureLocked);
             if(!S.track)return;
             if(S.isExposureLocked){
-                const curIso=parseInt(proIsoSlider.value);
-                const curExp=parseInt(proExpSlider.value);
+                const curIso=parseInt(proIsoSlider.value);const curExp=parseInt(proExpSlider.value);
                 let hwSuccess=0;
-                const c=S.caps.exposureCompensation||{min:-4,max:4};
-                const mn=c.min??-4,mx=c.max??4;
-                const ev=mn+((curExp/100)*(mx-mn));
+                const c=S.caps.exposureCompensation||{min:-4,max:4};const mn=c.min??-4,mx=c.max??4;const ev=mn+((curExp/100)*(mx-mn));
                 try{await S.track.applyConstraints({advanced:[{exposureMode:'manual'}]});const s=S.track.getSettings();if(s.exposureMode==='manual')hwSuccess++;}catch(e){}
                 try{await S.track.applyConstraints({advanced:[{iso:curIso}]});const s=S.track.getSettings();if(s.iso!==undefined&&Math.abs(s.iso-curIso)<=100)hwSuccess++;}catch(e){}
                 try{await S.track.applyConstraints({advanced:[{exposureCompensation:ev}]});const s=S.track.getSettings();if(s.exposureCompensation!==undefined&&Math.abs(s.exposureCompensation-ev)<=0.5)hwSuccess++;}catch(e){}
@@ -1011,7 +1020,7 @@ var userLat=null,userLng=null;
         if(S.track)S.track.applyConstraints({advanced:[{zoom:Math.max(1,S.hwZoomMin),exposureMode:'continuous',focusMode:'continuous',torch:false}]}).catch(()=>{});
         S.hwZoomCurrent=Math.max(1,S.hwZoomMin);
         S.hwZoomPending=null;
-        video.style.transform='';
+        videoScaleWrap.style.transform='';
         Stabilizer.setMode('off');
         stabBtns.forEach(b=>b.classList.toggle('active',b.dataset.stab==='off'));
         stabIndicator.classList.remove('show');stabQuickBtn.classList.remove('stab-on');
@@ -1084,10 +1093,10 @@ var userLat=null,userLng=null;
                 S.canvasW=window.innerWidth;S.canvasH=window.innerHeight;
                 canvas.width=S.canvasW;canvas.height=S.canvasH;
                 zebraCanvas.width=S.canvasW;zebraCanvas.height=S.canvasH;
-                // ⭐ Reset zoom on start
                 S.zoom=1;
                 S.hwZoomCurrent=Math.max(1,S.hwZoomMin);
                 zoomSlider.value=500;
+                videoScaleWrap.style.transform='';
                 applyCSSZoom();
                 updateZoomUI();
                 statusText.textContent=(video.videoWidth||'?')+'p';
@@ -1106,19 +1115,14 @@ var userLat=null,userLng=null;
         }
         if(Stabilizer.enabled){Stabilizer.update();applyCSSZoom();}
         const needCanvas=S.isGrid||S.vignetteAmount>0||S.leakAmount>0||S.grainAmount>0||(S.isTelescopeMode&&S.zoom>1.2);
-        if(needCanvas&&now-S.lastRender>=100){
-            S.lastRender=now;renderFrame();
-        }else if(!needCanvas&&canvas.style.display!=='none'){
-            canvas.style.display='none';
-        }
+        if(needCanvas&&now-S.lastRender>=100){S.lastRender=now;renderFrame();}
+        else if(!needCanvas&&canvas.style.display!=='none'){canvas.style.display='none';}
         requestAnimationFrame(renderLoop);
     }
 
     function renderFrame(){
         const needsTelescope=S.isTelescopeMode&&S.zoom>1.2;
-        if(!S.isGrid&&S.vignetteAmount===0&&S.leakAmount===0&&S.grainAmount===0&&!needsTelescope){
-            canvas.style.display='none';return;
-        }
+        if(!S.isGrid&&S.vignetteAmount===0&&S.leakAmount===0&&S.grainAmount===0&&!needsTelescope){canvas.style.display='none';return;}
         canvas.style.display='block';
         ctx.clearRect(0,0,S.canvasW,S.canvasH);
         if(needsTelescope){S.frameCounter++;if(S.frameCounter%120===0)detectObject();applyTelescopeDark();}
@@ -1338,18 +1342,19 @@ var userLat=null,userLng=null;
         document.querySelectorAll('.quick-zoom-btn').forEach(b=>{b.classList.toggle('active',b.textContent===val+'x');});
     };
 
-    // ⭐⭐⭐ FIXED: Handle resize + orientation to prevent stretch ⭐⭐⭐
+    // ⭐⭐⭐ FIXED: Handle resize + orientation + visualViewport (mobile browser zoom) ⭐⭐⭐
     function handleResize(){
         S.canvasW=window.innerWidth;
         S.canvasH=window.innerHeight;
         canvas.width=S.canvasW;canvas.height=S.canvasH;
         zebraCanvas.width=S.canvasW;zebraCanvas.height=S.canvasH;
+        videoScaleWrap.style.width='100%';
+        videoScaleWrap.style.height='100%';
         applyCSSZoom();
         markNeedsRender();
     }
     window.addEventListener('resize',handleResize);
     window.addEventListener('orientationchange',()=>{setTimeout(handleResize,300);});
-    // ⭐ Also handle visualViewport changes (browser zoom)
     if(window.visualViewport){
         window.visualViewport.addEventListener('resize',handleResize);
         window.visualViewport.addEventListener('scroll',handleResize);
