@@ -1,16 +1,27 @@
 {
-  "name":"Saqskyscoop Ultra – 1000x Telescope",
-  "short_name":"Saqskyscoop",
-  "description":"Ultra Fast 1000x Hybrid Telescope with all features.",
-  "start_url":"./index.html",
-  "scope":"./",
-  "display":"standalone",
-  "display_override":["standalone","fullscreen"],
-  "orientation":"any",
-  "background_color":"#050510",
-  "theme_color":"#050510",
-  "lang":"en-US",
-  "categories":["astronomy","education","utilities"],
-  "icons":[{"src":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNTYiIHI9IjI0MCIgZmlsbD0iIzBjMTQ0NSIgc3Ryb2tlPSIjMDBmMGZmIiBzdHJva2Utd2lkdGg9IjgiLz48cGF0aCBkPSJNMTQwIDI4MEwxOTAgMjIwbDE0MCAxNDBNMjkwIDM4MGw2MC02ME0xNjAgMjAwaDMwbC01MCAxNTBNMzIwIDE4MGwtODAgODAiIHN0cm9rZT0iIzAwZjBmZiIgc3Ryb2tlLXdpZHRoPSIxMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBmaWxsPSJub25lIi8+PC9zdmc+","sizes":"512x512","type":"image/svg+xml","purpose":"any"}],
-  "prefer_related_applications":false
+  "name": "Saqskyscoop Ultra – Pro Quality",
+  "short_name": "Saqskyscoop",
+  "description": "4K Ultra telescope camera with 1000x zoom, cinematic grades, stacking & stabilizer.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050510",
+  "theme_color": "#050510",
+  "lang": "en",
+  "categories": ["photo", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%23050510'/%3E%3Ccircle cx='96' cy='96' r='62' fill='none' stroke='%2300f0ff' stroke-width='5'/%3E%3Ccircle cx='96' cy='96' r='32' fill='%23ff007f' opacity='0.85'/%3E%3Ccircle cx='96' cy='96' r='11' fill='%23ffffff'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23050510'/%3E%3Ccircle cx='256' cy='256' r='165' fill='none' stroke='%2300f0ff' stroke-width='12'/%3E%3Ccircle cx='256' cy='256' r='86' fill='%23ff007f' opacity='0.85'/%3E%3Ccircle cx='256' cy='256' r='30' fill='%23ffffff'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

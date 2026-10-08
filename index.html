@@ -204,6 +204,8 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 #stabIndicator.show{display:flex}
 #stabIndicator.active{background:linear-gradient(135deg,rgba(0,255,136,.3),rgba(0,240,255,.3));border-color:var(--neon-green);animation:stab-pulse 1.5s infinite}
 @keyframes stab-pulse{0%,100%{box-shadow:0 0 8px rgba(0,255,136,.4)}50%{box-shadow:0 0 20px rgba(0,255,136,.9)}}
+#offlineIndicator{position:fixed;top:calc(env(safe-area-inset-top,0px) + 60px);left:50%;transform:translateX(-50%);background:rgba(255,80,80,.9);color:#fff;padding:5px 14px;border-radius:20px;font-size:.6rem;font-weight:800;letter-spacing:1px;z-index:440;display:none;text-transform:uppercase}
+#offlineIndicator.show{display:block}
 </style>
 </head>
 <body>
@@ -228,6 +230,7 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 <div class="rec-badge" id="recBadge"><div class="rec-dot"></div><span id="recTimer">00:00</span></div>
 </div>
 <div id="stabIndicator"><i class="fas fa-shield-alt"></i> <span id="stabLabel">STABILIZER</span></div>
+<div id="offlineIndicator">📴 OFFLINE MODE</div>
 <div class="ui-overlay" id="uiOverlay">
 <div>
 <div class="top-hud">
@@ -456,8 +459,37 @@ input[type="range"]:disabled{opacity:.4;pointer-events:none}
 <div class="sub" id="procSub">Please wait...</div>
 </div>
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(e=>console.log('SW:',e));});}
+/* ============================================================
+   SERVICE WORKER REGISTRATION (Offline support)
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { scope: './' })
+      .then(reg => {
+        console.log('✅ SW registered:', reg.scope);
+        reg.update().catch(()=>{});
+      })
+      .catch(e => console.log('❌ SW failed:', e));
+  });
+}
 
+/* ============================================================
+   ONLINE / OFFLINE INDICATOR
+   ============================================================ */
+(function(){
+  const ind = document.getElementById('offlineIndicator');
+  function update(){
+    if(navigator.onLine){ ind.classList.remove('show'); }
+    else { ind.classList.add('show'); }
+  }
+  window.addEventListener('online', ()=>{ update(); if(window.showToast) window.showToast('🌐 Back Online'); });
+  window.addEventListener('offline', ()=>{ update(); if(window.showToast) window.showToast('📴 Offline Mode'); });
+  update();
+})();
+
+/* ============================================================
+   INSTALL PROMPT
+   ============================================================ */
 (function(){
     const popup=document.getElementById('installPopup');
     const yesBtn=document.getElementById('installYes');
@@ -476,6 +508,7 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.s
     window.addEventListener('appinstalled',()=>popup.classList.remove('show'));
 })();
 
+/* Ripple effect on buttons */
 document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-card,.cinema-card').forEach(el=>{
     el.addEventListener('pointerdown',function(e){
         const rect=this.getBoundingClientRect();
@@ -494,6 +527,9 @@ document.querySelectorAll('button,.preset-chip,.effect-chip,.color-dot,.lens-car
 const IS_REDMI = /redmi|xiaomi|poco|mi\s/i.test(navigator.userAgent);
 console.log('Device:',IS_REDMI?'Redmi/Xiaomi':'Other');
 
+/* ============================================================
+   STABILIZER
+   ============================================================ */
 const Stabilizer = {
     enabled:false,mode:'off',
     smoothX:0,smoothY:0,rawX:0,rawY:0,offsetX:0,offsetY:0,
@@ -555,6 +591,9 @@ const Stabilizer = {
 
 var userLat=null,userLng=null;
 
+/* ============================================================
+   MAIN CAMERA APP
+   ============================================================ */
 (()=>{
     const video=document.getElementById('video');
     const videoScaleWrap=document.getElementById('videoScaleWrap');
@@ -727,14 +766,12 @@ var userLat=null,userLng=null;
         deepsky:{bright:100,cont:125,focus:100,gamma:115,temp:0,sharp:5,clarity:20}
     };
 
-    // ⭐⭐⭐ UNIFIED UNHARP MASK — high quality sharpening ⭐⭐⭐
     function applyUnsharpMask(targetCtx,w,h,amount,radius){
         try{
             const imgData=targetCtx.getImageData(0,0,w,h);
             const data=imgData.data;
             const copy=new Uint8ClampedArray(data);
             const r=radius||2;
-            // Simple box blur for background
             const blurred=new Uint8ClampedArray(data.length);
             for(let y=0;y<h;y++){
                 for(let x=0;x<w;x++){
@@ -959,16 +996,15 @@ var userLat=null,userLng=null;
         recordBtn.addEventListener('click',toggleRecording);
         finderBtn.addEventListener('click',()=>{const showing=finderScope.style.display==='block';finderScope.style.display=showing?'none':'block';finderBtn.classList.toggle('active',!showing);});
 
-        // ⭐⭐⭐ CAPTURE: Short tap = single, Long press = stacked ⭐⭐⭐
         let capHoldTimer=null;
         captureBtn.addEventListener('pointerdown',()=>{
             capHoldTimer=setTimeout(()=>{
                 capHoldTimer=null;
-                captureWithStacking(8);  // Long press → multi-frame stack
+                captureWithStacking(8);
             },600);
         });
         captureBtn.addEventListener('pointerup',()=>{
-            if(capHoldTimer){clearTimeout(capHoldTimer);capHoldTimer=null;captureImage();}  // Short tap → single
+            if(capHoldTimer){clearTimeout(capHoldTimer);capHoldTimer=null;captureImage();}
         });
         captureBtn.addEventListener('pointerleave',()=>{if(capHoldTimer){clearTimeout(capHoldTimer);capHoldTimer=null;}});
         captureBtn.addEventListener('pointercancel',()=>{if(capHoldTimer){clearTimeout(capHoldTimer);capHoldTimer=null;}});
@@ -1080,12 +1116,10 @@ var userLat=null,userLng=null;
         showToast('✅ Reset');
     }
 
-    // ⭐⭐⭐ 4K CAMERA START — requests highest quality ⭐⭐⭐
     async function startCamera(){
         permModal.classList.add('hidden');loadingModal.classList.remove('hidden');
         const timeoutId=setTimeout(()=>{loadingModal.classList.add('hidden');alert('Camera timeout');},15000);
         try{
-            // ⭐ Try 4K first (best quality)
             let constraints={video:{facingMode:'environment',width:{ideal:3840},height:{ideal:2160},frameRate:{ideal:30}},audio:false};
             try{
                 S.stream=await navigator.mediaDevices.getUserMedia(constraints);
@@ -1254,7 +1288,6 @@ var userLat=null,userLng=null;
         }else{zoomModeEl.textContent='📱 DIGITAL '+S.zoom.toFixed(0)+'x';zoomModeEl.style.color='#ffb700';}
     }
 
-    // ⭐⭐⭐ CAPTURE — with unsharp mask + WebP + 4K ⭐⭐⭐
     async function captureImage(){
         try{
             showProcessing('Capturing','Rendering frame...');
@@ -1280,10 +1313,8 @@ var userLat=null,userLng=null;
                 if(m){const op=Math.min(0.7,(S.colorOpacity/100));cctx.globalCompositeOperation='multiply';cctx.fillStyle='rgba('+m[1]+','+m[2]+','+m[3]+','+op+')';cctx.fillRect(0,0,outW,outH);cctx.globalCompositeOperation='source-over';}
             }
             updateProcessing(50,'Sharpening...');
-            // ⭐ Unsharp mask for high quality
             applyUnsharpMask(cctx,outW,outH,0.6,2);
             updateProcessing(75,'Encoding...');
-            // ⭐ Try WebP first, fallback to JPEG
             const supportsWebP=c.toDataURL('image/webp').indexOf('data:image/webp')===0;
             const mimeType=supportsWebP?'image/webp':'image/jpeg';
             const quality=supportsWebP?0.92:0.96;
@@ -1302,7 +1333,6 @@ var userLat=null,userLng=null;
         }catch(e){hideProcessing();showToast('❌ '+e.message);}
     }
 
-    // ⭐⭐⭐ STACKING — long press for multi-frame noise reduction ⭐⭐⭐
     async function captureWithStacking(frames){
         try{
             frames=frames||8;
@@ -1475,64 +1505,162 @@ var userLat=null,userLng=null;
     init();
 })();
 
+/* ============================================================
+   SKY DATA — OFFLINE-SAFE (with localStorage caching)
+   ============================================================ */
+const SKY_CACHE_KEY = 'saqsky_data_v1';
+
+function readSkyCache() {
+  try { return JSON.parse(localStorage.getItem(SKY_CACHE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function writeSkyCache(obj) {
+  try {
+    const cur = readSkyCache();
+    localStorage.setItem(SKY_CACHE_KEY, JSON.stringify(Object.assign({}, cur, obj, { ts: Date.now() })));
+  } catch(e) {}
+}
+
 async function loadSkyData(){
-    if(userLat===null){
-        if(navigator.geolocation){
-            navigator.geolocation.getCurrentPosition(
-                (pos)=>{userLat=pos.coords.latitude;userLng=pos.coords.longitude;fetchSkyData();},
-                ()=>{fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>{userLat=d.latitude;userLng=d.longitude;fetchSkyData();}).catch(()=>{});},
-                {timeout:8000}
-            );
-        }
-    }else fetchSkyData();
-    updateMoonPhase();updatePlanets();updateStars();
+  // Always render math-only sections (offline-safe)
+  try { updateMoonPhase(); } catch(e){}
+  try { updatePlanets(); } catch(e){}
+  try { updateStars(); } catch(e){}
+
+  // Show cached values immediately (works offline)
+  const cached = readSkyCache();
+  if (cached.sunrise)    { const el=document.getElementById('sunrise');    if(el) el.textContent = cached.sunrise; }
+  if (cached.sunset)     { const el=document.getElementById('sunset');     if(el) el.textContent = cached.sunset; }
+  if (cached.temperature) { const el=document.getElementById('temperature'); if(el) el.textContent = cached.temperature; }
+  if (cached.cloudCover) { const el=document.getElementById('cloudCover'); if(el) el.textContent = cached.cloudCover; }
+  if (cached.humidity)   { const el=document.getElementById('humidity');   if(el) el.textContent = cached.humidity; }
+  if (cached.viewQuality){ const el=document.getElementById('viewQuality'); if(el) el.textContent = cached.viewQuality; }
+
+  // If offline, stop here
+  if (!navigator.onLine) return;
+
+  // If we have cached coordinates, just refresh
+  if (userLat === null && cached.lat != null) {
+    userLat = cached.lat;
+    userLng = cached.lng;
+  }
+
+  if (userLat === null) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          writeSkyCache({ lat: userLat, lng: userLng });
+          fetchSkyData();
+        },
+        async () => {
+          try {
+            const d = await (await fetch('https://ipapi.co/json/')).json();
+            userLat = d.latitude; userLng = d.longitude;
+            writeSkyCache({ lat: userLat, lng: userLng });
+            fetchSkyData();
+          } catch(e) {}
+        },
+        { timeout: 8000 }
+      );
+    }
+  } else {
+    fetchSkyData();
+  }
 }
+
 async function fetchSkyData(){
-    if(userLat===null)return;
-    try{const r=await fetch('https://api.sunrise-sunset.org/json?lat='+userLat+'&lng='+userLng+'&formatted=0');const d=await r.json();
-        if(d.results){document.getElementById('sunrise').textContent=new Date(d.results.sunrise).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('sunset').textContent=new Date(d.results.sunset).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}}catch(e){}
-    try{const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+userLat+'&longitude='+userLng+'&current=temperature_2m,cloud_cover,relative_humidity_2m');const d=await r.json();
-        if(d.current){document.getElementById('temperature').textContent=d.current.temperature_2m+'°C';document.getElementById('cloudCover').textContent=d.current.cloud_cover+'%';document.getElementById('humidity').textContent=d.current.relative_humidity_2m+'%';
-            let q='Excellent';if(d.current.cloud_cover>70)q='Poor';else if(d.current.cloud_cover>40)q='Fair';else if(d.current.cloud_cover>15)q='Good';
-            document.getElementById('viewQuality').textContent=q;}}catch(e){}
+  if (userLat === null || !navigator.onLine) return;
+
+  try {
+    const r = await fetch('https://api.sunrise-sunset.org/json?lat=' + userLat + '&lng=' + userLng + '&formatted=0');
+    const d = await r.json();
+    if (d.results) {
+      const sr = new Date(d.results.sunrise).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const ss = new Date(d.results.sunset).toLocaleTimeString([],  { hour: '2-digit', minute: '2-digit' });
+      const el1 = document.getElementById('sunrise'); if (el1) el1.textContent = sr;
+      const el2 = document.getElementById('sunset');  if (el2) el2.textContent = ss;
+      writeSkyCache({ sunrise: sr, sunset: ss });
+    }
+  } catch(e) {}
+
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + userLat + '&longitude=' + userLng + '&current=temperature_2m,cloud_cover,relative_humidity_2m');
+    const d = await r.json();
+    if (d.current) {
+      const t = d.current.temperature_2m + '°C';
+      const c = d.current.cloud_cover + '%';
+      const h = d.current.relative_humidity_2m + '%';
+      let q = 'Excellent';
+      if (d.current.cloud_cover > 70) q = 'Poor';
+      else if (d.current.cloud_cover > 40) q = 'Fair';
+      else if (d.current.cloud_cover > 15) q = 'Good';
+
+      const e1 = document.getElementById('temperature'); if (e1) e1.textContent = t;
+      const e2 = document.getElementById('cloudCover');  if (e2) e2.textContent = c;
+      const e3 = document.getElementById('humidity');    if (e3) e3.textContent = h;
+      const e4 = document.getElementById('viewQuality'); if (e4) e4.textContent = q;
+
+      writeSkyCache({ temperature: t, cloudCover: c, humidity: h, viewQuality: q });
+    }
+  } catch(e) {}
 }
+
 function updateMoonPhase(){
-    const now=new Date(),y=now.getFullYear(),m=now.getMonth()+1,day=now.getDate();
-    let jd;
-    if(m<=2){const yy=y-1,mm=m+12;jd=Math.floor(365.25*(yy+4716))+Math.floor(30.6001*(mm+1))+day-1524.5;}
-    else{jd=Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+day-1524.5;}
-    const ds=jd-2451549.5,nm=ds/29.53058867,phase=nm-Math.floor(nm);
-    const illum=Math.round((1-Math.cos(phase*2*Math.PI))*50);
-    let pn='';
-    if(phase<0.0625||phase>=0.9375)pn='New Moon';
-    else if(phase<0.1875)pn='Waxing Crescent';
-    else if(phase<0.3125)pn='First Quarter';
-    else if(phase<0.4375)pn='Waxing Gibbous';
-    else if(phase<0.5625)pn='Full Moon';
-    else if(phase<0.6875)pn='Waning Gibbous';
-    else if(phase<0.8125)pn='Last Quarter';
-    else pn='Waning Crescent';
-    document.getElementById('moonPhase').textContent=pn;
-    document.getElementById('moonIllum').textContent=illum+'%';
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth()+1, day = now.getDate();
+  let jd;
+  if (m <= 2) { const yy=y-1, mm=m+12; jd = Math.floor(365.25*(yy+4716)) + Math.floor(30.6001*(mm+1)) + day - 1524.5; }
+  else { jd = Math.floor(365.25*(y+4716)) + Math.floor(30.6001*(m+1)) + day - 1524.5; }
+  const ds = jd - 2451549.5, nm = ds/29.53058867, phase = nm - Math.floor(nm);
+  const illum = Math.round((1 - Math.cos(phase*2*Math.PI)) * 50);
+  let pn = '';
+  if (phase < 0.0625 || phase >= 0.9375) pn = 'New Moon';
+  else if (phase < 0.1875) pn = 'Waxing Crescent';
+  else if (phase < 0.3125) pn = 'First Quarter';
+  else if (phase < 0.4375) pn = 'Waxing Gibbous';
+  else if (phase < 0.5625) pn = 'Full Moon';
+  else if (phase < 0.6875) pn = 'Waning Gibbous';
+  else if (phase < 0.8125) pn = 'Last Quarter';
+  else pn = 'Waning Crescent';
+  const e1 = document.getElementById('moonPhase'); if (e1) e1.textContent = pn;
+  const e2 = document.getElementById('moonIllum'); if (e2) e2.textContent = illum + '%';
 }
+
 function updatePlanets(){
-    const mi=new Date().getMonth();
-    const planets=[
-        {name:'Mercury',months:[0,1,2,3,10,11],mag:'-0.4'},
-        {name:'Venus',months:[0,1,2,3,4,5,6,7,8,9,10,11],mag:'-4.6'},
-        {name:'Mars',months:[3,4,5,6,7,8],mag:'-1.2'},
-        {name:'Jupiter',months:[0,1,2,3,4,5,6,7,8,9,10,11],mag:'-2.5'},
-        {name:'Saturn',months:[5,6,7,8,9,10],mag:'0.5'}
-    ];
-    const c=document.getElementById('planetList');c.innerHTML='';
-    planets.forEach(p=>{const v=p.months.includes(mi);const r=document.createElement('div');r.className='data-row';
-        r.innerHTML='<span>'+p.name+' ('+p.mag+')</span><span style="color:'+(v?'#00ff64':'#ff6464')+'">'+(v?'● VIS':'○ HID')+'</span>';c.appendChild(r);});
+  const mi = new Date().getMonth();
+  const planets = [
+    { name:'Mercury', months:[0,1,2,3,10,11], mag:'-0.4' },
+    { name:'Venus',   months:[0,1,2,3,4,5,6,7,8,9,10,11], mag:'-4.6' },
+    { name:'Mars',    months:[3,4,5,6,7,8], mag:'-1.2' },
+    { name:'Jupiter', months:[0,1,2,3,4,5,6,7,8,9,10,11], mag:'-2.5' },
+    { name:'Saturn',  months:[5,6,7,8,9,10], mag:'0.5' }
+  ];
+  const c = document.getElementById('planetList'); if (!c) return;
+  c.innerHTML = '';
+  planets.forEach(p => {
+    const v = p.months.includes(mi);
+    const r = document.createElement('div');
+    r.className = 'data-row';
+    r.innerHTML = '<span>'+p.name+' ('+p.mag+')</span><span style="color:'+(v?'#00ff64':'#ff6464')+'">'+(v?'● VIS':'○ HID')+'</span>';
+    c.appendChild(r);
+  });
 }
+
 function updateStars(){
-    const stars=[{name:'Sirius',mag:'-1.46'},{name:'Canopus',mag:'-0.74'},{name:'Arcturus',mag:'-0.05'},{name:'Vega',mag:'0.03'},{name:'Capella',mag:'0.08'},{name:'Rigel',mag:'0.13'}];
-    const c=document.getElementById('starList');c.innerHTML='';
-    stars.forEach(s=>{const r=document.createElement('div');r.className='data-row';
-        r.innerHTML='<span>'+s.name+'</span><span>'+s.mag+'</span>';c.appendChild(r);});
+  const stars = [
+    { name:'Sirius', mag:'-1.46' }, { name:'Canopus', mag:'-0.74' },
+    { name:'Arcturus', mag:'-0.05' }, { name:'Vega', mag:'0.03' },
+    { name:'Capella', mag:'0.08' }, { name:'Rigel', mag:'0.13' }
+  ];
+  const c = document.getElementById('starList'); if (!c) return;
+  c.innerHTML = '';
+  stars.forEach(s => {
+    const r = document.createElement('div');
+    r.className = 'data-row';
+    r.innerHTML = '<span>'+s.name+'</span><span>'+s.mag+'</span>';
+    c.appendChild(r);
+  });
 }
 </script>
 </body>
